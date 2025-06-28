@@ -124,10 +124,9 @@
   users.groups.docker.members = ["cpuguy83"];
 
 
-  # Install firefox.
   programs.firefox.enable = true;
+  programs.kdeconnect.enable = true;
 
-  # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
   virtualisation = {
