@@ -101,6 +101,8 @@
     extraGroups = [ "networkmanager" "wheel" "docker" "libvirtd" "kvm"];
     packages = with pkgs; [
       kdePackages.kate
+      kdePackages.kdepim-addons
+      pkgs-unstable.kdePackages.korganizer
       ghostty
       stow
       fzy
@@ -114,6 +116,7 @@
       thunderbird
       remmina
       vulkan-tools
+      direnv
     ];
   };
 
@@ -165,6 +168,7 @@
       vscode
       htop
       ddcutil
+      socat
     ])
 
     ++
@@ -244,22 +248,49 @@
     openFirewall = true;
   };
 
-  systemd.user.services.msft-vm = {
-    description = "Micrisoft in-tuned VM";
-    wantedBy = [ "default.target" ];
-    environment = {
-      QEMU_AUDIO_DRV = "pulseaudio";
-      QEMU_PA_SERVER = "%t/pulse/native";
+    systemd.user.services.msft-vm = {
+      description = "Micrisoft in-tuned VM";
+      wantedBy = [ "default.target" ];
+      serviceConfig = {
+        ExecStart = ''
+          ${pkgs.qemu}/bin/qemu-system-x86_64 \
+            -m 16384 \
+            -enable-kvm \
+            -cpu host \
+            -smp 4 \
+            -M q35,accel=kvm \
+            -netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::13389-:3389,hostfwd=udp::13389-:3389 \
+            -device virtio-net-pci,netdev=net0 \
+            -device vhost-vsock-pci,guest-cid=3 \
+            -audio driver=pipewire,model=virtio \
+            -audiodev pipewire,id=snd0,in.channels=1,out.channels=2,in.frequency=48000,out.frequency=48000 \
+            -device virtio-sound,audiodev=snd0 \
+            -display gtk,gl=on \
+            -device virtio-gpu-rutabaga,gfxstream-vulkan=on,cross-domain=on,hostmem=16G,wsi=surfaceless \
+            -chardev socket,path=%t/msft-vm-mon.sock,server,nowait,id=qmp0 \
+            -mon chardev=qmp0,mode=control \
+            -drive file=/home/cpuguy83/VMs/ubuntu-msft.qcow2
+      '';
+        Restart = "on-failure";
+        ExecStop = ''
+        ${pkgs.socat}/bin/socat - UNIX-CONNECT=%t/msft-vm-mon.sock <<EOF
+{ "execute": "qmp_capabilities" }
+{ "execute": "system_powerdown" }
+EOF
+      '';
+      };
     };
-    serviceConfig = {
-      ExecStart = "${pkgs.qemu}/bin/qemu-system-x86_64 -m 16384 -enable-kvm -cpu host -smp 4 -M q35,accel=kvm -netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::13389-:3389,hostfwd=udp::13389-:3389 -device virtio-net-pci,netdev=net0 -device ich9-intel-hda -device hda-duplex -display none -device virtio-gpu-rutabaga,gfxstream-vulkan=on,cross-domain=on,hostmem=8G,wsi=surfaceless -device vhost-vsock-pci,guest-cid=3 -drive file=%h/VMs/ubuntu-msft.qcow2";
-      Restart = "on-failure";
-    };
-  };
 
   programs.steam.enable = true;
   programs.nh.enable = true;
   hardware.i2c.enable = true;
   hardware.graphics.enable32Bit = true;
   hardware.graphics.enable = true;
+
+  # Make sure the systemd unit uses dockerd from our overlay instead of the
+  # main pkgs.docker
+  systemd.services.docker.serviceConfig.ExecStart = [
+    ""
+    "${pkgs.docker.moby}/bin/dockerd"
+  ];
 }

@@ -16,12 +16,17 @@
     let
       lanzaboote = inputs.lanzaboote;
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
       pkgs-unstable = inputs.nixpkgs-unstable.legacyPackages.${system};
     in {
+
     nixosConfigurations = {
       nixos = nixpkgs.lib.nixosSystem {
         inherit system;
+
+        specialArgs = {
+          inherit pkgs-unstable;
+        };
+
         modules = [
           ./configuration.nix
           lanzaboote.nixosModules.lanzaboote
@@ -34,11 +39,9 @@
               pkiBundle = "/var/lib/sbctl";
             };
           })
-        ];
 
-        specialArgs = {
-          inherit pkgs-unstable;
-        };
+          (import ./overlays)
+        ];
       };
     };
   };
