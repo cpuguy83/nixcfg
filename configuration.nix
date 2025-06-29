@@ -272,12 +272,16 @@
             -drive file=/home/cpuguy83/VMs/ubuntu-msft.qcow2
       '';
         Restart = "on-failure";
-        ExecStop = ''
+      ExecStop = let
+        qemuStopScript = pkgs.writeScript "stop-qemu-vm" ''
+          #!{pkgs.runtimeShell}
         ${pkgs.socat}/bin/socat - UNIX-CONNECT=%t/msft-vm-mon.sock <<EOF
 { "execute": "qmp_capabilities" }
 { "execute": "system_powerdown" }
 EOF
       '';
+      in 
+        "${qemuStopScript}";
       };
     };
 
