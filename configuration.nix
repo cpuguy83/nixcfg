@@ -257,6 +257,7 @@
             -enable-kvm \
             -cpu host \
             -smp 4 \
+          -vga none \
             -M q35,accel=kvm \
             -netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::13389-:3389,hostfwd=udp::13389-:3389 \
             -device virtio-net-pci,netdev=net0 \
