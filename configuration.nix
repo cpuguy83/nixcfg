@@ -248,7 +248,7 @@
   };
 
     systemd.user.services.msft-vm = {
-      description = "Micrisoft in-tuned VM";
+    description = "Microsoft in-tuned VM";
       wantedBy = [ "default.target" ];
       serviceConfig = {
         ExecStart = ''
