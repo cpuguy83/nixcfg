@@ -299,7 +299,6 @@ ${pkgs.qemu}/bin/qemu-system-x86_64 \
   -audio driver=pipewire,model=virtio \
   -audiodev pipewire,id=snd0,in.channels=1,out.channels=2,in.frequency=48000,out.frequency=48000 \
   -device virtio-sound,audiodev=snd0 \
-  -display gtk,gl=on \
   -device virtio-gpu-rutabaga,gfxstream-vulkan=on,cross-domain=on,hostmem=16G,wsi=surfaceless \
   -chardev socket,path=$QMP_SOCKET,server=on,wait=off,id=qmp0 \
   -mon chardev=qmp0,mode=control \
