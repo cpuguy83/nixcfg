@@ -122,6 +122,7 @@
       remmina
       vulkan-tools
       direnv
+      gh
     ];
   };
 
