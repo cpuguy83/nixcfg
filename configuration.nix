@@ -8,7 +8,6 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      ./msft-vm/default.nix
     ];
 
   nix.extraOptions = ''
@@ -262,13 +261,6 @@
   hardware.i2c.enable = true;
   hardware.graphics.enable32Bit = true;
   hardware.graphics.enable = true;
-
-  # Make sure the systemd unit uses dockerd from our overlay instead of the
-  # main pkgs.docker
-  systemd.services.docker.serviceConfig.ExecStart = [
-    ""
-    "${pkgs.docker.moby}/bin/dockerd"
-  ];
 
   boot.binfmt.emulatedSystems = [
     "aarch64-linux"

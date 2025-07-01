@@ -32,7 +32,13 @@
         };
 
         modules = [
+          (import ./overlays)
+
+          ./docker.nix
+          ./msft-vm/default.nix
+
           ./configuration.nix
+
           lanzaboote.nixosModules.lanzaboote
 
           ({pkgs, lib, ...}: {
@@ -43,8 +49,6 @@
               pkiBundle = "/var/lib/sbctl";
             };
           })
-
-          (import ./overlays)
         ];
       };
     };
