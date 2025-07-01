@@ -169,10 +169,10 @@
       slack
       wl-clipboard
       waypipe
-      vscode
       htop
       ddcutil
       socat
+      kdePackages.kwallet-pam
     ])
 
     ++
@@ -187,6 +187,8 @@
       pkgs-unstable.libGL
       pkgs-unstable.virt-manager
       pkgs-unstable.libvirt
+      pkgs-unstable.vscode
+      (pkgs.vscode.override { isInsiders = true; })
     ]);
 
   # Sets proper link paths for packages using binaries not compiled against nix

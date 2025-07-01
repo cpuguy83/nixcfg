@@ -12,19 +12,23 @@
     };
   };
 
-  outputs = { nixpkgs, ... } @ inputs:
+  outputs = { nixpkgs, nixpkgs-unstable, ... } @ inputs:
     let
       lanzaboote = inputs.lanzaboote;
       system = "x86_64-linux";
-      pkgs-unstable = inputs.nixpkgs-unstable.legacyPackages.${system};
+      pkgs-unstable = import nixpkgs-unstable {
+        inherit system;
+        config.allowUnfree = true;
+      };
     in {
+      pkgs-unstable.config.allowUnfree = true;
 
-    nixosConfigurations = {
-      nixos = nixpkgs.lib.nixosSystem {
+      nixosConfigurations = {
+        nixos = nixpkgs.lib.nixosSystem {
         inherit system;
 
         specialArgs = {
-          inherit pkgs-unstable;
+          pkgs-unstable = pkgs-unstable;
         };
 
         modules = [
