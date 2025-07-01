@@ -123,6 +123,7 @@
       vulkan-tools
       direnv
       gh
+      jq
     ];
   };
 
