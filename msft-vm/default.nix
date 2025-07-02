@@ -12,7 +12,7 @@ let
       chmod +x $out/bin/stop.sh
 
       wrapProgram $out/bin/start.sh \
-        --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.qemu pkgs.coreutils pkgs.systemd pkgs.socat ]}
+        --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.qemu pkgs.coreutils pkgs.systemd pkgs.socat pkgs.util-linux ]}
 
       wrapProgram $out/bin/stop.sh \
         --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.socat ]}
