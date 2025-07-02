@@ -24,7 +24,8 @@ qemu-system-x86_64 \
 	-chardev socket,id=qga0,server=on,wait=off,path=$QGA_SOCKET \
 	-device virtio-serial-pci,id=virtio-serial0 \
 	-device virtserialport,bus=virtio-serial0.0,nr=1,chardev=qga0,id=channel0,name=org.qemu.guest_agent.0 \
-		-drive file=/home/cpuguy83/VMs/ubuntu-msft.qcow2 \
+	-drive file=/home/cpuguy83/VMs/ubuntu-msft.qcow2 \
+	-usb -device u2f-passthru,hidraw=/dev/hidraw0 \
 		&
 
 pid=$!
