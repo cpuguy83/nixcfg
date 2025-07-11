@@ -10,9 +10,13 @@
 
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "thunderbolt" "usb_storage" "usbhid" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "amdgpu" "kvm_amd" ];
+  boot.kernelModules = [ "amdgpu" "kvm_amd" "btusb" "mt7291e" ];
   boot.extraModulePackages = [ ];
   boot.kernelParams = [ "amdgpu.sg_display=0" "amd_iommu=on" ];
+
+  boot.extraModprobeConfig = ''
+    options btusb enable_autosuspend=0
+  '';
 
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/9ccf2a0d-2828-416e-b2ef-e8907942c136";
@@ -50,4 +54,6 @@
 
   hardware.bluetooth.enable = true;
   hardware.bluetooth.powerOnBoot = true;
+
+  hardware.firmware = [ pkgs.linux-firmware ];
 }

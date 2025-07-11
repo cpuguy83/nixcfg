@@ -19,13 +19,15 @@ qemu-system-x86_64 \
 	-audiodev pipewire,id=snd0,in.channels=1,out.channels=2,in.frequency=48000,out.frequency=48000 \
 	-device virtio-sound,audiodev=snd0 \
 	-device virtio-gpu-rutabaga,gfxstream-vulkan=on,cross-domain=on,hostmem=16G,wsi=surfaceless \
+	-display dbus,gl=on \
+	-device usb-tablet \
 	-chardev socket,path=$QMP_SOCKET,server=on,wait=off,id=qmp0 \
 	-mon chardev=qmp0,mode=control \
 	-chardev socket,id=qga0,server=on,wait=off,path=$QGA_SOCKET \
 	-device virtio-serial-pci,id=virtio-serial0 \
 	-device virtserialport,bus=virtio-serial0.0,nr=1,chardev=qga0,id=channel0,name=org.qemu.guest_agent.0 \
 	-drive file=/home/cpuguy83/VMs/ubuntu-msft.qcow2 \
-	-usb -device u2f-passthru,hidraw=/dev/hidraw0 \
+	-usb -device u2f-passthru \
 		&
 
 pid=$!

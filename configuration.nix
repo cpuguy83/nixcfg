@@ -106,6 +106,7 @@
     packages = with pkgs; [
       kdePackages.kate
       kdePackages.kdepim-addons
+      kdePackages.merkuro
       pkgs-unstable.kdePackages.korganizer
       ghostty
       stow
@@ -249,6 +250,7 @@
   };
 
 
+  # Add support for airprint devices
   services.avahi = {
     enable = true;
     nssmdns4 = true;
@@ -262,8 +264,8 @@
   hardware.graphics.enable32Bit = true;
   hardware.graphics.enable = true;
 
-  boot.binfmt.emulatedSystems = [
-    "aarch64-linux"
-    "riscv64-linux"
-  ];
+  # boot.binfmt.emulatedSystems = [
+  #   "aarch64-linux"
+  #   "riscv64-linux"
+  # ];
 }
