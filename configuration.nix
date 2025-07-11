@@ -179,6 +179,9 @@
       ddcutil
       socat
       kdePackages.kwallet-pam
+
+      v4l-utils
+
     ])
 
     ++
