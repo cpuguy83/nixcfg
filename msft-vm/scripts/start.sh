@@ -5,6 +5,10 @@ set -eu
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/lib.sh"
 
+SPICE_SOCKET="${XDG_RUNTIME_DIR}/msft-vm/spice.sock"
+
+mkdir -p "$(dirname "$SPICE_SOCKET")"
+
 qemu-system-x86_64 \
 	-m 16384 \
 	-enable-kvm \
@@ -19,7 +23,7 @@ qemu-system-x86_64 \
 	-audiodev pipewire,id=snd0,in.channels=1,out.channels=2,in.frequency=48000,out.frequency=48000 \
 	-device virtio-sound,audiodev=snd0 \
 	-device virtio-gpu-rutabaga,gfxstream-vulkan=on,cross-domain=on,hostmem=16G,wsi=surfaceless \
-	-display dbus,gl=on \
+	-display dbus,gl=off \
 	-device usb-tablet \
 	-chardev socket,path=$QMP_SOCKET,server=on,wait=off,id=qmp0 \
 	-mon chardev=qmp0,mode=control \
@@ -28,6 +32,14 @@ qemu-system-x86_64 \
 	-device virtserialport,bus=virtio-serial0.0,nr=1,chardev=qga0,id=channel0,name=org.qemu.guest_agent.0 \
 	-drive file=/home/cpuguy83/VMs/ubuntu-msft.qcow2 \
 	-usb -device u2f-passthru \
+	-device nec-usb-xhci,id=usb \
+	-chardev spicevmc,name=usbredir,id=usbredirchardev1 \
+	-device usb-redir,chardev=usbredirchardev1,id=usbredirdev1 \
+	-chardev spicevmc,name=usbredir,id=usbredirchardev2 \
+	-device usb-redir,chardev=usbredirchardev2,id=usbredirdev2 \
+	-chardev spicevmc,name=usbredir,id=usbredirchardev3 \
+	-device usb-redir,chardev=usbredirchardev3,id=usbredirdev3 \
+	-spice "disable-ticketing=on,unix=on,addr=${SPICE_SOCKET}" \
 		&
 
 pid=$!

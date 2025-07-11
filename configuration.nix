@@ -180,6 +180,9 @@
       socat
       kdePackages.kwallet-pam
 
+      virt-viewer
+      usbredir
+
       v4l-utils
 
       # Just needed for copilot
@@ -191,7 +194,7 @@
     (with pkgs-unstable; [
       pkgs-unstable.firefox
       pkgs-unstable.qemu_kvm
-      pkgs-unstable.qemu
+      pkgs-unstable.qemu_full
       pkgs-unstable.virglrenderer
       pkgs-unstable.mesa
       pkgs-unstable.libglvnd
