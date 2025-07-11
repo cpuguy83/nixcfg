@@ -102,7 +102,7 @@
   users.users.cpuguy83 = {
     isNormalUser = true;
     description = "Brian Goff";
-    extraGroups = [ "networkmanager" "wheel" "docker" "libvirtd" "kvm"];
+    extraGroups = [ "networkmanager" "wheel" "docker" "libvirtd" "kvm" ];
     packages = with pkgs; [
       kdePackages.kate
       kdePackages.kdepim-addons
@@ -124,6 +124,10 @@
       direnv
       gh
       jq
+      vial
+      via
+      qmk
+      qmk_hid
     ];
   };
 
@@ -263,6 +267,15 @@
   hardware.i2c.enable = true;
   hardware.graphics.enable32Bit = true;
   hardware.graphics.enable = true;
+
+  services.udev = {
+    packages = with pkgs; [
+      qmk
+      qmk-udev-rules
+      qmk_hid
+      vial
+    ];
+  };
 
   # boot.binfmt.emulatedSystems = [
   #   "aarch64-linux"
