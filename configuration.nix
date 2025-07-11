@@ -182,6 +182,8 @@
 
       v4l-utils
 
+      # Just needed for copilot
+      nodejs_24
     ])
 
     ++
