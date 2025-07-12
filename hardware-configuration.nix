@@ -25,14 +25,6 @@
 
   boot.initrd.luks.devices."luks-8d2fc873-0f12-4eb8-b004-8fb2d25b3bd6".device = "/dev/disk/by-uuid/8d2fc873-0f12-4eb8-b004-8fb2d25b3bd6";
 
-  # boot.initrd.systemd = {
-  #   additionalUpstreamUnits = [ "systemd-tpm2-setup-early.service" ];
-  #   storePaths = [
-  #     "${config.boot.initrd.systemd.package}/lib/systemd/systemd-tpm2-setup"
-  #     "${config.boot.initrd.systemd.package}/lib/systemd/system-generators/systemd-tpm2-generator"
-  #   ];
-  # };
-
   fileSystems."/boot" =
     { device = "/dev/disk/by-uuid/3453-FA1E";
       fsType = "vfat";
