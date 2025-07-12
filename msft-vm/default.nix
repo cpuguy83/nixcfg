@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, pkgs-unstable, ... }:
 let
   vmScripts = pkgs.stdenv.mkDerivation {
     name = "msft-vm-scripts";
@@ -20,9 +20,31 @@ let
   };
 in
   {
-    environment.systemPackages = [
+    environment.systemPackages = ([
       vmScripts
-    ];
+    ]) 
+    
+    ++
+
+    (with pkgs; [
+      virt-viewer
+      usbredir
+      waypipe
+    ])
+
+    ++
+
+    (with pkgs-unstable; [
+      qemu
+      qemu_kvm
+      virglrenderer
+      mesa
+      libglvnd
+      libGL
+    ])
+    ;
+
+    virtualisation.spiceUSBRedirection.enable = true;
 
     systemd.user.services.msft-vm = let
       qmpSock = "%t/msft-vm-ga.sock";

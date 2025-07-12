@@ -35,24 +35,19 @@
           (import ./overlays)
 
           ./docker.nix
-          ./msft-vm/default.nix
-          ./msft-corp/default.nix
+          ./msft-vm
+          ./msft-corp
 
           ./configuration.nix
-          ./desktop/default.nix
+          ./desktop
+          ./1password.nix
 
           lanzaboote.nixosModules.lanzaboote
+          ./boot.nix
 
-          ({pkgs, lib, ...}: {
-            boot.loader.systemd-boot.enable = lib.mkForce false;
-            boot.initrd.systemd.enable = true;
-            boot.lanzaboote = {
-              enable = true;
-              pkiBundle = "/var/lib/sbctl";
-            };
-
-            msft-corp.enable = false;
+          ({
             desktop.de = "gnome";
+            msft-corp.enable = false;
           })
         ];
       };

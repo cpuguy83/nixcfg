@@ -14,11 +14,6 @@
     experimental-features = nix-command flakes
   '';
 
-
-  # Bootloader.
-  boot.loader.efi.canTouchEfiVariables = true;
-  boot.kernelPackages = pkgs.linuxPackages_latest;
-
   networking.hostName = "nixos"; # Define your hostname.
 
   # Enable networking
@@ -111,10 +106,6 @@
         };
       };
     };
-
-    spiceUSBRedirection = {
-      enable = true;
-    };
   };
 
   # List packages installed in system profile. To search, run:
@@ -135,9 +126,6 @@
       ddcutil
       socat
 
-      virt-viewer
-      usbredir
-
       v4l-utils
 
       # Just needed for copilot
@@ -148,13 +136,6 @@
 
     (with pkgs-unstable; [
       firefox
-      qemu_kvm
-      qemu_full
-      virglrenderer
-      mesa
-      libglvnd
-      libGL
-      virt-manager
       vscode
       (pkgs.vscode.override { isInsiders = true; })
     ]);
@@ -164,7 +145,6 @@
   programs.nix-ld.enable = true;
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
-  programs.virt-manager.enable = true;
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
@@ -174,15 +154,6 @@
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "25.05"; # Did you read the comment?
 
-  programs._1password.enable = true;
-  programs._1password-gui = {
-    enable = true;
-    # Certain features, including CLI integration and system authentication support,
-    # require enabling PolKit integration on some desktop environments (e.g. Plasma).
-    polkitPolicyOwners = [ "cpuguy83" ];
-  };
-
-  security.polkit.enable = true;
   security.pam = {
     services = {
       login.u2fAuth = true;
@@ -204,9 +175,10 @@
     openFirewall = true;
   };
 
-
-  programs.steam.enable = true;
   programs.nh.enable = true;
+
+  # Steamy stuff
+  programs.steam.enable = true;
   hardware.i2c.enable = true;
   hardware.graphics.enable32Bit = true;
   hardware.graphics.enable = true;
@@ -219,9 +191,4 @@
       vial
     ];
   };
-
-  # boot.binfmt.emulatedSystems = [
-  #   "aarch64-linux"
-  #   "riscv64-linux"
-  # ];
 }
