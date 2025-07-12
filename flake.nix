@@ -39,6 +39,7 @@
           ./msft-corp/default.nix
 
           ./configuration.nix
+          ./desktop/default.nix
 
           lanzaboote.nixosModules.lanzaboote
 
@@ -51,6 +52,7 @@
             };
 
             msft-corp.enable = false;
+            desktop.de = "gnome";
           })
         ];
       };

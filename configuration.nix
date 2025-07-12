@@ -62,13 +62,6 @@
   services.xserver.enable = true;
   services.xserver.videoDrivers = [ "amdgpu" ];
 
-  # Enable the KDE Plasma Desktop Environment.
-  services.displayManager.sddm.enable = true;
-  services.desktopManager.plasma6.enable = true;
-
-  security.pam.services.sddm = {
-    enableKwallet = true;
-  };
 
   # Configure keymap in X11
   services.xserver.xkb = {
@@ -104,10 +97,6 @@
     description = "Brian Goff";
     extraGroups = [ "networkmanager" "wheel" "docker" "libvirtd" "kvm" ];
     packages = with pkgs; [
-      kdePackages.kate
-      kdePackages.kdepim-addons
-      kdePackages.merkuro
-      pkgs-unstable.kdePackages.korganizer
       ghostty
       stow
       fzy
@@ -136,7 +125,6 @@
 
 
   programs.firefox.enable = true;
-  programs.kdeconnect.enable = true;
 
   nixpkgs.config.allowUnfree = true;
 
@@ -178,7 +166,6 @@
       htop
       ddcutil
       socat
-      kdePackages.kwallet-pam
 
       virt-viewer
       usbredir
