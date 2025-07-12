@@ -96,18 +96,6 @@
 
   nixpkgs.config.allowUnfree = true;
 
-  virtualisation = {
-    docker = {
-      enable = true;
-      daemon.settings = {
-        experimental = true;
-        features = {
-          containerd-snapshotter = true;
-        };
-      };
-    };
-  };
-
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = 
@@ -115,7 +103,6 @@
       git
       vim
       curl
-      docker
       tpm2-tss
       sbctl
       pam_u2f
