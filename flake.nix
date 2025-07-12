@@ -36,6 +36,7 @@
 
           ./docker.nix
           ./msft-vm/default.nix
+          ./msft-corp/default.nix
 
           ./configuration.nix
 
@@ -48,6 +49,8 @@
               enable = true;
               pkiBundle = "/var/lib/sbctl";
             };
+
+            msft-corp.enable = false;
           })
         ];
       };
