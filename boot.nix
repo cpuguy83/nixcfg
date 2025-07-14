@@ -15,7 +15,7 @@
   ];
 
   boot.kernelParams = [ "amdgpu.sg_display=0" "amd_iommu=on" ];
-  boot.kernelModules = [ "amdgpu" "kvm_amd" "btusb" "mt7291e" ];
+  boot.kernelModules = [ "amdgpu" "kvm_amd" ];
 
   # per GPT, may help with BT firmware issue where the device just quit working
   # after suspend and I had to completely pull the power to get it working again
