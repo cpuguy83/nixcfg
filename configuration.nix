@@ -65,7 +65,7 @@
   users.users.cpuguy83 = {
     isNormalUser = true;
     description = "Brian Goff";
-    extraGroups = [ "networkmanager" "wheel" "docker" "kvm" ];
+    extraGroups = [ "networkmanager" "wheel" "docker" "kvm" "video" "audio" "render" ];
     packages = with pkgs; [
       ghostty
       stow
