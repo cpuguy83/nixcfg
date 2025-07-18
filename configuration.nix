@@ -62,6 +62,10 @@
   };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
+
+  home-manager.users.cpuguy83 = {
+    home.stateVersion = "25.05";
+  };
   users.users.cpuguy83 = {
     isNormalUser = true;
     description = "Brian Goff";

@@ -14,5 +14,15 @@
     polkitPolicyOwners = [ "cpuguy83" ];
   };
 
+  environment.etc = {
+    "1password/custom_allowed_browsers" = {
+      text = ''
+        .zen-wrapped
+        zen
+      '';
+      mode = "0755";
+    };
+  };
+
   security.polkit.enable = true;
 }
