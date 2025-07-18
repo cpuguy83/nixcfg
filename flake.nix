@@ -49,7 +49,7 @@
         modules = [
           (import ./overlays)
 
-          ./docker.nix
+          ./docker
           ./msft-vm
           ./msft-corp
 
@@ -66,6 +66,7 @@
           ({
             home-manager.useUserPackages = true;
             home-manager.useGlobalPkgs = true;
+
             desktop.de = "gnome";
             msft-corp.enable = false;
           })
