@@ -2,8 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ pkgs, pkgs-unstable, ... }:
-
+{ pkgs, pkgs-unstable, lib, config, ... }:
 {
   imports =
     [ # Include the results of the hardware scan.
@@ -181,5 +180,40 @@
       qmk_hid
       vial
     ];
+  };
+
+  fonts = {
+    enableDefaultPackages = true;
+    packages = with pkgs; [
+      ubuntu_font_family
+      nerd-fonts.fira-code
+      nerd-fonts.fira-mono
+      nerd-fonts.dejavu-sans-mono
+      nerd-fonts.adwaita-mono
+      nerd-fonts.jetbrains-mono
+      inter
+      noto-fonts
+      noto-fonts-emoji
+      noto-fonts-cjk-sans
+    ];
+  };
+
+  # Min password requirements for intune
+  security.pam.services.passwd.rules.password.pwquality = {
+    control = lib.mkForce "required"; 
+    modulePath = "${pkgs.libpwquality.lib}/lib/security/pam_pwquality.so"; 
+    # order BEFORE pam_unix.so
+    order =  config.security.pam.services.passwd.rules.password.unix.order - 10;
+    settings = {
+      use_authtok = true;
+      shadowretry = 3;
+      minlen = 12;
+      difok = 6;
+      dcredit = -1;
+      ucredit = -1;
+      ocredit = -1;
+      lcredit = -1;
+      enforce_for_root = true;
+    }; 
   };
 }

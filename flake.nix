@@ -68,7 +68,7 @@
             home-manager.useGlobalPkgs = true;
 
             desktop.de = "gnome";
-            msft-corp.enable = false;
+            msft-corp.enable = true;
           })
         ];
       };
