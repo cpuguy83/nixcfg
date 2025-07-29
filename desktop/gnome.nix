@@ -17,11 +17,11 @@ with lib; {
       ];
     };
 
-    programs.ssh.askPassword = pkgs.lib.mkForce "${pkgs.seahorse.out}/libexec/seahorse/ssh-askpass";
+    # programs.ssh.askPassword = pkgs.lib.mkForce "${pkgs.seahorse.out}/libexec/seahorse/ssh-askpass";
     programs.kdeconnect.package = pkgs.gnomeExtensions.gsconnect;
+    security.pam.services.gdm.enableGnomeKeyring = true;
+    security.pam.services.login.enableGnomeKeyring = true;
 
-    # security.pam.services.greetd.enableGnomeKeyring = true;
-    # security.pam.services.sddm.enableGnomeKeyring = true;
 
     environment.systemPackages = with pkgs;
     (with gnomeExtensions; [

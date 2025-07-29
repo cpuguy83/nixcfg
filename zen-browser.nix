@@ -1,9 +1,9 @@
-{ lib, zen-browser, ... }:
+{ lib, inputs, ... }:
 
 {
   home-manager.users.cpuguy83 = lib.mkMerge [{
     imports = [
-      zen-browser.homeModules.default
+      inputs.zen-browser.homeModules.default
     ];
     programs.zen-browser.enable = true;
     programs.zen-browser.policies = {

@@ -2,18 +2,20 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ pkgs, pkgs-unstable, lib, config, ... }:
+{ pkgs, pkgs-unstable, lib, config, inputs, ... }:
 {
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+      (import ./overlays)
+      (import "${inputs.home-manager}/nixos")
     ];
 
   nix.extraOptions = ''
     experimental-features = nix-command flakes
   '';
 
-  networking.hostName = "nixos"; # Define your hostname.
+  networking.hostName = "anduril"; # Define your hostname.
 
   # Enable networking
   networking.networkmanager.enable = true;
@@ -62,13 +64,10 @@
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
 
-  home-manager.users.cpuguy83 = {
-    home.stateVersion = "25.05";
-  };
   users.users.cpuguy83 = {
     isNormalUser = true;
     description = "Brian Goff";
-    extraGroups = [ "networkmanager" "wheel" "docker" "kvm" "video" "audio" "render" ];
+    extraGroups = [ "networkmanager" "wheel" "docker" "kvm" "video" "audio" "render" "input" ];
     packages = with pkgs; [
       ghostty
       stow
@@ -90,6 +89,12 @@
       via
       qmk
       qmk_hid
+
+      discord
+      legcord
+      home-manager
+
+      zed-editor
     ];
   };
 
@@ -99,12 +104,14 @@
 
   nixpkgs.config.allowUnfree = true;
 
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = 
     (with pkgs; [
       git
-      vim
+      vim_configurable
+      neovim
       curl
       tpm2-tss
       sbctl
@@ -146,11 +153,12 @@
 
   security.pam = {
     services = {
-      login.u2fAuth = true;
+      login.u2fAuth = false;
+      sudo.u2fAuth = true;
     };
 
     u2f = {
-      enable = true;
+      # enable = true;
       settings = {
         cue = true;
       };
@@ -196,24 +204,26 @@
       noto-fonts-emoji
       noto-fonts-cjk-sans
     ];
+    fontconfig = {
+      antialias = true;
+      hinting = {
+        enable = true;
+        style = "full";
+        autohint = true;
+      };
+      subpixel = {
+        rgba = "rgb";
+        lcdfilter = "default";
+      };
+    };
   };
 
-  # Min password requirements for intune
-  security.pam.services.passwd.rules.password.pwquality = {
-    control = lib.mkForce "required"; 
-    modulePath = "${pkgs.libpwquality.lib}/lib/security/pam_pwquality.so"; 
-    # order BEFORE pam_unix.so
-    order =  config.security.pam.services.passwd.rules.password.unix.order - 10;
-    settings = {
-      use_authtok = true;
-      shadowretry = 3;
-      minlen = 12;
-      difok = 6;
-      dcredit = -1;
-      ucredit = -1;
-      ocredit = -1;
-      lcredit = -1;
-      enforce_for_root = true;
-    }; 
+  home-manager.useUserPackages = true;
+  home-manager.useGlobalPkgs = true;
+  home-manager.users.cpuguy83 = {
+    home.stateVersion = "24.11";
   };
+
+  desktop.de = "hyprland";
+  msft-corp.enable = true;
 }

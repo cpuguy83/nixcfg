@@ -22,53 +22,43 @@
       url = "github:nix-community/home-manager/release-25.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    hyprland = {
+      url = "github:hyprwm/hyprland";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+
+    hyprland-plugins = {
+      url = "github:hyprwm/hyprland-plugins";
+      inputs.hyprland.follows = "hyprland";
+    };
   };
 
-  outputs = { nixpkgs, nixpkgs-unstable, ... } @ inputs:
-    let
-      zen-browser = inputs.zen-browser;
-      lanzaboote = inputs.lanzaboote;
-      system = "x86_64-linux";
-      pkgs-unstable = import nixpkgs-unstable {
-        inherit system;
-        config.allowUnfree = true;
-      };
-      home-manager = inputs.home-manager;
-    in {
-      pkgs-unstable.config.allowUnfree = true;
-
-      nixosConfigurations = {
-        nixos = nixpkgs.lib.nixosSystem {
-        inherit system;
-
+  outputs = { nixpkgs, nixpkgs-unstable, home-manager, hyprland, ... }@inputs:
+  let
+    system = "x86_64-linux";
+    pkgs-unstable = import nixpkgs-unstable {
+      inherit system;
+      config.allowUnfree = true;
+    };
+  in {
+    nixosConfigurations = {
+      anduril = nixpkgs.lib.nixosSystem {
         specialArgs = {
-          pkgs-unstable = pkgs-unstable;
-          zen-browser = zen-browser;
+          inherit pkgs-unstable inputs;
         };
 
         modules = [
-          (import ./overlays)
-
-          ./docker
-          ./msft-vm
-          ./msft-corp
-
+          ./modules.nix
           ./configuration.nix
-          ./desktop
-          ./1password.nix
+          inputs.lanzaboote.nixosModules.lanzaboote
 
-          lanzaboote.nixosModules.lanzaboote
-          ./boot.nix
-
-          (import "${home-manager}/nixos")
-
-          ./zen-browser.nix
           ({
             home-manager.useUserPackages = true;
             home-manager.useGlobalPkgs = true;
-
-            desktop.de = "gnome";
-            msft-corp.enable = true;
+            home-manager.extraSpecialArgs = {
+              inherit inputs;
+            };
           })
         ];
       };
