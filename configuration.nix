@@ -158,7 +158,6 @@
     };
 
     u2f = {
-      # enable = true;
       settings = {
         cue = true;
       };
