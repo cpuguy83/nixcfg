@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ pkgs, pkgs-unstable, lib, config, inputs, ... }:
+{ pkgs, pkgs-unstable, inputs, ... }:
 {
   imports =
     [ # Include the results of the hardware scan.
@@ -15,7 +15,7 @@
     experimental-features = nix-command flakes
   '';
 
-  networking.hostName = "anduril"; # Define your hostname.
+  networking.hostName = "yavin4"; # Define your hostname.
 
   # Enable networking
   networking.networkmanager.enable = true;

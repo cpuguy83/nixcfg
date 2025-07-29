@@ -43,7 +43,7 @@
     };
   in {
     nixosConfigurations = {
-      anduril = nixpkgs.lib.nixosSystem {
+      yavin4 = nixpkgs.lib.nixosSystem {
         specialArgs = {
           inherit pkgs-unstable inputs;
         };
