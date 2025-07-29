@@ -18,8 +18,10 @@
       "$terminal" = "uwsm app -- ghostty";
       "exec-once" = [
         "$terminal"
-        # "uwsm app -- swayosd-server"
+        "uwsm app -- swayosd-server"
         "uwsm app -- gnome-keyring-daemon --start --components=secrets"
+        "uwsm app -- swaync"
+        "uwsm app -- ashell"
       ];
       general = {
         "resize_on_border" = true;

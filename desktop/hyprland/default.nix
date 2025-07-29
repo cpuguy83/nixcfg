@@ -1,4 +1,4 @@
-{ pkgs, lib, config, inputs, ... }:
+{ pkgs, pkgs-unstable, lib, config, inputs, ... }:
 with lib;
 let
   inherit (lib) mkIf mkMerge;
@@ -13,13 +13,11 @@ in
       (import ./osd.nix   { inherit pkgs; })
       (import ./settings.nix   { inherit pkgs plugin-packages home-manager; })
       ({
-        nix.settings = lib.mkMerge [
-          {
-            substituters = ["https://hyprland.cachix.org"];
-            trusted-substituters = ["https://hyprland.cachix.org"];
-            trusted-public-keys = ["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
-          }
-        ];
+        nix.settings = {
+          substituters = lib.mkAfter["https://hyprland.cachix.org"];
+          trusted-substituters = lib.mkAfter["https://hyprland.cachix.org"];
+          trusted-public-keys = lib.mkAfter["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
+        };
 
         services.gnome.gnome-keyring.enable = true;
 
@@ -55,6 +53,10 @@ in
           plugin-packages.hyprbars
           hyprlandPlugins.hyprspace
 
+          swaynotificationcenter
+
+          pkgs-unstable.ashell
+
           pavucontrol
           fuzzel
           hyprpolkitagent
@@ -85,31 +87,6 @@ in
           ];
         };
 
-        home-manager.users.cpuguy83.programs.hyprpanel = {
-          enable = true;
-          systemd.enable = true;
-
-          settings = {
-            theme.bar.taransparent = true;
-            # theme.bar.opacity = 80;
-            menus.clock = {
-              time = {
-                military = true;
-                hideSeconds = true;
-              };
-            };
-            bar = {
-              battery.label = false;
-              customModules = {
-                hypridle = {
-                  isActiveCommand = "systemctl --user status hypridle.service | grep -q 'Active: active (running)' && echo 'yes' || echo 'no'";
-                  startCommand = "systemctl --user start hypridle.service";
-                  stopCommand = "systemctl --user stop hypridle.service";
-                };
-              };
-            };
-          };
-        };
 
         home-manager.users.cpuguy83.services.hypridle = {
           enable = true;
