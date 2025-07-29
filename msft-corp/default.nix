@@ -120,16 +120,26 @@ in {
       };
     };
 
-    systemd.services.intune-daemon = {
+
+    systemd.user.services.intune-portal = {
       serviceConfig = {
+        ExecStart = "${pkgs-unstable.intune-portal}/bin/intune-portal";
         BindReadOnlyPaths = [
           "${spoofedOSRelease}:/etc/os-release"
         ];
-        # Environment = [
-        #   "PATH=${customPATH}:${pkgs.intune-portal}/bin"
-        # ];
       };
     };
+
+    # systemd.services.intune-daemon = {
+    #   serviceConfig = {
+    #     BindReadOnlyPaths = [
+    #       "${spoofedOSRelease}:/etc/os-release"
+    #     ];
+    #     # Environment = [
+    #     #   "PATH=${customPATH}:${pkgs.intune-portal}/bin"
+    #     # ];
+    #   };
+    # };
 
   environment.etc."mozilla/native-messaging-hosts/linux_entra_sso.json".source =
     "${entra-sso}/lib/mozilla/native-messaging-hosts/linux_entra_sso.json";
