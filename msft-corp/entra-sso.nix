@@ -1,4 +1,4 @@
-{  lib, stdenv, fetchFromGitHub, python3, makeWrapper }:
+{  lib, stdenv, fetchFromGitHub, python3, makeWrapper, wrapGAppsNoGuiHook, glib,  gobject-introspection }:
 
 let
   pythonEnv = python3.withPackages (ps: with ps; [ pydbus pygobject3 ]);
@@ -8,8 +8,8 @@ stdenv.mkDerivation rec {
   pname = "linux-entra-sso-host";
   version = "1.4.0"; # update as needed
 
-  nativeBuildInputs = [ makeWrapper ];
-  buildInputs = [ pythonEnv ];
+  nativeBuildInputs = [ makeWrapper wrapGAppsNoGuiHook ];
+  buildInputs = [ pythonEnv glib gobject-introspection];
 
   src = fetchFromGitHub {
     owner = "siemens";
@@ -24,12 +24,14 @@ stdenv.mkDerivation rec {
     install -Dm755 linux-entra-sso.py $out/libexec/linux-entra-sso/linux-entra-sso.py
 
     substituteInPlace $out/libexec/linux-entra-sso/linux-entra-sso.py \
-      --replace "0.0.0-dev" "${version}" \
-      --replace "#!/usr/bin/python3" "#!${python3}/bin/python3"
+      --replace-fail "0.0.0-dev" "${version}" \
+      --replace-quiet "#!/usr/bin/python3" "#!${python3}/bin/python3"
 
-    makeWrapper ${python3}/bin/python3 $out/bin/linux-entra-sso \
+    makeWrapper $out/libexec/linux-entra-sso/linux-entra-sso.py $out/bin/linux-entra-sso \
+      --argv0 "$out/libexec/linux-entra-sso/linux-entra-sso.py" \
       --add-flags "$out/libexec/linux-entra-sso/linux-entra-sso.py" \
-      --prefix PYTHONPATH : "${pythonEnv}/${python3.sitePackages}"
+      --prefix PYTHONPATH : "${pythonEnv}/${python3.sitePackages}" \
+      --set GI_TYPELIB_PATH "${glib}/share/gir-1.0:${gobject-introspection}/share/gir-1.0" # Make sure this path is correct
 
     install -Dm644 platform/firefox/linux_entra_sso.json \
       $out/lib/mozilla/native-messaging-hosts/linux_entra_sso.json
