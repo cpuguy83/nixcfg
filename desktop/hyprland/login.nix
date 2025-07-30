@@ -19,9 +19,6 @@ in
   ];
 
   security.pam.services.greetd.enableGnomeKeyring = true;
-  security.pam.services.login.enableGnomeKeyring = true;
-  security.pam.services.su.enableGnomeKeyring = true;
-  security.pam.services.sudo.enableGnomeKeyring = true;
 
   systemd.services.greetd.serviceConfig = {
     Type = "idle";

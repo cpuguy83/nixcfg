@@ -155,14 +155,18 @@
     services = {
       login.u2fAuth = false;
       sudo.u2fAuth = true;
+      sudo-rs.u2fAuth = true;
     };
 
     u2f = {
+      enable = true;
+      control = "sufficient";
       settings = {
         cue = true;
       };
     };
   };
+
 
 
   # Add support for airprint devices
@@ -186,6 +190,7 @@
       qmk-udev-rules
       qmk_hid
       vial
+      yubikey-personalization
     ];
   };
 

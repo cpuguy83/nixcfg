@@ -20,6 +20,10 @@ in
         };
 
         services.gnome.gnome-keyring.enable = true;
+        security.pam.services.login.enableGnomeKeyring = true;
+        security.pam.services.su.enableGnomeKeyring = true;
+        security.pam.services.sudo.enableGnomeKeyring = true;
+        security.pam.services.hyprlock.u2fAuth = true;
 
         programs.hyprland = {
           package = hyprland;
@@ -64,10 +68,43 @@ in
           brightnessctl
           playerctl
           glib-networking
+          hyprshot
 
           seahorse # gnome-keyring GUI
         ];
 
+        systemd.user.services.hyprpolkitagent = {
+          description = "Hyprland Polkit Agent";
+          wantedBy = [ "graphical-session.target" ];
+          after = [ "graphical-session.target" ];
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent";
+            Restart = "on-failure";
+          };
+        };
+
+        systemd.user.services.ashell = {
+          description = "Ashell - Hyprland Shell";
+          wantedBy = [ "graphical-session.target" ];
+          after = [ "graphical-session.target" ];
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = "${pkgs-unstable.ashell}/bin/ashell";
+            Restart = "on-failure";
+          };
+        };
+
+        systemd.user.services.swaync = {
+          description = "Sway Notification Center";
+          wantedBy = [ "graphical-session.target" ];
+          after = [ "graphical-session.target" ];
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = "${pkgs.swaynotificationcenter}/bin/swaync";
+            Restart = "on-failure";
+          };
+        };
 
         environment.sessionVariables = {
           WLR_NO_HARDWARE_CURSORS = "1";
@@ -87,6 +124,44 @@ in
           ];
         };
 
+        home-manager.users.cpuguy83.programs.hyprlock = {
+          package = pkgs.hyprlock;
+          enable = true;
+          settings = {
+            general = {
+              hide_cursor = true;
+            };
+            label = [
+              {
+                monitor = "DP-1";
+                color = "rgba(242, 243, 244, 0.75)";
+                text = "$TIME";
+                position = "0, 300";
+                font_size = 95;
+                font_family = "JetBrains Mono Nerd Font";
+                halign = "center";
+                valign = "center";
+              }
+            ];
+            background = [
+              {
+                monitor = "";
+                path = "screenshot";
+                blur_passes = 3;
+                blur_size = 7;
+                brightness = 0.5;
+                vibrancy = 0.2;
+                vibrancy_darkness = 0.2;
+              }
+            ];
+            input-field = {
+              monitor = "DP-1";
+              hide_input = false;
+              placeholder_text = "Enter password";
+              fade_on_empty = false;
+            };
+          };
+        };
 
         home-manager.users.cpuguy83.services.hypridle = {
           enable = true;

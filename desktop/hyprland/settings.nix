@@ -18,10 +18,7 @@
       "$terminal" = "uwsm app -- ghostty";
       "exec-once" = [
         "$terminal"
-        "uwsm app -- swayosd-server"
         "uwsm app -- gnome-keyring-daemon --start --components=secrets"
-        "uwsm app -- swaync"
-        "uwsm app -- ashell"
       ];
       general = {
         "resize_on_border" = true;
@@ -43,6 +40,8 @@
         "$mod, E, exec, dolphin"
         "$mod, L, exec, hyprlock"
         "$mod, TAB, exec, hyprctl dispatch overview:toggle"
+        "SHIFT $mod, 4, exec, hyprshot -m region -r | wl-copy"
+        "SHIFT $mod, m, exec, swaync-client -t"
       ];
 
       bindle = [
