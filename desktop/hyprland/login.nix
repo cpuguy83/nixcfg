@@ -1,4 +1,4 @@
-{ pkgs, hyprland, ... }:
+{ pkgs, ... }:
 let
   tuigreet = pkgs.greetd.tuigreet;
 in

@@ -23,21 +23,6 @@ UBUNTU_CODENAME=noble
 LOGO=ubuntu-logo
 '';
 
-  customPATH = lib.makeBinPath (with pkgs; [
-              mokutil
-              efitools
-              dmidecode
-              wget
-              gnutar
-              gawk
-              gnugrep
-              coreutils
-              util-linux
-              procps
-              gzip
-              realm
-            ]);
-
 in {
   options.msft-corp = {
     enable = mkEnableOption {
@@ -71,7 +56,7 @@ in {
       # order BEFORE pam_unix.so
       order =  config.security.pam.services.passwd.rules.password.unix.order - 10;
       settings = {
-        use_authtok = true;
+        # use_authtok = true;
         shadowretry = 3;
         minlen = 12;
         difok = 6;
@@ -114,12 +99,13 @@ in {
         BindReadOnlyPaths = [
           "${spoofedOSRelease}:/etc/os-release"
         ];
-        # Environment = [
-        #   "PATH=${customPATH}:${pkgs.intune-portal}/bin"
-        # ];
       };
     };
 
+    # Required because, at least for now, a script that MDM sends down to run
+    # references `/bin/bash` directly instead of `/usr/bin/env bash`.
+    # envfs is a workaround to make sure that the script can find bash.
+    services.envfs.enable = true;
 
     systemd.user.services.intune-portal = {
       serviceConfig = {
@@ -130,18 +116,8 @@ in {
       };
     };
 
-    # systemd.services.intune-daemon = {
-    #   serviceConfig = {
-    #     BindReadOnlyPaths = [
-    #       "${spoofedOSRelease}:/etc/os-release"
-    #     ];
-    #     # Environment = [
-    #     #   "PATH=${customPATH}:${pkgs.intune-portal}/bin"
-    #     # ];
-    #   };
-    # };
-
-  environment.etc."mozilla/native-messaging-hosts/linux_entra_sso.json".source =
-    "${entra-sso}/lib/mozilla/native-messaging-hosts/linux_entra_sso.json";
+    home-manager.users.cpuguy83.home.file.".mozilla/native-messaging-hosts/linux_entra_sso.json" = {
+      source = "${entra-sso}/lib/mozilla/native-messaging-hosts/linux_entra_sso.json";
+    };
   };
 }

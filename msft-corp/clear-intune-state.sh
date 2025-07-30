@@ -20,13 +20,11 @@ remove_state() {
 	rm -rf ~/.local/state/microsoft-identity-broker
 	rm -rf ~/.cache/intune-portal
 	rm -rf ~/.Microsoft
+	rm -rf ~/.config/intune
 
 	: ${XDG_RUNTIME_DIR:="/run/user/$(id -u)"}
 	rm -rf ${XDG_RUNTIME_DIR}/intune
 	rm -rf ${XDG_RUNTIME_DIR}/microsoft-identity-broker
-	
-	# nix-shell -p libsecret --run "secret-tool clear name LinuxBrokerRegularUserSecretKey"
-	# nix-shell -p libsecret --run "secret-tool clear name LinuxBrokerSystemUserSecretKey"
 }
 
 restart_services() {
