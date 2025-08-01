@@ -118,6 +118,8 @@ in {
       gzip
       realm
     ];
+
+    programs.azurevpnclient.enable = true;
       
     systemd.user.services.intune-agent = {
       serviceConfig = {

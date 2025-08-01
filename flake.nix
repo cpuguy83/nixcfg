@@ -38,6 +38,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+
+    azurevpnclient = {
+      url = "github:cpuguy83/nix-azurevpn-client";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { nixpkgs, nixpkgs-unstable, home-manager, hyprland, ... }@inputs:
@@ -55,6 +60,7 @@
         };
 
         modules = [
+          inputs.azurevpnclient.nixosModules.azurevpnclient
           ./modules.nix
           ./configuration.nix
           inputs.lanzaboote.nixosModules.lanzaboote
