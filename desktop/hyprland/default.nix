@@ -98,6 +98,7 @@ in
         };
 
         systemd.user.services.hyprpolkitagent = {
+          enable = true;
           description = "Hyprland Polkit Agent";
           wantedBy = [ "graphical-session.target" ];
           after = [ "graphical-session.target" ];
@@ -109,6 +110,7 @@ in
         };
 
         systemd.user.services.swaync = {
+          enable = true;
           description = "Sway Notification Center";
           wantedBy = [ "graphical-session.target" ];
           after = [ "graphical-session.target" ];
