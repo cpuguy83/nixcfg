@@ -11,6 +11,8 @@ in
     mkMerge [
       (import ./login.nix { inherit lib pkgs hyprland; })
       (import ./osd.nix   { inherit pkgs; })
+      (import ./shell.nix   { inherit pkgs-unstable home-manager pkgs inputs; })
+      (import ./lockscreen.nix   { inherit pkgs home-manager; })
       (import ./settings.nix   { inherit pkgs plugin-packages home-manager; })
       ({
         nix.settings = {
@@ -23,7 +25,6 @@ in
         security.pam.services.login.enableGnomeKeyring = true;
         security.pam.services.su.enableGnomeKeyring = true;
         security.pam.services.sudo.enableGnomeKeyring = true;
-        security.pam.services.hyprlock.u2fAuth = true;
 
         programs.hyprland = {
           package = hyprland;
