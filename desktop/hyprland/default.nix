@@ -35,13 +35,10 @@ in
 
 
         services.gnome.glib-networking.enable = true;
-
-
-        programs.hyprlock.enable = true;
-        programs.uwsm.enable = true;
-
         services.hypridle.enable = true;
         services.blueman.enable = true;
+
+        programs.uwsm.enable = true;
 
         systemd.user.services.mpris-proxy = {
             description = "Mpris proxy";
@@ -58,8 +55,6 @@ in
           hyprlandPlugins.hyprspace
 
           swaynotificationcenter
-
-          pkgs-unstable.ashell
 
           pavucontrol
           fuzzel
@@ -113,17 +108,6 @@ in
           };
         };
 
-        systemd.user.services.ashell = {
-          description = "Ashell - Hyprland Shell";
-          wantedBy = [ "graphical-session.target" ];
-          after = [ "graphical-session.target" ];
-          serviceConfig = {
-            Type = "simple";
-            ExecStart = "${pkgs-unstable.ashell}/bin/ashell";
-            Restart = "on-failure";
-          };
-        };
-
         systemd.user.services.swaync = {
           description = "Sway Notification Center";
           wantedBy = [ "graphical-session.target" ];
@@ -144,52 +128,12 @@ in
           _JAVA_AWT_WM_NONREPARENTING = "1"; # For Java apps compatibility
         };
 
-
         xdg.portal = {
           enable = true;
           extraPortals = with hyprland-packages; [
             xdg-desktop-portal-hyprland
             pkgs.xdg-desktop-portal-gtk
           ];
-        };
-
-        home-manager.users.cpuguy83.programs.hyprlock = {
-          package = pkgs.hyprlock;
-          enable = true;
-          settings = {
-            general = {
-              hide_cursor = true;
-            };
-            label = [
-              {
-                monitor = "DP-1";
-                color = "rgba(242, 243, 244, 0.75)";
-                text = "$TIME";
-                position = "0, 300";
-                font_size = 95;
-                font_family = "JetBrains Mono Nerd Font";
-                halign = "center";
-                valign = "center";
-              }
-            ];
-            background = [
-              {
-                monitor = "";
-                path = "screenshot";
-                blur_passes = 3;
-                blur_size = 7;
-                brightness = 0.5;
-                vibrancy = 0.2;
-                vibrancy_darkness = 0.2;
-              }
-            ];
-            input-field = {
-              monitor = "DP-1";
-              hide_input = false;
-              placeholder_text = "Enter password";
-              fade_on_empty = false;
-            };
-          };
         };
 
         home-manager.users.cpuguy83.services.hypridle = {
@@ -219,8 +163,6 @@ in
             ];
           };
         };
-
-
       })
     ]
   );
