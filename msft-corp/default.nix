@@ -105,7 +105,16 @@ in {
     # Required because, at least for now, a script that MDM sends down to run
     # references `/bin/bash` directly instead of `/usr/bin/env bash`.
     # envfs is a workaround to make sure that the script can find bash.
-    services.envfs.enable = true;
+    # services.envfs.enable = true;
+
+    system.activationScripts.binbash = {
+      deps = [ "binsh" ];  # Ensure /bin/sh is available first
+      text = ''
+        mkdir -m 0755 -p /bin
+        ln -sfn ${pkgs.bash}/bin/bash /bin/bash
+      '';
+    };
+
 
     systemd.user.services.intune-portal = {
       serviceConfig = {
