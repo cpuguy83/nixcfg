@@ -18,7 +18,10 @@
       "$terminal" = "uwsm app -- ghostty";
       "exec-once" = [
         "$terminal"
+        "uwsm app -- caelestia-shell"
         "uwsm app -- gnome-keyring-daemon --start --components=secrets"
+        "uwsm app -- wl-paste --type text --watch cliphist store"
+        "uwsm app -- wl-paste --type image --watch cliphist store"
       ];
       general = {
         "resize_on_border" = true;
@@ -40,8 +43,10 @@
         "$mod, E, exec, dolphin"
         "$mod, L, exec, hyprlock"
         "$mod, TAB, exec, hyprctl dispatch overview:toggle"
-        "SHIFT $mod, 4, exec, hyprshot -m region -r | wl-copy"
+        "SHIFT $mod, 4, exec, hyprshot -m region --clipboard-only"
         "SHIFT $mod, m, exec, swaync-client -t"
+        "SHIFT $mod, v, exec, hyprctl dispatch togglefloating"
+        "SHIFT $mod, p, exec, 1password --quick-access"
       ];
 
       bindle = [

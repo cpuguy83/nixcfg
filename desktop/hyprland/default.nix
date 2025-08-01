@@ -54,6 +54,7 @@ in
 
           plugin-packages.hyprbars
           hyprlandPlugins.hyprspace
+          cliphist
 
           swaynotificationcenter
 
