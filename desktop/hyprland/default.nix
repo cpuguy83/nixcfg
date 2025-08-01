@@ -73,6 +73,35 @@ in
           seahorse # gnome-keyring GUI
         ];
 
+        programs.kdeconnect.enable = true;
+        services.dbus.packages = with pkgs; [
+          kdePackages.kdeconnect-kde
+        ];
+
+        systemd.user.services.kdeconnectd = {
+          enable = true;
+          description = "KDE Connect Daemon";
+          wantedBy = [ "graphical-session.target" ];
+          after = [ "graphical-session.target" ];
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = "${pkgs.kdePackages.kdeconnect-kde}/bin/kdeconnectd";
+            Restart = "on-failure";
+          };
+        };
+
+        systemd.user.services.kdeconnect-indicator = {
+          enable = true;
+          description = "KDE Connect Indicator";
+          wantedBy = [ "graphical-session.target" ];
+          after = [ "graphical-session.target" ];
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = "${pkgs.kdePackages.kdeconnect-kde}/bin/kdeconnect-indicator";
+            Restart = "on-failure";
+          };
+        };
+
         systemd.user.services.hyprpolkitagent = {
           description = "Hyprland Polkit Agent";
           wantedBy = [ "graphical-session.target" ];
