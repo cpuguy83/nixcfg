@@ -80,7 +80,6 @@
       azure-cli
       zoom-us
       thunderbird
-      remmina
       vulkan-tools
       direnv
       gh
