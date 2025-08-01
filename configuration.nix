@@ -154,19 +154,17 @@
     services = {
       login.u2fAuth = false;
       sudo.u2fAuth = true;
-      sudo-rs.u2fAuth = true;
     };
 
     u2f = {
-      enable = true;
+      enable = false;
       control = "sufficient";
       settings = {
         cue = true;
+        pinverification = true;
       };
     };
   };
-
-
 
   # Add support for airprint devices
   services.avahi = {
