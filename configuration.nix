@@ -206,6 +206,7 @@
       noto-fonts
       noto-fonts-emoji
       noto-fonts-cjk-sans
+      corefonts
     ];
     fontconfig = {
       antialias = true;
