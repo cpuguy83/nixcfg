@@ -13,7 +13,7 @@ in
       (import ./osd.nix   { inherit pkgs; })
       (import ./shell.nix   { inherit pkgs-unstable home-manager pkgs inputs; })
       (import ./lockscreen.nix   { inherit pkgs home-manager; })
-      (import ./settings.nix   { inherit pkgs plugin-packages home-manager; })
+      (import ./settings.nix   { inherit pkgs plugin-packages inputs; })
       ({
         nix.settings = {
           substituters = lib.mkAfter["https://hyprland.cachix.org"];
@@ -66,9 +66,12 @@ in
           playerctl
           glib-networking
           hyprshot
+          qimgv
 
           seahorse # gnome-keyring GUI
         ];
+
+        services.udisks2.enable = true;
 
         programs.kdeconnect.enable = true;
         services.dbus.packages = with pkgs; [
@@ -146,7 +149,7 @@ in
             general = {
               lock_cmd = "pidof xhyprlock || hyprlock";
               before_sleep_cmd = "loginctl lock-session";
-              after_sleep_cmd = "hyprctl dispatch dpms on";
+              after_sleep_cmd = "hyprctl dispatch dpms on && uwsm app -S both -- ashell";
             };
 
             listener = [
@@ -156,11 +159,11 @@ in
                 on-resume = "brightnessctl -r";
               }
               {
-                timeout = 300; # 5 minutes
+                timeout = 600; # 10 minutes
                 on-timeout = "loginctl lock-session";
               }
               {
-                timeout = 1800; # 10 minutes
+                timeout = 1800; # 30 minutes
                 on-timeout = "hyprctl dispatch dpms off";
                 on-resume = "hyprctl dispatch dpms on && brightnessctl -r";
               }
