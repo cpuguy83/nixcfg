@@ -217,6 +217,11 @@
         rgba = "rgb";
         lcdfilter = "default";
       };
+      defaultFonts = {
+        serif = [ "Noto Serif" ];
+        sansSerif = [ "Inter" ];
+        monospace = [ "JetBrainsMono Nerd Font Mono" ];
+      };
     };
   };
 
