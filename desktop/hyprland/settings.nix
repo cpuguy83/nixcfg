@@ -1,4 +1,4 @@
-{ pkgs, plugin-packages, ... }:
+{ pkgs, plugin-packages, inputs, ... }:
 {
   home-manager.users.cpuguy83.wayland.windowManager.hyprland = {
     enable = true;
@@ -7,7 +7,7 @@
 
     plugins = with plugin-packages; [
       hyprbars
-      pkgs.hyprlandPlugins.hyprspace
+      inputs.hyprspace.packages.${pkgs.system}.Hyprspace
     ];
 
     settings = {
@@ -22,6 +22,7 @@
         "uwsm app -- gnome-keyring-daemon --start --components=secrets"
         "uwsm app -- wl-paste --type text --watch cliphist store"
         "uwsm app -- wl-paste --type image --watch cliphist store"
+        "uwsm app -- ashell"
       ];
       general = {
         "resize_on_border" = true;

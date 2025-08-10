@@ -1,23 +1,10 @@
-{ pkgs-unstable, pkgs, inputs, ... }:
+{ pkgs-unstable, pkgs, ... }:
 
 {
   environment.systemPackages = [
     pkgs-unstable.ashell
     pkgs.networkmanagerapplet
-    inputs.caelestia.packages.${pkgs.system}.caelestia-shell
   ];
-
-  # systemd.user.services.ashell = {
-  #   enable = true;
-  #   description = "Ashell - Hyprland Shell";
-  #   wantedBy = [ "graphical-session.target" ];
-  #   after = [ "graphical-session.target" ];
-  #   serviceConfig = {
-  #     Type = "simple";
-  #     ExecStart = "${pkgs-unstable.ashell}/bin/ashell";
-  #     Restart = "on-failure";
-  #   };
-  # };
 
   systemd.user.services.nm-applet = {
     enable = true;

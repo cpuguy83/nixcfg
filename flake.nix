@@ -38,14 +38,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    caelestia = {
-      url = "github:caelestia-dots/shell";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     azurevpnclient = {
       url = "github:cpuguy83/nix-azurevpn-client";
       inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    hyprspace = {
+      url = "github:KZDKM/Hyprspace";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
   };
 
