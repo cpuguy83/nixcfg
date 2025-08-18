@@ -233,4 +233,16 @@
 
   desktop.de = "hyprland";
   msft-corp.enable = true;
+
+
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+
+    settings = {
+      General = {
+        Experimental = true;
+      };
+    };
+  };
 }

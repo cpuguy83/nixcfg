@@ -23,7 +23,5 @@
     options btusb enable_autosuspend=0
   '';
 
-  hardware.bluetooth.enable = true;
-  hardware.bluetooth.powerOnBoot = true;
   hardware.firmware = [ pkgs.linux-firmware ];
 }
