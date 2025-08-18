@@ -1,9 +1,14 @@
 { pkgs, pkgs-unstable, inputs, ... }:
 
-{
+let
+  addons = pkgs.firefox-addons;
+  onepassword = addons."1password-x-password-manager";
+in {
   environment.systemPackages = [
     pkgs-unstable.firefoxpwa
   ];
+
+  environment.sessionVariables.MOZ_ENBALE_WAYLAND = "1";
 
   home-manager.users.cpuguy83 = {
     imports = [
@@ -12,6 +17,20 @@
 
     programs.zen-browser = {
       enable = true;
+
+      profiles = {
+        default = {
+          extensions.packages = with addons; [
+            ublock-origin
+            sponsorblock
+            gsconnect
+            pwas-for-firefox
+            onepassword
+          ];
+        };
+      };
+
+
       nativeMessagingHosts = [pkgs-unstable.firefoxpwa];
       policies = {
         AutofillAddressEnabled = true;
@@ -31,13 +50,6 @@
           Fingerprinting = true;
         };
 
-        extensions = with inputs.firefox-addons.packages."${pkgs.system}"; [
-          ublock-origin
-          sponsorblock
-          gsconnect
-          pwas-for-firefox
-          "1password-x-password-manager"
-        ];
         ExtensionSettings = {
           "linux-entra-sso@example.com" = {
             installation_mode = "force_installed";

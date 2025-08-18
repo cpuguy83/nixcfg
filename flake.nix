@@ -76,15 +76,13 @@
             nix.settings.trusted-public-keys = [
               "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
             ];
-          })
-          inputs.azurevpnclient.nixosModules.azurevpnclient
-          ./modules.nix
-          ./configuration.nix
-          inputs.lanzaboote.nixosModules.lanzaboote
 
+            nixpkgs.config.allowUnfree = true;
+          })
           ({
             nixpkgs.overlays = [
               inputs.waybar.overlays.default
+              inputs.firefox-addons.overlays.default
             ];
             home-manager.useUserPackages = true;
             home-manager.useGlobalPkgs = true;
@@ -92,6 +90,11 @@
               inherit inputs;
             };
           })
+
+          inputs.azurevpnclient.nixosModules.azurevpnclient
+          ./modules.nix
+          ./configuration.nix
+          inputs.lanzaboote.nixosModules.lanzaboote
         ];
       };
     };
