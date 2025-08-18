@@ -10,17 +10,11 @@ in
   config = mkIf (config.desktop.de == "hyprland") (
     mkMerge [
       (import ./login.nix { inherit lib pkgs hyprland; })
-      (import ./osd.nix   { inherit pkgs; })
-      (import ./shell.nix   { inherit pkgs-unstable home-manager pkgs inputs; })
+      (import ./osd.nix   { inherit pkgs-unstable; })
+      (import ./shell.nix   { inherit home-manager pkgs inputs lib; })
       (import ./lockscreen.nix   { inherit pkgs home-manager; })
       (import ./settings.nix   { inherit pkgs plugin-packages inputs; })
       ({
-        nix.settings = {
-          substituters = lib.mkAfter["https://hyprland.cachix.org"];
-          trusted-substituters = lib.mkAfter["https://hyprland.cachix.org"];
-          trusted-public-keys = lib.mkAfter["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
-        };
-
         services.gnome.gnome-keyring.enable = true;
         security.pam.services.login.enableGnomeKeyring = true;
         security.pam.services.su.enableGnomeKeyring = true;
@@ -52,11 +46,7 @@ in
           kitty
           ghostty
 
-          plugin-packages.hyprbars
-          hyprlandPlugins.hyprspace
           cliphist
-
-          swaynotificationcenter
 
           pavucontrol
           fuzzel
@@ -67,6 +57,7 @@ in
           glib-networking
           hyprshot
           qimgv
+          gnome-font-viewer
 
           seahorse # gnome-keyring GUI
         ];
@@ -82,7 +73,10 @@ in
           enable = true;
           description = "KDE Connect Daemon";
           wantedBy = [ "graphical-session.target" ];
-          after = [ "graphical-session.target" ];
+          after = [
+            "graphical-session.target"
+            "xdg-desktop-autostart.target"
+          ];
           serviceConfig = {
             Type = "simple";
             ExecStart = "${pkgs.kdePackages.kdeconnect-kde}/bin/kdeconnectd";
@@ -94,7 +88,10 @@ in
           enable = true;
           description = "KDE Connect Indicator";
           wantedBy = [ "graphical-session.target" ];
-          after = [ "graphical-session.target" ];
+          after = [
+            "graphical-session.target"
+            "xdg-desktop-autostart.target"
+          ];
           serviceConfig = {
             Type = "simple";
             ExecStart = "${pkgs.kdePackages.kdeconnect-kde}/bin/kdeconnect-indicator";
@@ -106,22 +103,13 @@ in
           enable = true;
           description = "Hyprland Polkit Agent";
           wantedBy = [ "graphical-session.target" ];
-          after = [ "graphical-session.target" ];
+          after = [
+            "graphical-session.target"
+            "xdg-desktop-autostart.target"
+          ];
           serviceConfig = {
             Type = "simple";
             ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent";
-            Restart = "on-failure";
-          };
-        };
-
-        systemd.user.services.swaync = {
-          enable = true;
-          description = "Sway Notification Center";
-          wantedBy = [ "graphical-session.target" ];
-          after = [ "graphical-session.target" ];
-          serviceConfig = {
-            Type = "simple";
-            ExecStart = "${pkgs.swaynotificationcenter}/bin/swaync";
             Restart = "on-failure";
           };
         };

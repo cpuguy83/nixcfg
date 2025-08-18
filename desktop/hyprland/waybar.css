@@ -1,0 +1,20 @@
+* {
+	font-weight: bold;
+	/* font-family: "JetBrainsMono Nerd Font Mono"; */
+	font-family: "AdwaitaMono Nerd Font";
+}
+
+window#waybar {
+  background-color: rgba(0, 0, 0, 0.5);
+  transition-property: background-color;
+  transition-duration: 0.5s;
+}
+
+window#waybar.hidden {
+  opacity: 0.5;
+}
+
+window#waybar.empty {
+  background-color: transparent;
+}
+

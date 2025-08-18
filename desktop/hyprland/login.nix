@@ -8,7 +8,7 @@ in
     restart = true;
     settings = {
       default_session = {
-        command = "${tuigreet}/bin/tuigreet --time --cmd 'uwsm start hyprland-uwsm.desktop'";
+        command = "${tuigreet}/bin/tuigreet --asterisks --remember --remember-user-session --time --cmd 'uwsm start hyprland-uwsm.desktop'";
         user = "cpuguy83";
       };
     };

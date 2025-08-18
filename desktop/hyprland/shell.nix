@@ -1,9 +1,10 @@
-{ pkgs-unstable, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   environment.systemPackages = [
-    pkgs-unstable.ashell
     pkgs.networkmanagerapplet
+    pkgs.nwg-look
+    pkgs.whitesur-gtk-theme
   ];
 
   systemd.user.services.nm-applet = {
@@ -18,127 +19,147 @@
     };
   };
 
-  home-manager.users.cpuguy83.home.file.".config/caelestia/shell.json".text = ''
-    {
-        "background": {
-            "enabled": true
-        },
-        "bar": {
-            "dragThreshold": 20,
-            "externalAudioProgram": ["pavucontrol"],
-            "persistent": true,
-            "showOnHover": true,
-            "status": {
-                "showAudio": false,
-                "showBattery": false,
-                "showBluetooth": true,
-                "showKbLayout": false,
-                "showNetwork": true
-            },
-            "workspaces": {
-                "activeIndicator": true,
-                "activeLabel": "󰮯 ",
-                "activeTrail": false,
-                "label": "  ",
-                "occupiedBg": false,
-                "occupiedLabel": "󰮯 ",
-                "rounded": true,
-                "showWindows": true,
-                "shown": 5
-            }
-        },
-        "border": {
-            "rounding": 25,
-            "thickness": 10
-        },
-        "dashboard": {
-            "mediaUpdateInterval": 500,
-            "visualiserBars": 45
-        },
-        "launcher": {
-            "actionPrefix": ">",
-            "dragThreshold": 50,
-            "vimKeybinds": false,
-            "enableDangerousActions": false,
-            "maxShown": 8,
-            "maxWallpapers": 9,
-            "useFuzzy": {
-                "apps": false,
-                "actions": false,
-                "schemes": false,
-                "variants": false,
-                "wallpapers": false
-            }
-        },
-        "lock": {
-            "maxNotifs": 5
-        },
-        "notifs": {
-            "actionOnClick": false,
-            "clearThreshold": 0.3,
-            "defaultExpireTimeout": 5000,
-            "expandThreshold": 20,
-            "expire": false
-        },
-        "osd": {
-            "hideDelay": 2000
-        },
-        "paths": {
-            "mediaGif": "root:/assets/bongocat.gif",
-            "sessionGif": "root:/assets/kurukuru.gif",
-            "wallpaperDir": "~/Pictures/Wallpapers"
-        },
-        "services": {
-          "weatherLocation": "10,10",
-          "useFahrenheit": false,
-          "useTwelveHourClock": false
-        },
-        "session": {
-            "dragThreshold": 30,
-            "vimKeybinds": false,
-            "commands": {
-                "logout": ["loginctl", "terminate-user", ""],
-                "shutdown": ["systemctl", "poweroff"],
-                "hibernate": ["systemctl", "hibernate"],
-                "reboot": ["systemctl", "reboot"]
-            }
-        }
-    }
-  '';
+  home-manager.users.cpuguy83.home.pointerCursor = {
+    package = pkgs.whitesur-gtk-theme;
+    name = "WhiteSur-cursors";
+    size = 24;
+  };
 
-  home-manager.users.cpuguy83.home.file.".config/ashell/config.toml".text = ''
-    clipboard_cmd = "cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"
-    [modules]
-    left = [ "Workspaces", "WindowTitle" ]
-    center = [ "MediaPlayer" ]
-    right = [ "Clipboard", "Tray", [ "Clock", "Settings" ], "Notifications" ]
+  home-manager.users.cpuguy83.services.swaync = {
+    enable = true;
+    settings = {
+      notification-2fa-action = true;
+      notification-inline-replies = true;
+      widgets = [
+        "inhibitors"
+        "title"
+        "dnd"
+        "notification"
+        "mpris"
+        "volume"
+      ];
 
-    [settings]
-    bluetooth_more_cmd = "blueman-manager"
-    remove_airplane_btn = true
-    audio_sinks_more_cmd = "pavucontrol -t 3"
-    audio_sources_more_cmd = "pavucontrol -t 4"
-    vpn_more_cmd = "nm-connection-editor"
+      widget-config = {
+        mpris = {
+          autohide = true;
+        };
 
-    [appearance]
-    style = "Solid"
-    opacity = 0.6
+        volume = {
+          show-per-app = true;
+          show-per-app-icon = true;
+        };
+      };
+    };
+  };
 
-    [[CustomModule]]
-    # The name will link the module in your left/center/right definition
-    name = "Notifications"
-    # The default icon for this custom module
-    icon = ""
-    # The command that will be executed on click
-    command = "swaync-client -t -sw"
-    # You can optionally configure your custom module to update the UI using another command
-    # The output right now follows the waybar json-style output, using the `alt` and `text` field
-    # E.g. `{"text": "3", "alt": "notification"}`
-    listen_cmd = "swaync-client -swb"
-    # You can define behavior for the `text` and `alt` fields
-    # Any number of regex can be used to change the icon based on the alt field
-    icons.'dnd.*' = ""
-    # Another regex can optionally show a red "alert" dot on the icon
-    alert = ".*notification"
-  '';
+  home-manager.users.cpuguy83.programs.waybar = {
+    enable = true;
+    systemd.enable = true;
+    style = builtins.readFile ./waybar.css;
+    settings = {
+      main = {
+        height = 34;
+        exclusive = true;
+        passthrough = false;
+        position = "top";
+        spacing = 3;
+        fixed-center = true;
+        margin-top = 0;
+        margin-bottom = 0;
+        margin-left = 0;
+        margin-right = 0;
+
+        modules-left = [
+          "wlr/taskbar"
+        ];
+        modules-center = [
+          "mpris"
+        ];
+        modules-right = [
+          "custom/menu"
+          "custom/clipboard"
+          "pulseaudio"
+          "tray"
+          "clock"
+          "custom/notification"
+        ];
+
+        "hyprland/workspaces" = {
+          active-only = false;
+          all-outputs = false;
+          format = "{icon}";
+          on-click = "activate";
+        };
+
+        clock = {
+          interval = 30;
+          format = " {:%H:%M} ";
+        };
+
+        mpris = {
+          interval = 1;
+          format = " {title} | {artist} ";
+          format-paused = " {title} | {artist} {status_icon} ";
+          on-click = "playerctl play-pause";
+          on-scroll-up = "playerctl next";
+          on-scroll-down = "playerctl previous";
+          status-icons = {
+            playing = "";
+            paused = "";
+            stopped = "";
+          };
+        };
+
+        pulseaudio = {
+          format = " {volume}% {icon}  {format_source} ";
+          format-bluetooth = " {volume}% {icon}   {format_source} ";
+          format-icons = {
+            default = [ "" "" "" "" " " ];
+            headphones = "";
+          };
+          format-source = "{volume}% ";
+          format-source-muted = "";
+          on-click  = "pavucontrol";
+        };
+
+        "custom/notification" = {
+          tooltip = false;
+          format = " {icon}  ";
+          format-icons = {
+            notification = "<span foreground='red'></span>";
+            none = "";
+            dnd-none = "";
+            dnd-notification = "<span foreground='red'><sup></sup></span>";
+            inhibited-notification = "<span foreground='red'><sup></sup></span>";
+            inhibited-none = "";
+            dnd-inhibited = "<span foreground='red'><sup></sup></span>";
+            dnd-inhibited-none = "";
+          };
+          return-type = "json";
+          exec = "swaync-client -swb";
+          on-click = "swaync-client -t -sw";
+          on-click-right = "swaync-client -d -sw";
+          escape = true;
+        };
+
+        "custom/clipboard" = {
+          format = "  ";
+          interval = "once";
+          return-type = "json";
+          on-click = "cliphist list | fuzzel --dmenu | cliphist decode | wl-copy";
+          tooltip = false;
+        };
+
+        "wlr/taskbar" = {
+          format = "{icon}";
+          tooltip-format = "{name} | {title}";
+          on-click = "activate";
+        };
+
+        "tray" = {
+          spacing = 10;
+        };
+      };
+    };
+  };
 }

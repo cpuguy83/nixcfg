@@ -1,18 +1,22 @@
-  { pkgs, ... }:
+  { pkgs-unstable, ... }:
 
   {
-    services.udev.packages = [ pkgs.swayosd ];
+    services.udev.packages = [ pkgs-unstable.swayosd ];
 
     environment.systemPackages = [
-      pkgs.swayosd
+      pkgs-unstable.swayosd
     ];
 
     systemd.user.services.sway-osd = {
       description = "Sway OSD";
       wantedBy = [ "graphical-session.target" ];
+      after = [
+        "graphical-session.target"
+        "xdg-desktop-autostart.target"
+      ];
       serviceConfig = {
         Type = "simple";
-        ExecStart = "${pkgs.swayosd}/bin/swayosd-server";
+        ExecStart = "${pkgs-unstable.swayosd}/bin/swayosd-server";
         Restart = "on-failure";
       };
     };
@@ -27,7 +31,7 @@
     serviceConfig = {
       Type = "dbus";
       BusName = "org.erikreider.swayosd";
-      ExecStart = "${pkgs.swayosd}/bin/swayosd-libinput-backend";
+      ExecStart = "${pkgs-unstable.swayosd}/bin/swayosd-libinput-backend";
       Restart = "on-failure";
     };
   };

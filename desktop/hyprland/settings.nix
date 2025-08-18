@@ -1,4 +1,4 @@
-{ pkgs, plugin-packages, inputs, ... }:
+{ plugin-packages, ... }:
 {
   home-manager.users.cpuguy83.wayland.windowManager.hyprland = {
     enable = true;
@@ -7,26 +7,29 @@
 
     plugins = with plugin-packages; [
       hyprbars
-      inputs.hyprspace.packages.${pkgs.system}.Hyprspace
+      hyprexpo
+      # inputs.hyprtasking.packages.${pkgs.system}.hyprtasking
+
     ];
 
     settings = {
       ecosystem = {
-        "no_donation_nag" = true;
+        no_donation_nag = true;
       };
       "$mod" = "SUPER";
       "$terminal" = "uwsm app -- ghostty";
-      "exec-once" = [
+      "$cursor" = "WhiteSur-cursors";
+      "$cursor_size" = "24";
+      exec-once = [
         "$terminal"
-        "uwsm app -- caelestia-shell"
         "uwsm app -- gnome-keyring-daemon --start --components=secrets"
+        "hyprctl setcursor $cursor $cursor_size"
         "uwsm app -- wl-paste --type text --watch cliphist store"
         "uwsm app -- wl-paste --type image --watch cliphist store"
-        "uwsm app -- ashell"
       ];
       general = {
-        "resize_on_border" = true;
-        "hover_icon_on_border" = true;
+        resize_on_border = true;
+        hover_icon_on_border = true;
       };
       monitor = [
         "DP-1,preferred,auto-right,auto"
@@ -43,11 +46,19 @@
         "$mod, J, togglesplit,"
         "$mod, E, exec, dolphin"
         "$mod, L, exec, hyprlock"
-        "$mod, TAB, exec, hyprctl dispatch overview:toggle"
+        "$mod, TAB, hyprexpo:expo, toggle"
         "SHIFT $mod, 4, exec, hyprshot -m region --clipboard-only"
         "SHIFT $mod, m, exec, swaync-client -t"
         "SHIFT $mod, v, exec, hyprctl dispatch togglefloating"
         "SHIFT $mod, p, exec, 1password --quick-access"
+        "$mod, F11, fullscreen"
+      ];
+
+      env = [
+        "HYPRCURSOR_THEME,$cursor"
+        "HYPRCURSOR_SIZE,$cursor_size"
+        "XCURSOR_THEME,$cursor"
+        "XCURSOR_SIZE,$cursor_size"
       ];
 
       bindle = [
@@ -77,9 +88,20 @@
           enabled = true;
 
           size = 3;
-          passes = 1;
+          passes = 2;
           vibrancy = "0.1696";
         };
+      };
+
+      plugin.hyprbars = {
+        bar_blur = true;
+        bar_part_of_window = true;
+        bar_precedence_over_border = true;
+      };
+
+      plugin.hyprexpo = {
+        workspace_method = "current";
+        skip_empty = true;
       };
     };
   };
