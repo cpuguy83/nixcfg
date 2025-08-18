@@ -1,6 +1,10 @@
-{ pkgs, inputs, ... }:
+{ pkgs, pkgs-unstable, inputs, ... }:
 
 {
+  environment.systemPackages = [
+    pkgs-unstable.firefoxpwa
+  ];
+
   home-manager.users.cpuguy83 = {
     imports = [
       inputs.zen-browser.homeModules.default
@@ -8,7 +12,7 @@
 
     programs.zen-browser = {
       enable = true;
-      nativeMessagingHosts = [pkgs.firefoxpwa];
+      nativeMessagingHosts = [pkgs-unstable.firefoxpwa];
       policies = {
         AutofillAddressEnabled = true;
         AutofillCreditCardEnabled = false;
@@ -31,6 +35,7 @@
           ublock-origin
           sponsorblock
           gsconnect
+          pwas-for-firefox
           "1password-x-password-manager"
         ];
         ExtensionSettings = {
