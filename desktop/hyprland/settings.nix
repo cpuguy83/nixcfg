@@ -1,4 +1,4 @@
-{ plugin-packages, ... }:
+{ plugin-packages, inputs, pkgs, ... }:
 {
   home-manager.users.cpuguy83.wayland.windowManager.hyprland = {
     enable = true;
@@ -8,8 +8,6 @@
     plugins = with plugin-packages; [
       hyprbars
       hyprexpo
-      # inputs.hyprtasking.packages.${pkgs.system}.hyprtasking
-
     ];
 
     settings = {

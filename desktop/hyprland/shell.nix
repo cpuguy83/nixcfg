@@ -20,6 +20,7 @@
   };
 
   home-manager.users.cpuguy83.home.pointerCursor = {
+    enable = true;
     package = pkgs.whitesur-gtk-theme;
     name = "WhiteSur-cursors";
     size = 24;
@@ -76,9 +77,9 @@
           "mpris"
         ];
         modules-right = [
-          "custom/menu"
           "custom/clipboard"
-          "pulseaudio"
+          "group/audio"
+          "bluetooth"
           "tray"
           "clock"
           "custom/notification"
@@ -110,16 +111,34 @@
           };
         };
 
-        pulseaudio = {
-          format = " {volume}% {icon}  {format_source} ";
-          format-bluetooth = " {volume}% {icon}   {format_source} ";
+        wireplumber = {
+          format = " {volume}% {icon} ";
+          format-bluetooth = " {volume}% {icon}    ";
+          format-muted = " {volume}% 󰖁 ";
           format-icons = {
             default = [ "" "" "" "" " " ];
             headphones = "";
           };
-          format-source = "{volume}% ";
-          format-source-muted = "";
           on-click  = "pavucontrol";
+          on-click-right = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+          scroll-step = 5;
+        };
+
+        "wireplumber#source" = {
+          node-type = "Audio/Source";
+          format = " {volume}%  ";
+          format-muted = " {volume}%   ";
+          on-click-right = "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
+          scroll-step = 5;
+          on-click  = "pavucontrol -t 4";
+        };
+
+        "group/audio" = {
+          orientation = "horizontal";
+          modules = [
+            "wireplumber"
+            "wireplumber#source"
+          ];
         };
 
         "custom/notification" = {
@@ -156,8 +175,21 @@
           on-click = "activate";
         };
 
-        "tray" = {
+        tray = {
           spacing = 10;
+        };
+
+        bluetooth = {
+          format-on = " 󰂯 ";
+          format-off = " 󰂲 ";
+          format-disabled = " 󰂲 ";
+          format-connected = "  󰂯 ";
+          tooltip-format = "{controller_alias}\t{controller_address}";
+          tooltip-format-connected = "{controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}";
+          tooltip-format-enumerate-connected = "{device_alias}\t{device_address}";
+          tooltip-format-enumerate-connected-battery = "{device_alias}\t{device_address}\t{device_battery_percentage}%";
+          on-click = "blueman-manager";
+          on-click-right = "rfkill toggle bluetooth";
         };
       };
     };

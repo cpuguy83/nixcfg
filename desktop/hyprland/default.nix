@@ -31,7 +31,7 @@ in
 
         services.gnome.glib-networking.enable = true;
         services.hypridle.enable = true;
-        services.blueman.enable = true;
+        # services.blueman.enable = true;
 
         programs.uwsm.enable = true;
 
