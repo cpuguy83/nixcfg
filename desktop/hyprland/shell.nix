@@ -2,22 +2,9 @@
 
 {
   environment.systemPackages = [
-    pkgs.networkmanagerapplet
     pkgs.nwg-look
     pkgs.whitesur-gtk-theme
   ];
-
-  systemd.user.services.nm-applet = {
-    enable = true;
-    description = "NetworkManager Applet";
-    wantedBy = [ "graphical-session.target" ];
-    after = [ "graphical-session.target" ];
-    serviceConfig = {
-      Type = "simple";
-      ExecStart = "${pkgs.networkmanagerapplet}/bin/nm-applet";
-      Restart = "on-failure";
-    };
-  };
 
   home-manager.users.cpuguy83.home.pointerCursor = {
     enable = true;
@@ -78,9 +65,9 @@
         ];
         modules-right = [
           "custom/clipboard"
+          "custom/password"
           "group/audio"
           "bluetooth"
-          "tray"
           "clock"
           "custom/notification"
         ];
@@ -141,11 +128,17 @@
           ];
         };
 
+        "custom/password" = {
+          format = " 󱕵 ";
+          on-click = "1password --quick-access";
+          on-click-right = "1password";
+        };
+
         "custom/notification" = {
           tooltip = false;
           format = " {icon}  ";
           format-icons = {
-            notification = "<span foreground='red'></span>";
+            notification = " ";
             none = "";
             dnd-none = "";
             dnd-notification = "<span foreground='red'><sup></sup></span>";
@@ -173,10 +166,6 @@
           format = "{icon}";
           tooltip-format = "{name} | {title}";
           on-click = "activate";
-        };
-
-        tray = {
-          spacing = 10;
         };
 
         bluetooth = {

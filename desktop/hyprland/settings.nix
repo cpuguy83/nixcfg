@@ -22,8 +22,8 @@
         "$terminal"
         "uwsm app -- gnome-keyring-daemon --start --components=secrets"
         "hyprctl setcursor $cursor $cursor_size"
-        "uwsm app -- wl-paste --type text --watch cliphist store"
-        "uwsm app -- wl-paste --type image --watch cliphist store"
+        # "uwsm app -- wl-paste --type text --watch cliphist store"
+        # "uwsm app -- wl-paste --type image --watch cliphist store"
       ];
       general = {
         resize_on_border = true;

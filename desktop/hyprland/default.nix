@@ -46,8 +46,6 @@ in
           kitty
           ghostty
 
-          cliphist
-
           pavucontrol
           fuzzel
           hyprpolkitagent
