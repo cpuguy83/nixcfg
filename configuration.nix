@@ -2,14 +2,12 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ pkgs, pkgs-unstable, inputs, ... }:
+{ pkgs, inputs, ... }:
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware.nix
-      (import ./overlays)
-      (import "${inputs.home-manager}/nixos")
-    ];
+  imports = [
+    ./hardware.nix
+    (import "${inputs.home-manager}/nixos")
+  ];
 
   nix.extraOptions = ''
     experimental-features = nix-command flakes
@@ -17,6 +15,11 @@
 
   nix.optimise.automatic = true;
   nix.optimise.dates = ["03:45"];
+  nix.gc = {
+    automatic = true;
+    dates = "daily";
+    options = "--delete-older-than 30d";
+  };
 
   networking.hostName = "yavin4"; # Define your hostname.
 
@@ -88,7 +91,6 @@
       gh
       jq
       vial
-      via
       qmk
       qmk_hid
 
@@ -102,42 +104,34 @@
 
   users.groups.docker.members = ["cpuguy83"];
 
-  programs.firefox.enable = true;
-
   nixpkgs.config.allowUnfree = true;
-
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  environment.systemPackages = 
-    (with pkgs; [
-      git
-      vim_configurable
-      neovim
-      curl
-      tpm2-tss
-      sbctl
-      pam_u2f
-      slack
-      wl-clipboard
-      waypipe
-      htop
-      ddcutil
-      socat
+  environment.systemPackages = with pkgs; [
+    git
+    vim_configurable
+    neovim
+    curl
+    tpm2-tss
+    sbctl
+    pam_u2f
+    slack
+    wl-clipboard
+    waypipe
+    htop
+    ddcutil
+    socat
 
-      v4l-utils
+    v4l-utils
 
-      # Just needed for copilot
-      nodejs_24
-    ])
+    # Just needed for copilot
+    nodejs_24
+  ];
 
-    ++
-
-    (with pkgs-unstable; [
-      firefox
-      vscode
-      (pkgs.vscode.override { isInsiders = true; })
-    ]);
+  home-manager.users.cpuguy83.programs.vscode = {
+    enable = true;
+  };
 
   # Sets proper link paths for packages using binaries not compiled against nix
   # (i.e. vscode's nodejs).

@@ -1,15 +1,15 @@
 (self: prev: {
   docker_28 = prev.docker_28.override {
-    version = "28.3.2";
-    cliRev = "v28.3.2";
+    version = "28.3.3";
+    cliRev = "v28.3.3";
     cliHash = "sha256-LsV9roOPw0LccvBUeF3bY014OwG6QpnVsLf+dqKyvsg=";
-    mobyRev = "v28.3.2";
+    mobyRev = "v28.3.3";
     mobyHash = "sha256-YfdnCAc9NgLTuvxLHGhTPdWqXz9VSVsQsfzLD3YER3g=";
     containerd = prev.containerd;
   };
 
   docker-buildx = prev.docker-buildx.overrideAttrs (_: rec {
-    version = "0.25.0";
+    version = "0.27.0";
     rev = "1";
     src = prev.fetchFromGitHub {
         owner = "docker";
