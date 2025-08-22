@@ -1,4 +1,4 @@
-{ pkgs, config, lib, ... }:
+{ pkgs, config, ... }:
 {
   imports = [ ./hardware-configuration.nix ];
 
@@ -25,9 +25,13 @@
     "amd_iommu=on"
     "amd_pstate=active"
   ];
-  boot.kernelModules = [ "amdgpu" "kvm_amd" "zenpower" ];
+  boot.kernelModules = [
+    "amdgpu"
+    "kvm_amd"
+    "zenpower"
+  ];
   boot.blacklistedKernelModules = [ "k10temp" ];
-  boot.extraModulePackages = [ config.boot.kernelPackages.zenPower ];
+  boot.extraModulePackages = [ config.boot.kernelPackages.zenpower ];
 
   services.fstrim.enable = true;
 }

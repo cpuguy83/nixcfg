@@ -6,7 +6,7 @@
 {
   imports =
     [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
+      ./hardware.nix
       (import ./overlays)
       (import "${inputs.home-manager}/nixos")
     ];
@@ -233,16 +233,4 @@
 
   desktop.de = "hyprland";
   msft-corp.enable = true;
-
-
-  hardware.bluetooth = {
-    enable = true;
-    powerOnBoot = true;
-
-    settings = {
-      General = {
-        Experimental = true;
-      };
-    };
-  };
 }
