@@ -143,15 +143,6 @@ in {
     };
 
 
-    systemd.user.services.intune-portal = {
-      serviceConfig = {
-        ExecStart = "${pkgs-unstable.intune-portal}/bin/intune-portal";
-        BindReadOnlyPaths = [
-          "${spoofedOSRelease}:/etc/os-release"
-        ];
-      };
-    };
-
     home-manager.users.cpuguy83.home.file.".mozilla/native-messaging-hosts/linux_entra_sso.json" = {
       source = "${entra-sso}/lib/mozilla/native-messaging-hosts/linux_entra_sso.json";
     };
