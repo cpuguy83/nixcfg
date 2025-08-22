@@ -14,10 +14,13 @@
     settings = {
       General = {
         Experimental = true;
+        KernelExperimental = true;
       };
     };
   };
 
+
+  services.blueman.enable = true;
   hardware.cpu.amd.updateMicrocode = true;
 
   boot.kernelParams = [
