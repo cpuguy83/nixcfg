@@ -6,6 +6,7 @@
 {
   imports = [
     ./hardware.nix
+    ./overlays
     (import "${inputs.home-manager}/nixos")
   ];
 
@@ -127,11 +128,9 @@
 
     # Just needed for copilot
     nodejs_24
+    vscode
   ];
 
-  home-manager.users.cpuguy83.programs.vscode = {
-    enable = true;
-  };
 
   # Sets proper link paths for packages using binaries not compiled against nix
   # (i.e. vscode's nodejs).
