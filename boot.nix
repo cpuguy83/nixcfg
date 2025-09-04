@@ -9,10 +9,16 @@
     pkiBundle = "/var/lib/sbctl";
   };
 
-  boot.binfmt.emulatedSystems = [
-    "aarch64-linux"
-    "riscv64-linux"
-  ];
+  boot.binfmt = {
+    emulatedSystems = [
+      "aarch64-linux"
+      "armv7l-linux"
+      "riscv64-linux"
+      "wasm32-wasi"
+      "wasm64-wasi"
+    ];
+    preferStaticEmulators = true;
+  };
 
   # per GPT, may help with BT firmware issue where the device just quit working
   # after suspend and I had to completely pull the power to get it working again
