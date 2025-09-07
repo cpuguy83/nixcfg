@@ -39,10 +39,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hyprspace = {
-      url = "github:KZDKM/Hyprspace";
-    };
-
     hyprtasking = {
       url = "github:raybbian/hyprtasking";
       inputs.hyprland.follows = "hyprland";
