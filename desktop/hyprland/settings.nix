@@ -8,6 +8,7 @@
     plugins = with plugin-packages; [
       hyprbars
       hyprexpo
+      inputs.hyprtasking.packages.${pkgs.system}.hyprtasking
     ];
 
     settings = {
@@ -44,7 +45,8 @@
         "$mod, J, togglesplit,"
         "$mod, E, exec, dolphin"
         "$mod, L, exec, hyprlock"
-        "$mod, TAB, hyprexpo:expo, toggle"
+        # "$mod, TAB, hyprexpo:expo, toggle"
+        "$mod, TAB, hyprtasking:toggle, all"
         "SHIFT $mod, 4, exec, hyprshot -m region --clipboard-only"
         "SHIFT $mod, m, exec, swaync-client -t"
         "SHIFT $mod, v, exec, hyprctl dispatch togglefloating"

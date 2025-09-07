@@ -43,6 +43,11 @@
       url = "github:KZDKM/Hyprspace";
     };
 
+    hyprtasking = {
+      url = "github:raybbian/hyprtasking";
+      inputs.hyprland.follows = "hyprland";
+    };
+
     waybar = {
       url = "github:Alexays/Waybar";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
