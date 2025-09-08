@@ -40,11 +40,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1754087142,
-        "narHash": "sha256-GM97mLsmddPR+B8m/IQjXJYN35/38X3O4Q/lxmBTiNE=",
+        "lastModified": 1757353776,
+        "narHash": "sha256-IXjOryMtFMGqLgCCDiuXtNb+rRoN2bdp5J++NZK5HX8=",
         "owner": "cpuguy83",
         "repo": "nix-azurevpn-client",
-        "rev": "85c7a4744a6f30e6d27ea8060dfa3da7d8a5de95",
+        "rev": "6d6cb8b61cab65d7678e8c3e0c19370d5c91f9f2",
         "type": "github"
       },
       "original": {
