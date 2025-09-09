@@ -245,11 +245,11 @@
     enable = true;
     theme = {
       package = pkgs.whitesur-gtk-theme;
-      name = "WhiteSur-light";
+      name = "WhiteSur-Light";
     };
     iconTheme = {
       package = pkgs.whitesur-icon-theme;
-      name = "WhiteSur-light";
+      name = "WhiteSur-Light";
     };
     cursorTheme = {
       package = pkgs.whitesur-cursors;
