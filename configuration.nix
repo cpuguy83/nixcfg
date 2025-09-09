@@ -227,6 +227,37 @@
     home.stateVersion = "24.11";
   };
 
+  home-manager.users.cpuguy83.home.pointerCursor = {
+    enable = true;
+    package = pkgs.whitesur-gtk-theme;
+    name = "WhiteSur-cursors";
+    size = 24;
+    gtk.enable = true;
+  };
+
+  home-manager.users.cpuguy83.home.packages = [
+    pkgs.whitesur-gtk-theme
+  ];
+
+  home-manager.users.cpuguy83.gtk = {
+    enable = true;
+    theme = {
+      package = pkgs.whitesur-gtk-theme;
+      name = "WhiteSur-light";
+    };
+    iconTheme = {
+      package = pkgs.whitesur-icon-theme;
+      name = "WhiteSur-light";
+    };
+    cursorTheme = {
+      package = pkgs.whitesur-gtk-theme;
+      name = "WhiteSur-cursors";
+    };
+  };
+
+
   desktop.de = "hyprland";
   msft-corp.enable = true;
+
+
 }

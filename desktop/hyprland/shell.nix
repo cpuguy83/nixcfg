@@ -6,13 +6,6 @@
     pkgs.whitesur-gtk-theme
   ];
 
-  home-manager.users.cpuguy83.home.pointerCursor = {
-    enable = true;
-    package = pkgs.whitesur-gtk-theme;
-    name = "WhiteSur-cursors";
-    size = 24;
-  };
-
   home-manager.users.cpuguy83.services.swaync = {
     enable = true;
     settings = {
@@ -68,6 +61,7 @@
           "custom/password"
           "group/audio"
           "bluetooth"
+          "tray"
           "clock"
           "custom/notification"
         ];
