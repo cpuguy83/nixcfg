@@ -6,7 +6,7 @@ in
 
 stdenv.mkDerivation rec {
   pname = "linux-entra-sso-host";
-  version = "1.4.0"; # update as needed
+  version = "1.5.1"; # update as needed
 
   nativeBuildInputs = [ makeWrapper wrapGAppsNoGuiHook ];
   buildInputs = [ pythonEnv glib gobject-introspection];
@@ -15,7 +15,7 @@ stdenv.mkDerivation rec {
     owner = "siemens";
     repo = "linux-entra-sso";
     rev = "v${version}";
-    sha256 = "sha256-NtqnuG6ChWNNQkyM4DJpWMa79UDsALcO7ZM+W6a36hE=";
+    sha256 = "sha256-LZVnu6O15ffvyJby8u21b1k2UqlLKV24L0/iocluWwY=";
   };
 
   buildPhase = "true"; # No build step needed
