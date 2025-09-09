@@ -229,7 +229,7 @@
 
   home-manager.users.cpuguy83.home.pointerCursor = {
     enable = true;
-    package = pkgs.whitesur-gtk-theme;
+    package = pkgs.whitesur-cursors;
     name = "WhiteSur-cursors";
     size = 24;
     gtk.enable = true;
@@ -237,6 +237,8 @@
 
   home-manager.users.cpuguy83.home.packages = [
     pkgs.whitesur-gtk-theme
+    pkgs.whitesur-icon-theme
+    pkgs.whitesur-cursors
   ];
 
   home-manager.users.cpuguy83.gtk = {
@@ -250,7 +252,7 @@
       name = "WhiteSur-light";
     };
     cursorTheme = {
-      package = pkgs.whitesur-gtk-theme;
+      package = pkgs.whitesur-cursors;
       name = "WhiteSur-cursors";
     };
   };
@@ -258,6 +260,4 @@
 
   desktop.de = "hyprland";
   msft-corp.enable = true;
-
-
 }
