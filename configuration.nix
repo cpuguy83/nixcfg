@@ -253,7 +253,7 @@
     };
     cursorTheme = {
       package = pkgs.whitesur-cursors;
-      name = "WhiteSur-cursors";
+      name = "WhiteSur-cursors-light";
     };
   };
 

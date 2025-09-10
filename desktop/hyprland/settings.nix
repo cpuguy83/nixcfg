@@ -17,7 +17,7 @@
       };
       "$mod" = "SUPER";
       "$terminal" = "uwsm app -- ghostty";
-      "$cursor" = "WhiteSur-cursors";
+      "$cursor" = "WhiteSur-cursors-light";
       "$cursor_size" = "24";
       exec-once = [
         "$terminal"
