@@ -43,7 +43,7 @@
         "$mod, SPACE, exec, $menu"
         "$mod, P, pseudo,"
         "$mod, J, togglesplit,"
-        "$mod, E, exec, dolphin"
+        "$mod, E, exec, [float; size 40%] $terminal -e \"bash -c 'source ~/.bashrc; exec yazi'\""
         "$mod, L, exec, hyprlock"
         # "$mod, TAB, hyprexpo:expo, toggle"
         "$mod, TAB, hyprtasking:toggle, all"

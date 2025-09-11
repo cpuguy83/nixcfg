@@ -33,6 +33,54 @@
     };
   };
 
+  home-manager.users.cpuguy83.programs.yazi = {
+    enable = true;
+    plugins = with pkgs.yaziPlugins; {
+      mount = mount;
+      git = git;
+      chmod = chmod;
+    };
+
+    initLua = ''
+      require("git"):setup()
+    '';
+
+    keymap = {
+      mgr = {
+        prepend_keymap = [
+          {
+            on =  "M";
+            run =  "plugin mount";
+            desc = "Mount stuff";
+          }
+          {
+            on =  ["c" "m"];
+            run =  "plugin chmod";
+            desc = "chmod";
+          }
+        ];
+      };
+    };
+
+    settings = {
+      plugin.prepend_fetchers = [
+        {
+          id = "git";
+          name = "*";
+          run = "git";
+        }
+        {
+          id = "git";
+          name = "*/";
+          run = "git";
+        }
+      ];
+      mgr = {
+        show_hidden = true;
+      };
+    };
+  };
+
   home-manager.users.cpuguy83.programs.waybar = {
     enable = true;
     systemd.enable = true;
