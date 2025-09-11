@@ -72,6 +72,21 @@
         ", XF86MonBrightnessDown, exec, swayosd-client --brightness -2"
       ];
 
+      windowrule = [
+        "float, class:(microsoft-azurevpnclient)"
+
+        "float, class:^(steam)$, title:^(Steam)$"
+        "size 60%, class:^(steam)$, title:^(Steam)$"
+
+        # NOTE: The zoom app sucks, and so do these rules...
+        # Zoom Meeting windows
+        "float, class:^(zoom)$, initialTitle:^(Meeting)$"
+        "size 40%, class:^(zoom)$, initialTitle:^(Meeting)$"
+        # Stupid Zoom workplace window that always comes up when you open zoom...
+        "float, class:^(zoom)$, initialTitle:^(Zoom Workplace - Free account)$"
+        "size 40%, class:^(zoom)$, initialTitle:^(Zoom Workplace - Free account)$"
+      ];
+
       decoration = {
         rounding = 10;
         rounding_power = 2;
