@@ -3,7 +3,6 @@
 {
   environment.systemPackages = [
     pkgs.nwg-look
-    pkgs.whitesur-gtk-theme
   ];
 
   home-manager.users.cpuguy83.services.swaync = {
