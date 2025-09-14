@@ -119,6 +119,10 @@
         workspace_method = "current";
         skip_empty = true;
       };
+
+      misc = {
+        focus_on_activate = true;
+      };
     };
   };
 }
