@@ -98,6 +98,7 @@
       discord
       legcord
       home-manager
+      libreoffice-fresh
 
       zed-editor
     ];
