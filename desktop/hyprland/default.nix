@@ -97,21 +97,6 @@ in
           };
         };
 
-        systemd.user.services.hyprpolkitagent = {
-          enable = true;
-          description = "Hyprland Polkit Agent";
-          wantedBy = [ "graphical-session.target" ];
-          after = [
-            "graphical-session.target"
-            "xdg-desktop-autostart.target"
-          ];
-          serviceConfig = {
-            Type = "simple";
-            ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent";
-            Restart = "on-failure";
-          };
-        };
-
         environment.sessionVariables = {
           WLR_NO_HARDWARE_CURSORS = "1";
           NIXOS_OZONE_WL = "1";

@@ -22,6 +22,7 @@
       exec-once = [
         "$terminal"
         "uwsm app -- gnome-keyring-daemon --start --components=secrets"
+        "uwsm app -- systemctl --user start hyprpolkitagent"
         "hyprctl setcursor $cursor $cursor_size"
         # "uwsm app -- wl-paste --type text --watch cliphist store"
         # "uwsm app -- wl-paste --type image --watch cliphist store"
