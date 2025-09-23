@@ -57,6 +57,8 @@ in
           qimgv
           gnome-font-viewer
 
+          dragon-drop # CLI drag-and-drop utility
+
           seahorse # gnome-keyring GUI
         ];
 

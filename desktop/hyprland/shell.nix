@@ -59,6 +59,11 @@
             run =  "plugin chmod";
             desc = "chmod";
           }
+          {
+            on = "<C-n>";
+            run = "shell -- dragon-drop --all -x -T \"$1\"";
+            desc = "Drag and drop";
+          }
         ];
       };
     };
