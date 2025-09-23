@@ -259,6 +259,7 @@
     };
   };
 
+  services.flatpak.enable = true;
 
   desktop.de = "hyprland";
   msft-corp.enable = true;
