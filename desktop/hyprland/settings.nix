@@ -16,7 +16,7 @@
         no_donation_nag = true;
       };
       "$mod" = "SUPER";
-      "$terminal" = "uwsm app -- ghostty";
+      "$terminal" = "ghostty +new-window";
       "$cursor" = "WhiteSur-cursors-light";
       "$cursor_size" = "24";
       exec-once = [
