@@ -23,9 +23,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hyprland.url = "github:hyprwm/hyprland/v0.50.1";
+    hyprland.url = "github:hyprwm/hyprland/v0.51.1";
     hyprland-plugins = {
-      url = "github:hyprwm/hyprland-plugins/v0.50.0";
+      url = "github:hyprwm/hyprland-plugins";
       inputs.hyprland.follows = "hyprland";
     };
 
@@ -40,12 +40,15 @@
     };
 
     hyprtasking = {
-      url = "github:raybbian/hyprtasking";
+      # url = "github:raybbian/hyprtasking";
+      url = "github:r00t3g/hyprtasking/9388b8ca1bd53a5bfa89b1a6caec7a801df0b6aa"; # fork with fixes for hyprland 0.51
       inputs.hyprland.follows = "hyprland";
     };
 
     waybar = {
-      url = "github:Alexays/Waybar";
+      # Pinned to slightly old commit due to breakages in newer commits
+      # See https://github.com/Alexays/Waybar/issues/4521
+      url = "github:Alexays/Waybar/6dc5a73a02af12fccf8eac8494da7d91db23400b";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
   };

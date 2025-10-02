@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ pkgs, inputs, ... }:
+{ pkgs, pkgs-unstable, inputs, ... }:
 {
   imports = [
     ./hardware.nix
@@ -76,7 +76,7 @@
     description = "Brian Goff";
     extraGroups = [ "networkmanager" "wheel" "docker" "kvm" "video" "audio" "render" "input" ];
     packages = with pkgs; [
-      ghostty
+      pkgs-unstable.ghostty
       stow
       fzy
       fzf
