@@ -111,7 +111,6 @@
           "mpris"
         ];
         modules-right = [
-          "custom/clipboard"
           "custom/password"
           "group/audio"
           "bluetooth"
@@ -182,12 +181,21 @@
           on-click-right = "1password";
         };
 
+        "custom/azvpn" = {
+          format = "AzureVPN ";
+          exec = "echo '{\"class\": \"connected\"}'";
+          exec-if = "test -d /proc/sys/net/ipv4/conf/MSFT-AzVPN-Temp";
+          return-type = "json";
+          interval = 10;
+        };
+
         "custom/notification" = {
           tooltip = false;
           format = " {icon}  ";
           format-icons = {
             notification = " ";
             none = "";
+            none-cc-open = "";
             dnd-none = "";
             dnd-notification = "<span foreground='red'><sup></sup></span>";
             inhibited-notification = "<span foreground='red'><sup></sup></span>";
