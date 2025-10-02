@@ -5,6 +5,7 @@ let
   plugin-packages = inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system};
   hyprland-packages = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
   hyprland = hyprland-packages.hyprland;
+  fix_hyprlock_path = ".local/bin/fix-hyprlock.sh";
 in
 {
   config = mkIf (config.desktop.de == "hyprland") (
@@ -116,13 +117,78 @@ in
           ];
         };
 
+        home-manager.users.cpuguy83.home.file.${fix_hyprlock_path} = {
+          text = ''
+            #!${pkgs.bash}/bin/bash
+
+            # This script attempts to fix hyprlock after resuming from suspend
+            # Frequently hyprlock has crashed or is not running after resume
+            # This script will check if the session is locked and if so
+            # restart hyprlock if it is not running.
+
+            # Wait for Hyprland to be ready
+            echo "Waiting for Hyprland to be ready..." >&2
+            for i in {1..100}; do
+              if hyprctl monitors >/dev/null 2>&1; then
+                break
+              fi
+              sleep 0.2
+            done
+
+            # Check one more time if hyprland is ready
+            if hyprctl monitors >/dev/null 2>&1; then
+              echo "Hyprland is not running. Exiting." >&2
+              exit
+            fi
+
+            echo "Hyprland is ready." >&2
+
+            # If hyprlock is already running there is nothing to do
+            if pidof hyprlock >/dev/null 2>&1; then
+              echo "hyprlock is already running." >&2
+              exit
+            fi
+
+            # Determine if the current session is locked
+            sid="$(loginctl | awk -v user="$USER" '$3 == user {print $1; exit}')"
+            [ -z "$sid" ] && exit
+            locked="$(loginctl show-session "$sid" -p LockedHint | cut -d= -f2)"
+
+            # If the session is not locked there is nothing to do
+            if [ "$locked" != "yes" ]; then
+              echo "Session is not locked. Exiting." >&2
+              exit
+            fi
+
+            # restore hyprlock
+            echo "Session is locked. Restarting hyprlock..." >&2
+            hyprctl --instance 0 'keyword misc:allow_session_lock_restore=1' && \
+            hyprctl --instance 0 'dispatch exec hyprlock'
+          '';
+          executable = true;
+        };
+
+        home-manager.users.cpuguy83.systemd.user.services.fix-hyprlock = {
+          Unit = {
+            Description = "Fix hyprlock after resume";
+            After = [ "suspend.target" ];
+          };
+          Service = {
+            Type = "oneshot";
+            ExecStart = "%h/${fix_hyprlock_path}";
+          };
+          Install = {
+            WantedBy = [ "suspend.target" ];
+          };
+        };
+
         home-manager.users.cpuguy83.services.hypridle = {
           enable = true;
           settings = {
             general = {
-              lock_cmd = "pidof xhyprlock || hyprlock";
+              lock_cmd = "pidof hyprlock || hyprlock";
               before_sleep_cmd = "loginctl lock-session";
-              after_sleep_cmd = "hyprctl dispatch dpms on && uwsm app -S both -- ashell";
+              after_sleep_cmd = "hyprctl dispatch dpms";
             };
 
             listener = [
