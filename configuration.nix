@@ -241,6 +241,9 @@
     pkgs.whitesur-gtk-theme
     pkgs.whitesur-icon-theme
     pkgs.whitesur-cursors
+
+    pkgs-unstable.codex
+    pkgs-unstable.claude-code
   ];
 
   home-manager.users.cpuguy83.gtk = {
