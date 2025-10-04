@@ -1,5 +1,13 @@
 { plugin-packages, inputs, pkgs, ... }:
 {
+  home-manager.users.cpuguy83.home.file.".local/bin/exec_yazi.sh" = {
+    text = ''
+      #!/usr/bin/env bash
+      source ~/.bashrc
+      exec yazi
+    '';
+    executable = true;
+  };
   home-manager.users.cpuguy83.wayland.windowManager.hyprland = {
     enable = true;
     package = null;
@@ -16,7 +24,13 @@
         no_donation_nag = true;
       };
       "$mod" = "SUPER";
+
       "$terminal" = "ghostty +new-window";
+      # ghostty +new-windows does not work with `-e` in GTK-land.
+      # Instead just execute a new ghostty.
+      # See https://github.com/ghostty-org/ghostty/issues/8862
+      "$file_manager" = "uwsm app -- ghostty -e ~/.local/bin/exec_yazi.sh";
+
       "$cursor" = "WhiteSur-cursors-light";
       "$cursor_size" = "24";
       exec-once = [
@@ -44,7 +58,7 @@
         "$mod, SPACE, exec, $menu"
         "$mod, P, pseudo,"
         "$mod, J, togglesplit,"
-        "$mod, E, exec, [float; size 40%] $terminal -e \"bash -c 'source ~/.bashrc; exec yazi'\""
+        "$mod, E, exec, [float; size 40%] $file_manager"
         "$mod, L, exec, hyprlock"
         # "$mod, TAB, hyprexpo:expo, toggle"
         "$mod, TAB, hyprtasking:toggle, all"
