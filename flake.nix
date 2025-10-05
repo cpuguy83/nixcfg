@@ -46,9 +46,7 @@
     };
 
     waybar = {
-      # Pinned to slightly old commit due to breakages in newer commits
-      # See https://github.com/Alexays/Waybar/issues/4521
-      url = "github:Alexays/Waybar/6dc5a73a02af12fccf8eac8494da7d91db23400b";
+      url = "github:Alexays/Waybar";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
   };
