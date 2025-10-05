@@ -61,7 +61,55 @@ in
           dragon-drop # CLI drag-and-drop utility
 
           seahorse # gnome-keyring GUI
+
+          xdg-desktop-portal-termfilechooser
         ];
+
+        home-manager.users.cpuguy83.home.file.".config/xdg-desktop-portal-termfilechooser/kitty-yazi-wrapper.sh" = {
+          text = ''
+#!${pkgs.bash}/bin/bash
+set -eo pipefail
+
+export PATH="${lib.makeBinPath [ pkgs.bash pkgs.coreutils pkgs.yazi pkgs.kitty ]}:$PATH"
+export TERMCMD="${lib.getExe pkgs.kitty} --class yazi-portal --title=\"Yazi File Picker\" -e"
+
+multiple="$1"
+directory="$2"
+save="$3"
+path="$4"
+out="$5"
+
+wrapper="${pkgs.xdg-desktop-portal-termfilechooser}/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh"
+"$wrapper" "$@"
+status=$?
+
+if [ "$status" -ne 0 ]; then
+  exit "$status"
+fi
+
+if [ "$save" = "1" ] && [ -s "$out" ]; then
+  first=$(head -n1 "$out")
+  if [ -d "$first" ]; then
+    suggestion=$(basename -- "$path")
+    if [ -z "$suggestion" ]; then
+      suggestion="Untitled"
+    fi
+    printf '%s/%s\n' "$first" "$suggestion" > "$out"
+  fi
+fi
+          '';
+          executable = true;
+        };
+
+        home-manager.users.cpuguy83.home.file.".config/xdg-desktop-portal-termfilechooser/config" = {
+          text = ''
+[filechooser]
+cmd=kitty-yazi-wrapper.sh
+default_dir=$HOME
+open_mode=suggested
+save_mode=suggested
+          '';
+        };
 
         services.udisks2.enable = true;
 
@@ -69,6 +117,19 @@ in
         services.dbus.packages = with pkgs; [
           kdePackages.kdeconnect-kde
         ];
+
+        systemd.user.services.xdg-desktop-portal-termfilechooser = {
+          description = "Portal service (terminal file chooser implementation)";
+          wantedBy = [ "graphical-session.target" ];
+          partOf = [ "graphical-session.target" ];
+          after = [ "graphical-session.target" ];
+          # serviceConfig = {
+          #   Type = "dbus";
+          #   BusName = "org.freedesktop.impl.portal.desktop.termfilechooser";
+          #   ExecStart = "${pkgs.xdg-desktop-portal-termfilechooser}/libexec/xdg-desktop-portal-termfilechooser";
+          #   Restart = "on-failure";
+          # };
+        };
 
         systemd.user.services.kdeconnectd = {
           enable = true;
@@ -114,7 +175,24 @@ in
           extraPortals = with hyprland-packages; [
             xdg-desktop-portal-hyprland
             pkgs.xdg-desktop-portal-gtk
+            pkgs.xdg-desktop-portal-termfilechooser
           ];
+          config = {
+            common."org.freedesktop.impl.portal.FileChooser" = "termfilechooser";
+            Hyprland = {
+              default = [ "hyprland" "gtk" ];
+              "org.freedesktop.impl.portal.FileChooser" = "termfilechooser";
+            };
+            "uwsm-hyprland" = {
+              default = [ "hyprland" "gtk" ];
+              "org.freedesktop.impl.portal.FileChooser" = "termfilechooser";
+            };
+          };
+        };
+
+        environment.variables = {
+          GTK_USE_PORTAL = "1";
+          GDK_DEBUG = "portals";
         };
 
         home-manager.users.cpuguy83.home.file.${fix_hyprlock_path} = {

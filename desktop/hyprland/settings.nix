@@ -1,10 +1,10 @@
 { plugin-packages, inputs, pkgs, ... }:
 {
-  home-manager.users.cpuguy83.home.file.".local/bin/exec_yazi.sh" = {
+  home-manager.users.cpuguy83.home.file.".local/bin/exec_yazi" = {
     text = ''
-      #!/usr/bin/env bash
-      source ~/.bashrc
-      exec yazi
+#!/usr/bin/env bash
+source ~/.bashrc
+exec ${pkgs.yazi}/bin/yazi "$@"
     '';
     executable = true;
   };
@@ -29,7 +29,7 @@
       # ghostty +new-windows does not work with `-e` in GTK-land.
       # Instead just execute a new ghostty.
       # See https://github.com/ghostty-org/ghostty/issues/8862
-      "$file_manager" = "uwsm app -- ghostty -e ~/.local/bin/exec_yazi.sh";
+      "$file_manager" = "uwsm app -- ghostty -e ~/.local/bin/exec_yazi";
 
       "$cursor" = "WhiteSur-cursors-light";
       "$cursor_size" = "24";
@@ -88,6 +88,8 @@
       ];
 
       windowrule = [
+        "float, class:^yazi-portal$"
+        "size 40% 40%, class:^yazi-portal$"
         "float, class:(microsoft-azurevpnclient)"
 
         "float, class:^(steam)$, title:^(Steam)$"
@@ -101,6 +103,7 @@
         "float, class:^(zoom)$, initialTitle:^(Zoom Workplace - Free account)$"
         "size 40%, class:^(zoom)$, initialTitle:^(Zoom Workplace - Free account)$"
       ];
+
 
       decoration = {
         rounding = 10;
