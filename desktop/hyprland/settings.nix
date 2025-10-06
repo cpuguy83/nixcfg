@@ -88,8 +88,8 @@ exec ${pkgs.yazi}/bin/yazi "$@"
       ];
 
       windowrule = [
-        "float, class:^yazi-portal$"
-        "size 40% 40%, class:^yazi-portal$"
+        "float, class:^com\\.mitchellh\\.ghostty\\.filepicker$"
+        "size 40% 40%, class:^com\\.mitchellh\\.ghostty\\.filepicker$"
         "float, class:(microsoft-azurevpnclient)"
 
         "float, class:^(steam)$, title:^(Steam)$"

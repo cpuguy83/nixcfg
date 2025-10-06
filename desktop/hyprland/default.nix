@@ -6,6 +6,10 @@ let
   hyprland-packages = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
   hyprland = hyprland-packages.hyprland;
   fix_hyprlock_path = ".local/bin/fix-hyprlock.sh";
+  yaziFilepickerConfig = pkgs.writeTextDir "yazi/config/yazi.toml" ''
+[manager]
+show_hidden = false
+'';
 in
 {
   config = mkIf (config.desktop.de == "hyprland") (
@@ -65,38 +69,18 @@ in
           xdg-desktop-portal-termfilechooser
         ];
 
-        home-manager.users.cpuguy83.home.file.".config/xdg-desktop-portal-termfilechooser/kitty-yazi-wrapper.sh" = {
+        home-manager.users.cpuguy83.home.file.".config/xdg-desktop-portal-termfilechooser/ghostty-wrapper.sh" = {
           text = ''
 #!${pkgs.bash}/bin/bash
 set -eo pipefail
 
-export PATH="${lib.makeBinPath [ pkgs.bash pkgs.coreutils pkgs.yazi pkgs.kitty ]}:$PATH"
-export TERMCMD="${lib.getExe pkgs.kitty} --class yazi-portal --title=\"Yazi File Picker\" -e"
+export PATH="${lib.makeBinPath [ pkgs.bash pkgs.coreutils pkgs.yazi pkgs.ghostty ]}:$PATH"
+export YAZI_CONFIG_HOME="${yaziFilepickerConfig}/yazi"
+export XDG_CONFIG_HOME="''${HOME}/.config"
 
-multiple="$1"
-directory="$2"
-save="$3"
-path="$4"
-out="$5"
+export TERMCMD="${lib.getExe pkgs.ghostty} --class=com.mitchellh.ghostty.filepicker --title='Yazi File Picker' -e"
 
-wrapper="${pkgs.xdg-desktop-portal-termfilechooser}/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh"
-"$wrapper" "$@"
-status=$?
-
-if [ "$status" -ne 0 ]; then
-  exit "$status"
-fi
-
-if [ "$save" = "1" ] && [ -s "$out" ]; then
-  first=$(head -n1 "$out")
-  if [ -d "$first" ]; then
-    suggestion=$(basename -- "$path")
-    if [ -z "$suggestion" ]; then
-      suggestion="Untitled"
-    fi
-    printf '%s/%s\n' "$first" "$suggestion" > "$out"
-  fi
-fi
+exec ${pkgs.xdg-desktop-portal-termfilechooser}/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh "$@"
           '';
           executable = true;
         };
@@ -104,8 +88,8 @@ fi
         home-manager.users.cpuguy83.home.file.".config/xdg-desktop-portal-termfilechooser/config" = {
           text = ''
 [filechooser]
-cmd=kitty-yazi-wrapper.sh
-default_dir=$HOME
+cmd=ghostty-wrapper.sh
+default_dir=$HOME/Downloads
 open_mode=suggested
 save_mode=suggested
           '';
