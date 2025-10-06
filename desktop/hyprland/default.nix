@@ -123,12 +123,6 @@ save_mode=suggested
           wantedBy = [ "graphical-session.target" ];
           partOf = [ "graphical-session.target" ];
           after = [ "graphical-session.target" ];
-          # serviceConfig = {
-          #   Type = "dbus";
-          #   BusName = "org.freedesktop.impl.portal.desktop.termfilechooser";
-          #   ExecStart = "${pkgs.xdg-desktop-portal-termfilechooser}/libexec/xdg-desktop-portal-termfilechooser";
-          #   Restart = "on-failure";
-          # };
         };
 
         systemd.user.services.kdeconnectd = {
