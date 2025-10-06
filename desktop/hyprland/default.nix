@@ -207,14 +207,14 @@ save_mode=suggested
             # Wait for Hyprland to be ready
             echo "Waiting for Hyprland to be ready..." >&2
             for i in {1..100}; do
-              if hyprctl monitors >/dev/null 2>&1; then
+              if hyprctl monitors --instance 0 >/dev/null 2>&1; then
                 break
               fi
               sleep 0.2
             done
 
             # Check one more time if hyprland is ready
-            if hyprctl monitors >/dev/null 2>&1; then
+            if ! hyprctl monitors --instance 0 >/dev/null 2>&1; then
               echo "Hyprland is not running. Exiting." >&2
               exit
             fi
