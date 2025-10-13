@@ -10,6 +10,7 @@
     settings = {
       notification-2fa-action = true;
       notification-inline-replies = true;
+      keyboard-shortcuts = false;
       widgets = [
         "inhibitors"
         "title"
