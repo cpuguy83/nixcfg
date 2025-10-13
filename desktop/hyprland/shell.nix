@@ -1,10 +1,6 @@
 { pkgs, ... }:
 
 {
-  environment.systemPackages = [
-    pkgs.nwg-look
-  ];
-
   home-manager.users.cpuguy83.services.swaync = {
     enable = true;
     settings = {
