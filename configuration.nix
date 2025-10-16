@@ -262,6 +262,27 @@
     };
   };
 
+  # Reinitialize YubiKeys on resume
+  # This is a workaround for an issue where YubiKeys stop working after suspend
+  # Don't know if this will work or not, but trying anyway...
+  systemd.services.yubikey-reinit = {
+    description = "Reauthorize all YubiKeys after resume";
+    after = [ "suspend.target" ];
+    wantedBy = [ "post-resume.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.writeShellScript "yubikey-reinit" ''
+        for d in /sys/bus/usb/devices/*; do
+          if [[ -f "$d/idVendor" ]] && grep -q 1050 "$d/idVendor"; then
+            echo 0 > "$d/authorized" 2>/dev/null || true
+            sleep 1
+            echo 1 > "$d/authorized" 2>/dev/null || true
+          fi
+        done
+      ''}";
+    };
+  };
+
   services.flatpak.enable = true;
 
   desktop.de = "hyprland";
