@@ -1,21 +1,21 @@
 (self: prev: {
   docker_28 = prev.docker_28.override {
-    version = "28.4.0";
-    cliRev = "v28.4.0";
-    cliHash = "sha256-SgePAc+GvjZgymu7VA2whwIFEYAfMVUz9G0ppxeOi7M=";
-    mobyRev = "v28.4.0";
-    mobyHash = "sha256-hiuwdemnjhi/622xGcevG4rTC7C+DyUijE585a9APSM=";
+    version = "28.5.1";
+    cliRev = "v28.5.1";
+    cliHash = "sha256-iT5FLzX8Pg07V0Uo+07gy3ChP/WgLTPs/vtxnFVmCG8=";
+    mobyRev = "v28.5.1";
+    mobyHash = "sha256-IlkEK4UeQjZsojbahzLy/rP3WqJUWXG9nthmBSEj10M=";
     containerd = prev.containerd;
   };
 
   docker-buildx = prev.docker-buildx.overrideAttrs (_: rec {
-    version = "0.28.0";
+    version = "0.29.1";
     rev = "1";
     src = prev.fetchFromGitHub {
         owner = "docker";
         repo = "buildx";
         rev = "v${version}";
-        sha256 = "sha256-sYhmXVc1pU0nzG57AIuaLqUOWz9MfFlpJZQ9B5Ki5ik=";
+        sha256 = "sha256-H7U44g4rw15c3Snx88YgAanSw4dWanmTugpGBIwfI6A=";
       };
       ldflags = [
         "-w"
