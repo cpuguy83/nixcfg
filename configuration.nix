@@ -227,39 +227,7 @@
   home-manager.useGlobalPkgs = true;
   home-manager.users.cpuguy83 = {
     home.stateVersion = "24.11";
-  };
-
-  home-manager.users.cpuguy83.home.pointerCursor = {
-    enable = true;
-    package = pkgs.whitesur-cursors;
-    name = "WhiteSur-cursors";
-    size = 24;
-    gtk.enable = true;
-  };
-
-  home-manager.users.cpuguy83.home.packages = [
-    pkgs.whitesur-gtk-theme
-    pkgs.whitesur-icon-theme
-    pkgs.whitesur-cursors
-
-    pkgs-unstable.codex
-    pkgs-unstable.claude-code
-  ];
-
-  home-manager.users.cpuguy83.gtk = {
-    enable = true;
-    theme = {
-      package = pkgs.whitesur-gtk-theme;
-      name = "WhiteSur-Light";
-    };
-    iconTheme = {
-      package = pkgs.whitesur-icon-theme;
-      name = "WhiteSur-Light";
-    };
-    cursorTheme = {
-      package = pkgs.whitesur-cursors;
-      name = "WhiteSur-cursors-light";
-    };
+    imports = [ ./home.nix ];
   };
 
   # Reinitialize YubiKeys on resume
