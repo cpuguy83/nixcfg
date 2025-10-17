@@ -49,56 +49,72 @@
       url = "github:Alexays/Waybar";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
+
+    nixvim = {
+      url = "github:nix-community/nixvim";
+    };
   };
 
-  outputs = { nixpkgs, nixpkgs-unstable, home-manager, hyprland, ... }@inputs:
-  let
-    system = "x86_64-linux";
-    pkgs-unstable = import nixpkgs-unstable {
-      inherit system;
-      config.allowUnfree = true;
-    };
-  in {
-    nixosConfigurations = {
-      yavin4 = nixpkgs.lib.nixosSystem {
-        specialArgs = {
-          inherit pkgs-unstable inputs;
+  outputs =
+    {
+      nixpkgs,
+      nixpkgs-unstable,
+      home-manager,
+      hyprland,
+      ...
+    }@inputs:
+    let
+      system = "x86_64-linux";
+      pkgs-unstable = import nixpkgs-unstable {
+        inherit system;
+        config.allowUnfree = true;
+      };
+    in
+    {
+      nixosConfigurations = {
+        yavin4 = nixpkgs.lib.nixosSystem {
+          specialArgs = {
+            inherit pkgs-unstable inputs;
+          };
+
+          modules = [
+            (
+              { ... }:
+              {
+                nix.settings.substituters = [
+                  "https://hyprland.cachix.org"
+                ];
+
+                nix.settings.trusted-substituters = [
+                  "https://hyprland.cachix.org"
+                ];
+
+                nix.settings.trusted-public-keys = [
+                  "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
+                ];
+
+                nixpkgs.config.allowUnfree = true;
+              }
+            )
+            ({
+              nixpkgs.overlays = [
+                inputs.waybar.overlays.default
+                inputs.firefox-addons.overlays.default
+              ];
+              home-manager.useUserPackages = true;
+              home-manager.useGlobalPkgs = true;
+              home-manager.extraSpecialArgs = {
+                inherit inputs;
+                inherit pkgs-unstable;
+              };
+            })
+
+            inputs.azurevpnclient.nixosModules.azurevpnclient
+            ./modules.nix
+            ./configuration.nix
+            inputs.lanzaboote.nixosModules.lanzaboote
+          ];
         };
-
-        modules = [
-          ({ ...}: {
-            nix.settings.substituters = [
-              "https://hyprland.cachix.org"
-            ];
-
-            nix.settings.trusted-substituters = [
-              "https://hyprland.cachix.org"
-            ];
-
-            nix.settings.trusted-public-keys = [
-              "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
-            ];
-
-            nixpkgs.config.allowUnfree = true;
-          })
-          ({
-            nixpkgs.overlays = [
-              inputs.waybar.overlays.default
-              inputs.firefox-addons.overlays.default
-            ];
-            home-manager.useUserPackages = true;
-            home-manager.useGlobalPkgs = true;
-            home-manager.extraSpecialArgs = {
-              inherit inputs;
-            };
-          })
-
-          inputs.azurevpnclient.nixosModules.azurevpnclient
-          ./modules.nix
-          ./configuration.nix
-          inputs.lanzaboote.nixosModules.lanzaboote
-        ];
       };
     };
-  };
 }

@@ -113,7 +113,6 @@
   environment.systemPackages = with pkgs; [
     git
     vim_configurable
-    neovim
     curl
     tpm2-tss
     sbctl
