@@ -53,6 +53,10 @@
     nixvim = {
       url = "github:nix-community/nixvim";
     };
+
+    nixd = {
+      url = "github:nix-community/nixd";
+    };
   };
 
   outputs =
@@ -100,12 +104,19 @@
               nixpkgs.overlays = [
                 inputs.waybar.overlays.default
                 inputs.firefox-addons.overlays.default
+                inputs.nixd.overlays.default
               ];
               home-manager.useUserPackages = true;
               home-manager.useGlobalPkgs = true;
               home-manager.extraSpecialArgs = {
                 inherit inputs;
                 inherit pkgs-unstable;
+              };
+
+              home-manager.users.cpuguy83 = {
+                imports = [
+                  ./home.nix
+                ];
               };
             })
 

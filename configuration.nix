@@ -222,13 +222,6 @@
     };
   };
 
-  home-manager.useUserPackages = true;
-  home-manager.useGlobalPkgs = true;
-  home-manager.users.cpuguy83 = {
-    home.stateVersion = "24.11";
-    imports = [ ./home.nix ];
-  };
-
   # Reinitialize YubiKeys on resume
   # This is a workaround for an issue where YubiKeys stop working after suspend
   # Don't know if this will work or not, but trying anyway...
