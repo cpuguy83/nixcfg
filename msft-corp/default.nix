@@ -1,6 +1,13 @@
-{ pkgs, pkgs-unstable, config, lib, ... }:
+{
+  pkgs,
+  pkgs-unstable,
+  config,
+  lib,
+  ...
+}:
 
-with lib; let
+with lib;
+let
   cfg = config.msft-corp;
   call = pkgs.lib.callPackageWith pkgs;
   entra-sso = call ./entra-sso.nix { };
@@ -8,22 +15,23 @@ with lib; let
   # NixOS is not a supported OS for Intune and this is part of the compliance
   # checks. This is a workaround to make it look like we are running Ubuntu.
   spoofedOSRelease = pkgs.writeText "intune-fake-os-release" ''
-PRETTY_NAME="Ubuntu 24.04.2 LTS"
-NAME="Ubuntu"
-VERSION_ID="24.04"
-VERSION="24.04.2 LTS (Noble Numbat)"
-VERSION_CODENAME=noble
-ID=ubuntu
-ID_LIKE=debian
-HOME_URL="https://www.ubuntu.com/"
-SUPPORT_URL="https://help.ubuntu.com/"
-BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
-PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
-UBUNTU_CODENAME=noble
-LOGO=ubuntu-logo
-'';
+    PRETTY_NAME="Ubuntu 24.04.2 LTS"
+    NAME="Ubuntu"
+    VERSION_ID="24.04"
+    VERSION="24.04.2 LTS (Noble Numbat)"
+    VERSION_CODENAME=noble
+    ID=ubuntu
+    ID_LIKE=debian
+    HOME_URL="https://www.ubuntu.com/"
+    SUPPORT_URL="https://help.ubuntu.com/"
+    BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+    PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+    UBUNTU_CODENAME=noble
+    LOGO=ubuntu-logo
+  '';
 
-in {
+in
+{
   options.msft-corp = {
     enable = mkEnableOption {
       description = "Microsoft services integration";
@@ -35,7 +43,7 @@ in {
     # Make sure that the unstable channel is used for these packages
     # I think this is necessary because `services.intune.enable` is referencing
     # the stable channel otherwise.
-    # 
+    #
     # Unstable is needed to pick up a few fixes that are not currently in stable
     # such that stable is non-functional.
     nixpkgs.overlays = lib.mkAfter [
@@ -74,13 +82,12 @@ in {
       -----END CERTIFICATE-----
     '';
 
-
     # Min password requirements for intune
     security.pam.services.passwd.rules.password.pwquality = {
-      control = lib.mkForce "requisite"; 
-      modulePath = "${pkgs.libpwquality.lib}/lib/security/pam_pwquality.so"; 
+      control = lib.mkForce "requisite";
+      modulePath = "${pkgs.libpwquality.lib}/lib/security/pam_pwquality.so";
       # order BEFORE pam_unix.so
-      order =  config.security.pam.services.passwd.rules.password.unix.order - 10;
+      order = config.security.pam.services.passwd.rules.password.unix.order - 10;
       settings = {
         # use_authtok = true;
         shadowretry = 3;
@@ -91,7 +98,7 @@ in {
         ocredit = -1;
         lcredit = -1;
         enforce_for_root = true;
-      }; 
+      };
     };
 
     environment.systemPackages = with pkgs; [
@@ -101,7 +108,8 @@ in {
       entra-sso
 
       openconnect
-      gpclient gpauth
+      gpclient
+      gpauth
       networkmanager-openconnect
       git-credential-manager
 
@@ -120,7 +128,7 @@ in {
     ];
 
     programs.azurevpnclient.enable = true;
-      
+
     systemd.user.services.intune-agent = {
       serviceConfig = {
         BindReadOnlyPaths = [
@@ -135,13 +143,12 @@ in {
     # services.envfs.enable = true;
 
     system.activationScripts.binbash = {
-      deps = [ "binsh" ];  # Ensure /bin/sh is available first
+      deps = [ "binsh" ]; # Ensure /bin/sh is available first
       text = ''
         mkdir -m 0755 -p /bin
         ln -sfn ${pkgs.bash}/bin/bash /bin/bash
       '';
     };
-
 
     home-manager.users.cpuguy83.home.file.".mozilla/native-messaging-hosts/linux_entra_sso.json" = {
       source = "${entra-sso}/lib/mozilla/native-messaging-hosts/linux_entra_sso.json";

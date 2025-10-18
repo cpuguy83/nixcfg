@@ -47,13 +47,16 @@
       mgr = {
         prepend_keymap = [
           {
-            on =  "M";
-            run =  "plugin mount";
+            on = "M";
+            run = "plugin mount";
             desc = "Mount stuff";
           }
           {
-            on =  ["c" "m"];
-            run =  "plugin chmod";
+            on = [
+              "c"
+              "m"
+            ];
+            run = "plugin chmod";
             desc = "chmod";
           }
           {
@@ -147,10 +150,16 @@
           format-bluetooth = " {volume}% {icon}    ";
           format-muted = " {volume}% 󰖁 ";
           format-icons = {
-            default = [ "" "" "" "" " " ];
+            default = [
+              ""
+              ""
+              ""
+              ""
+              " "
+            ];
             headphones = "";
           };
-          on-click  = "pavucontrol";
+          on-click = "pavucontrol";
           on-click-right = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
           scroll-step = 5;
         };
@@ -161,7 +170,7 @@
           format-muted = " {volume}%   ";
           on-click-right = "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
           scroll-step = 5;
-          on-click  = "pavucontrol -t 4";
+          on-click = "pavucontrol -t 4";
         };
 
         "group/audio" = {

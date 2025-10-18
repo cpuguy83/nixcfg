@@ -19,7 +19,6 @@
     };
   };
 
-
   services.blueman.enable = true;
   hardware.cpu.amd.updateMicrocode = true;
 

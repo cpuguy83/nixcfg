@@ -1,6 +1,12 @@
-{pkgs, lib, config, ...}:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 
-with lib; {
+with lib;
+{
   config = mkIf (config.desktop.de == "gnome") {
     services.xserver = {
       enable = true;
@@ -22,18 +28,18 @@ with lib; {
     security.pam.services.gdm.enableGnomeKeyring = true;
     security.pam.services.login.enableGnomeKeyring = true;
 
-
-    environment.systemPackages = with pkgs;
-    (with gnomeExtensions; [
-      gsconnect
-      blur-my-shell
-      just-perfection
-      media-controls
-      appindicator
-    ])
-    ++ [
-      whitesur-gtk-theme
-      gnome-tweaks
-    ];
+    environment.systemPackages =
+      with pkgs;
+      (with gnomeExtensions; [
+        gsconnect
+        blur-my-shell
+        just-perfection
+        media-controls
+        appindicator
+      ])
+      ++ [
+        whitesur-gtk-theme
+        gnome-tweaks
+      ];
   };
 }

@@ -1,27 +1,27 @@
-  { pkgs-unstable, ... }:
+{ pkgs-unstable, ... }:
 
-  {
-    services.udev.packages = [ pkgs-unstable.swayosd ];
+{
+  services.udev.packages = [ pkgs-unstable.swayosd ];
 
-    environment.systemPackages = [
-      pkgs-unstable.swayosd
+  environment.systemPackages = [
+    pkgs-unstable.swayosd
+  ];
+
+  systemd.user.services.sway-osd = {
+    description = "Sway OSD";
+    wantedBy = [ "graphical-session.target" ];
+    after = [
+      "graphical-session.target"
+      "xdg-desktop-autostart.target"
     ];
-
-    systemd.user.services.sway-osd = {
-      description = "Sway OSD";
-      wantedBy = [ "graphical-session.target" ];
-      after = [
-        "graphical-session.target"
-        "xdg-desktop-autostart.target"
-      ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${pkgs-unstable.swayosd}/bin/swayosd-server";
-        Restart = "on-failure";
-      };
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "${pkgs-unstable.swayosd}/bin/swayosd-server";
+      Restart = "on-failure";
     };
+  };
 
-    systemd.services.swayosd-libinput-backend = {
+  systemd.services.swayosd-libinput-backend = {
     description = "SwayOSD LibInput backend for listening to certain keys like CapsLock, ScrollLock, VolumeUp, etc.";
     documentation = [ "https://github.com/ErikReider/SwayOSD" ];
     wantedBy = [ "graphical.target" ];

@@ -12,19 +12,27 @@ let
       chmod +x $out/bin/stop.sh
 
       wrapProgram $out/bin/start.sh \
-        --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.qemu pkgs.coreutils pkgs.systemd pkgs.socat pkgs.util-linux ]}
+        --prefix PATH : ${
+          pkgs.lib.makeBinPath [
+            pkgs.qemu
+            pkgs.coreutils
+            pkgs.systemd
+            pkgs.socat
+            pkgs.util-linux
+          ]
+        }
 
       wrapProgram $out/bin/stop.sh \
         --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.socat ]}
     '';
   };
 in
-  {
-    environment.systemPackages = ([
-      vmScripts
-    ]) 
-    
-    ++
+{
+  environment.systemPackages = ([
+    vmScripts
+  ])
+
+  ++
 
     (with pkgs; [
       virt-viewer
@@ -32,7 +40,7 @@ in
       waypipe
     ])
 
-    ++
+  ++
 
     (with pkgs-unstable; [
       qemu
@@ -41,15 +49,16 @@ in
       mesa
       libglvnd
       libGL
-    ])
-    ;
+    ]);
 
-    virtualisation.spiceUSBRedirection.enable = true;
+  virtualisation.spiceUSBRedirection.enable = true;
 
-    systemd.user.services.msft-vm = let
+  systemd.user.services.msft-vm =
+    let
       qmpSock = "%t/msft-vm-ga.sock";
       qgaSock = "%t/msft-vm-qmp.sock";
-    in {
+    in
+    {
       description = "Microsoft in-tuned VM";
       wantedBy = [ "default.target" ];
       serviceConfig = {

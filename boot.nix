@@ -1,4 +1,4 @@
-{pkgs, lib, ...}:
+{ pkgs, lib, ... }:
 {
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelPackages = pkgs.linuxPackages_latest;
@@ -20,7 +20,15 @@
     preferStaticEmulators = true;
   };
 
-  boot.supportedFilesystems = [ "btrfs" "ext4" "vfat" "ntfs" "f2fs" "xfs" "ntfs-3g" ];
+  boot.supportedFilesystems = [
+    "btrfs"
+    "ext4"
+    "vfat"
+    "ntfs"
+    "f2fs"
+    "xfs"
+    "ntfs-3g"
+  ];
 
   # per GPT, may help with BT firmware issue where the device just quit working
   # after suspend and I had to completely pull the power to get it working again

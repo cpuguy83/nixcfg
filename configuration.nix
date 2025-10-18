@@ -2,7 +2,12 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ pkgs, pkgs-unstable, inputs, ... }:
+{
+  pkgs,
+  pkgs-unstable,
+  inputs,
+  ...
+}:
 {
   imports = [
     ./hardware.nix
@@ -15,7 +20,7 @@
   '';
 
   nix.optimise.automatic = true;
-  nix.optimise.dates = ["03:45"];
+  nix.optimise.dates = [ "03:45" ];
   nix.gc = {
     automatic = true;
     dates = "daily";
@@ -74,7 +79,16 @@
   users.users.cpuguy83 = {
     isNormalUser = true;
     description = "Brian Goff";
-    extraGroups = [ "networkmanager" "wheel" "docker" "kvm" "video" "audio" "render" "input" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "docker"
+      "kvm"
+      "video"
+      "audio"
+      "render"
+      "input"
+    ];
     packages = with pkgs; [
       pkgs-unstable.ghostty
       stow
@@ -104,7 +118,7 @@
     ];
   };
 
-  users.groups.docker.members = ["cpuguy83"];
+  users.groups.docker.members = [ "cpuguy83" ];
 
   nixpkgs.config.allowUnfree = true;
 
@@ -130,7 +144,6 @@
     nodejs_24
     vscode
   ];
-
 
   # Sets proper link paths for packages using binaries not compiled against nix
   # (i.e. vscode's nodejs).

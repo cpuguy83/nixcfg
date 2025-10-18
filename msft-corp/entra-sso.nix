@@ -1,15 +1,36 @@
-{  lib, stdenv, fetchFromGitHub, python3, makeWrapper, wrapGAppsNoGuiHook, glib,  gobject-introspection }:
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  python3,
+  makeWrapper,
+  wrapGAppsNoGuiHook,
+  glib,
+  gobject-introspection,
+}:
 
 let
-  pythonEnv = python3.withPackages (ps: with ps; [ pydbus pygobject3 ]);
+  pythonEnv = python3.withPackages (
+    ps: with ps; [
+      pydbus
+      pygobject3
+    ]
+  );
 in
 
 stdenv.mkDerivation rec {
   pname = "linux-entra-sso-host";
   version = "1.5.1"; # update as needed
 
-  nativeBuildInputs = [ makeWrapper wrapGAppsNoGuiHook ];
-  buildInputs = [ pythonEnv glib gobject-introspection];
+  nativeBuildInputs = [
+    makeWrapper
+    wrapGAppsNoGuiHook
+  ];
+  buildInputs = [
+    pythonEnv
+    glib
+    gobject-introspection
+  ];
 
   src = fetchFromGitHub {
     owner = "siemens";

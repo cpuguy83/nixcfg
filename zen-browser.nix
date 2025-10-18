@@ -1,9 +1,15 @@
-{ pkgs, pkgs-unstable, inputs, ... }:
+{
+  pkgs,
+  pkgs-unstable,
+  inputs,
+  ...
+}:
 
 let
   addons = pkgs.firefox-addons;
   onepassword = addons."1password-x-password-manager";
-in {
+in
+{
   environment.systemPackages = [
     pkgs-unstable.firefoxpwa
   ];
@@ -35,12 +41,18 @@ in {
                 {
                   template = "https://search.nixos.org/packages";
                   params = [
-                    { name = "channel"; value = "unstable"; }
-                    { name = "query";   value = "{searchTerms}"; }
+                    {
+                      name = "channel";
+                      value = "unstable";
+                    }
+                    {
+                      name = "query";
+                      value = "{searchTerms}";
+                    }
                   ];
                 }
               ];
-              icon           = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
+              icon = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
               definedAliases = [ "@np" ];
             };
 
@@ -50,12 +62,18 @@ in {
                 {
                   template = "https://search.nixos.org/options";
                   params = [
-                    { name = "channel"; value = "unstable"; }
-                    { name = "query";   value = "{searchTerms}"; }
+                    {
+                      name = "channel";
+                      value = "unstable";
+                    }
+                    {
+                      name = "query";
+                      value = "{searchTerms}";
+                    }
                   ];
                 }
               ];
-              icon           = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
+              icon = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
               definedAliases = [ "@no" ];
             };
 
@@ -65,19 +83,21 @@ in {
                 {
                   template = "https://wiki.nixos.org/w/index.php";
                   params = [
-                    { name = "search"; value = "{searchTerms}"; }
+                    {
+                      name = "search";
+                      value = "{searchTerms}";
+                    }
                   ];
                 }
               ];
-              icon           = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
+              icon = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
               definedAliases = [ "@nw" ];
             };
           };
         };
       };
 
-
-      nativeMessagingHosts = [pkgs-unstable.firefoxpwa];
+      nativeMessagingHosts = [ pkgs-unstable.firefoxpwa ];
       policies = {
         AutofillAddressEnabled = true;
         AutofillCreditCardEnabled = false;
@@ -106,4 +126,3 @@ in {
     };
   };
 }
-

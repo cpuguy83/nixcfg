@@ -1,10 +1,15 @@
-{ plugin-packages, inputs, pkgs, ... }:
+{
+  plugin-packages,
+  inputs,
+  pkgs,
+  ...
+}:
 {
   home-manager.users.cpuguy83.home.file.".local/bin/exec_yazi" = {
     text = ''
-#!/usr/bin/env bash
-source ~/.bashrc
-exec ${pkgs.yazi}/bin/yazi "$@"
+      #!/usr/bin/env bash
+      source ~/.bashrc
+      exec ${pkgs.yazi}/bin/yazi "$@"
     '';
     executable = true;
   };
@@ -103,7 +108,6 @@ exec ${pkgs.yazi}/bin/yazi "$@"
         "float, class:^(zoom)$, initialTitle:^(Zoom Workplace - Free account)$"
         "size 40%, class:^(zoom)$, initialTitle:^(Zoom Workplace - Free account)$"
       ];
-
 
       decoration = {
         rounding = 10;

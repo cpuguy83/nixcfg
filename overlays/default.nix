@@ -5,5 +5,3 @@
     (import ./vscode.nix)
   ];
 }
-
-
