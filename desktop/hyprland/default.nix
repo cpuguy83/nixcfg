@@ -61,7 +61,7 @@ in
         wantedBy = [ "default.target" ];
       };
 
-      environment.systemPackages = with pkgs; [
+      home-manager.users.cpuguy83.home.packages = with pkgs; [
         # Needed because hyprland uses kitty as the default terminal
         kitty
         ghostty
