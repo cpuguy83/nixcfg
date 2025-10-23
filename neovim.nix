@@ -136,7 +136,7 @@
       }
       {
         mode = "n";
-        key = "<C-b>";
+        key = "<leader>b";
         action = "<cmd>DapToggleBreakpoint<CR>";
       }
     ];
