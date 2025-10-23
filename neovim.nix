@@ -17,6 +17,11 @@
     plugins.gitblame.enable = true;
     plugins.lightline.enable = true;
     plugins.treesitter.enable = true;
+
+    plugins.telescope.enable = true;
+    # Needed by telescope
+    plugins.web-devicons.enable = true;
+
     plugins.copilot-lsp.enable = true;
     plugins.copilot-chat.enable = true;
     plugins.copilot-lua = {
@@ -93,7 +98,6 @@
       vim-nix
       vim-go
       vim-toml
-      neovim-fuzzy
       molokai
       nerdtree
       vim-fugitive
@@ -127,7 +131,7 @@
     keymaps = [
       {
         key = "<C-p>";
-        action = "<cmd>FuzzyOpen<CR>";
+        action = ''<cmd>lua require("telescope.builtin").find_files()<CR>'';
       }
       {
         mode = "i";
