@@ -17,6 +17,7 @@
     plugins.gitblame.enable = true;
     plugins.lightline.enable = true;
     plugins.treesitter.enable = true;
+    plugins.neogit.enable = true;
 
     plugins.telescope.enable = true;
     # Needed by telescope
@@ -142,6 +143,11 @@
         mode = "n";
         key = "<leader>b";
         action = "<cmd>DapToggleBreakpoint<CR>";
+      }
+      {
+        mode = "n";
+        key = "<leader>gs";
+        action = "<cmd>Neogit<CR>";
       }
     ];
   };
