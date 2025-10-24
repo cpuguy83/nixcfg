@@ -237,17 +237,17 @@ in
           # Determine if the current session is locked
           sid="$(loginctl | awk -v user="$USER" '$3 == user {print $1; exit}')"
           [ -z "$sid" ] && exit
-          locked="$(loginctl show-session "$sid" -p LockedHint | cut -d= -f2)"
+          # locked="$(loginctl show-session "$sid" -p LockedHint | cut -d= -f2)"
 
           # If the session is not locked there is nothing to do
-          if [ "$locked" != "yes" ]; then
-            echo "Session is not locked. Exiting." >&2
-            exit
-          fi
+          # if [ "$locked" != "yes" ]; then
+          #   echo "Session is not locked. Exiting." >&2
+          #   exit
+          # fi
 
           # restore hyprlock
           echo "Session is locked. Restarting hyprlock..." >&2
-          hyprctl --instance 0 'keyword misc:allow_session_lock_restore=1' && \
+          hyprctl --instance 0 'keyword misc:allow_session_lock_restore 1' && \
           hyprctl --instance 0 'dispatch exec hyprlock'
         '';
         executable = true;
