@@ -55,7 +55,7 @@
         "DP-2,preferred,auto-left,auto"
       ];
 
-      "$menu" = "fuzzel";
+      "$menu" = "uwsm app -- fuzzel";
       bind = [
         "$mod SHIFT, Q, exec, $terminal"
         "$mod, Q, killactive,"

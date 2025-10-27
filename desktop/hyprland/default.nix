@@ -67,7 +67,6 @@ in
         ghostty
 
         pavucontrol
-        fuzzel
         hyprpolkitagent
         kdePackages.dolphin
         brightnessctl
@@ -83,6 +82,14 @@ in
 
         xdg-desktop-portal-termfilechooser
       ];
+
+      home-manager.users.cpuguy83.programs.fuzzel = {
+        enable = true;
+        settings.main = {
+          terminal = "ghostty";
+          launch-prefix = "uwsm app --";
+        };
+      };
 
       home-manager.users.cpuguy83.home.file.".config/xdg-desktop-portal-termfilechooser/ghostty-wrapper.sh" =
         {
