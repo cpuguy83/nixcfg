@@ -17,6 +17,15 @@
         KernelExperimental = true;
       };
     };
+    disabledPlugins = [
+      "StatusIcon"
+      "ShowConnected"
+      "ConnectionNotifier"
+      "DhcpClient"
+      "NetUsage"
+      "PPPSupport"
+      "StatusNotifierItem"
+    ];
   };
 
   services.blueman.enable = true;
