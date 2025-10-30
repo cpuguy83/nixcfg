@@ -21,7 +21,7 @@ in
 {
   config = mkIf (config.desktop.de == "hyprland") (mkMerge [
     (import ./login.nix { inherit lib pkgs hyprland; })
-    (import ./osd.nix { inherit pkgs-unstable; })
+    (import ./osd.nix { inherit pkgs pkgs-unstable; })
     (import ./shell.nix {
       inherit
         home-manager
