@@ -58,6 +58,10 @@
       };
     };
 
+    plugins.nvim-tree = {
+      enable = true;
+    };
+
     plugins.dap = {
       enable = true;
     };
@@ -124,7 +128,6 @@
       vim-go
       vim-toml
       molokai
-      nerdtree
       vim-fugitive
       vim-sensible
       coc-nvim
