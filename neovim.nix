@@ -19,7 +19,10 @@
     plugins.treesitter.enable = true;
     plugins.neogit.enable = true;
 
-    plugins.telescope.enable = true;
+    plugins.telescope = {
+      enable = true;
+      luaConfig.post = builtins.readFile ./neovim/telescope.lua;
+    };
     # Needed by telescope
     plugins.web-devicons.enable = true;
 
@@ -139,22 +142,9 @@
       listchars = "tab:▸ ";
     };
 
-    extraConfigLua = ''
-      vim.keymap.set("i", "<Tab>", function()
-        local copilot = require("copilot.suggestion")
-        if copilot.is_visible() then
-          copilot.accept()
-        else
-          return vim.api.nvim_replace_termcodes("<Tab>", true, true, true)
-        end
-      end, { expr = true })
-    '';
+    extraConfigLua = builtins.readFile ./neovim/extra.lua;
 
     keymaps = [
-      {
-        key = "<C-p>";
-        action = ''<cmd>lua require("telescope.builtin").find_files()<CR>'';
-      }
       {
         mode = "i";
         key = "<C-Space>";
