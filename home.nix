@@ -10,8 +10,11 @@
 
   imports = [
     inputs.nixvim.homeModules.nixvim
-    ./neovim.nix
+    ./modules/home
+    ./modules/shared
   ];
+
+  # config.desktop.de = "hyprland";
 
   home.pointerCursor = {
     enable = true;
@@ -46,4 +49,7 @@
       name = "WhiteSur-cursors-light";
     };
   };
+
+  services.gnome-keyring.enable = true;
+  mine.desktop.hyprland.enable = true;
 }

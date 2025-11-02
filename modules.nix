@@ -2,7 +2,6 @@
 
 {
   imports = [
-    ./desktop
     ./docker
     ./msft-corp
     ./1password.nix

@@ -2,10 +2,11 @@
   plugin-packages,
   inputs,
   pkgs,
+  hyprland-packages,
   ...
 }:
 {
-  home-manager.users.cpuguy83.home.file.".local/bin/exec_yazi" = {
+  home.file.".local/bin/exec_yazi" = {
     text = ''
       #!/usr/bin/env bash
       source ~/.bashrc
@@ -13,10 +14,11 @@
     '';
     executable = true;
   };
-  home-manager.users.cpuguy83.wayland.windowManager.hyprland = {
+
+  wayland.windowManager.hyprland = {
     enable = true;
-    package = null;
-    portalPackage = null;
+    package = null; # hyprland-packages.hyprland;
+    portalPackage = null; # hyprland-packages.xdg-desktop-portal-hyprland;
 
     plugins = with plugin-packages; [
       hyprbars
@@ -53,6 +55,10 @@
       monitor = [
         "DP-1,preferred,auto-right,auto"
         "DP-2,preferred,auto-left,auto"
+
+        # DP-3 is used purely as
+        "DP-3,disable"
+        "HDMI-A-3,disable"
       ];
 
       "$menu" = "uwsm app -- fuzzel";

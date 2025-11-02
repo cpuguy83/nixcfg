@@ -12,6 +12,9 @@
   imports = [
     ./hardware.nix
     ./overlays
+    ./osd.nix
+    ./modules/shared
+    ./modules/nixos
     (import "${inputs.home-manager}/nixos")
   ];
 
@@ -256,8 +259,33 @@
     };
   };
 
+  msft-corp.enable = true;
+
+  programs.kdeconnect.enable = true;
+  services.dbus.packages = with pkgs; [
+    kdePackages.kdeconnect-kde
+    dconf
+  ];
+
   services.flatpak.enable = true;
 
-  desktop.de = "hyprland";
-  msft-corp.enable = true;
+  security.pam.services.login.enableGnomeKeyring = true;
+  security.pam.services.su.enableGnomeKeyring = true;
+  security.pam.services.sudo.enableGnomeKeyring = true;
+
+  systemd.user.services.udisks2.enable = true;
+
+  mine.desktop.hyprland.enable = true;
+  xdg.portal.enable = true;
+  programs.dconf.enable = true;
+
+  systemd.user.services.mpris-proxy = {
+    description = "Mpris proxy";
+    after = [
+      "network.target"
+      "sound.target"
+    ];
+    wantedBy = [ "default.target" ];
+  };
+
 }

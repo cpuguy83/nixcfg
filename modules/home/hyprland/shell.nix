@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 {
-  home-manager.users.cpuguy83.services.swaync = {
+  services.swaync = {
     enable = true;
     settings = {
       notification-2fa-action = true;
@@ -29,9 +29,9 @@
     };
   };
 
-  home-manager.users.cpuguy83.home.file.".config/swaync/style.css".source = ./swaync-style.css;
+  home.file.".config/swaync/style.css".source = ./swaync-style.css;
 
-  home-manager.users.cpuguy83.programs.yazi = {
+  programs.yazi = {
     enable = true;
     plugins = with pkgs.yaziPlugins; {
       mount = mount;
@@ -87,7 +87,7 @@
     };
   };
 
-  home-manager.users.cpuguy83.programs.waybar = {
+  programs.waybar = {
     enable = true;
     systemd.enable = true;
     style = builtins.readFile ./waybar.css;

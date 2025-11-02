@@ -1,10 +1,7 @@
 { pkgs, ... }:
 
 {
-  programs.hyprlock.enable = true;
-  security.pam.services.hyprlock.u2fAuth = true;
-
-  home-manager.users.cpuguy83.programs.hyprlock = {
+  programs.hyprlock = {
     package = pkgs.hyprlock;
     enable = true;
     settings = {

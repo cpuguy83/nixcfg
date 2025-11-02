@@ -17,11 +17,10 @@ let
     [manager]
     show_hidden = false
   '';
+  cfg = config.mine.desktop.hyprland;
 in
 {
-  config = mkIf (config.desktop.de == "hyprland") (mkMerge [
-    (import ./login.nix { inherit lib pkgs hyprland; })
-    (import ./osd.nix { inherit pkgs pkgs-unstable; })
+  config = mkIf (cfg.enable) (mkMerge [
     (import ./shell.nix {
       inherit
         home-manager
@@ -31,37 +30,23 @@ in
         ;
     })
     (import ./lockscreen.nix { inherit pkgs home-manager; })
-    (import ./settings.nix { inherit pkgs plugin-packages inputs; })
+    (import ./settings.nix {
+      inherit
+        pkgs
+        plugin-packages
+        inputs
+        hyprland-packages
+        ;
+    })
     ({
-      services.gnome.gnome-keyring.enable = true;
-      security.pam.services.login.enableGnomeKeyring = true;
-      security.pam.services.su.enableGnomeKeyring = true;
-      security.pam.services.sudo.enableGnomeKeyring = true;
+      systemd.user.services.gnome.glib-networking.enable = true;
 
-      programs.hyprland = {
-        package = hyprland;
-        portalPackage = hyprland-packages.xdg-desktop-portal-hyprland;
-        enable = true;
-        withUWSM = true;
-        xwayland.enable = true;
-      };
+      xdg.portal.extraPortals = [
+        hyprland-packages.xdg-desktop-portal-hyprland
+        pkgs.xdg-desktop-portal-gtk
+      ];
 
-      services.gnome.glib-networking.enable = true;
-      services.hypridle.enable = true;
-      # services.blueman.enable = true;
-
-      programs.uwsm.enable = true;
-
-      systemd.user.services.mpris-proxy = {
-        description = "Mpris proxy";
-        after = [
-          "network.target"
-          "sound.target"
-        ];
-        wantedBy = [ "default.target" ];
-      };
-
-      home-manager.users.cpuguy83.home.packages = with pkgs; [
+      home.packages = with pkgs; [
         # Needed because hyprland uses kitty as the default terminal
         kitty
         ghostty
@@ -83,7 +68,7 @@ in
         xdg-desktop-portal-termfilechooser
       ];
 
-      home-manager.users.cpuguy83.programs.fuzzel = {
+      programs.fuzzel = {
         enable = true;
         settings.main = {
           terminal = "ghostty";
@@ -91,31 +76,30 @@ in
         };
       };
 
-      home-manager.users.cpuguy83.home.file.".config/xdg-desktop-portal-termfilechooser/ghostty-wrapper.sh" =
-        {
-          text = ''
-            #!${pkgs.bash}/bin/bash
-            set -eo pipefail
+      home.file.".config/xdg-desktop-portal-termfilechooser/ghostty-wrapper.sh" = {
+        text = ''
+          #!${pkgs.bash}/bin/bash
+          set -eo pipefail
 
-            export PATH="${
-              lib.makeBinPath [
-                pkgs.bash
-                pkgs.coreutils
-                pkgs.yazi
-                pkgs.ghostty
-              ]
-            }:$PATH"
-            export YAZI_CONFIG_HOME="${yaziFilepickerConfig}/yazi"
-            export XDG_CONFIG_HOME="''${HOME}/.config"
+          export PATH="${
+            lib.makeBinPath [
+              pkgs.bash
+              pkgs.coreutils
+              pkgs.yazi
+              pkgs.ghostty
+            ]
+          }:$PATH"
+          export YAZI_CONFIG_HOME="${yaziFilepickerConfig}/yazi"
+          export XDG_CONFIG_HOME="''${HOME}/.config"
 
-            export TERMCMD="${lib.getExe pkgs.ghostty} --class=com.mitchellh.ghostty.filepicker --title='Yazi File Picker' -e"
+          export TERMCMD="${lib.getExe pkgs.ghostty} --class=com.mitchellh.ghostty.filepicker --title='Yazi File Picker' -e"
 
-            exec ${pkgs.xdg-desktop-portal-termfilechooser}/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh "$@"
-          '';
-          executable = true;
-        };
+          exec ${pkgs.xdg-desktop-portal-termfilechooser}/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh "$@"
+        '';
+        executable = true;
+      };
 
-      home-manager.users.cpuguy83.home.file.".config/xdg-desktop-portal-termfilechooser/config" = {
+      home.file.".config/xdg-desktop-portal-termfilechooser/config" = {
         text = ''
           [filechooser]
           cmd=ghostty-wrapper.sh
@@ -125,51 +109,7 @@ in
         '';
       };
 
-      services.udisks2.enable = true;
-
-      programs.kdeconnect.enable = true;
-      services.dbus.packages = with pkgs; [
-        kdePackages.kdeconnect-kde
-      ];
-
-      systemd.user.services.xdg-desktop-portal-termfilechooser = {
-        description = "Portal service (terminal file chooser implementation)";
-        wantedBy = [ "graphical-session.target" ];
-        partOf = [ "graphical-session.target" ];
-        after = [ "graphical-session.target" ];
-      };
-
-      systemd.user.services.kdeconnectd = {
-        enable = true;
-        description = "KDE Connect Daemon";
-        wantedBy = [ "graphical-session.target" ];
-        after = [
-          "graphical-session.target"
-          "xdg-desktop-autostart.target"
-        ];
-        serviceConfig = {
-          Type = "simple";
-          ExecStart = "${pkgs.kdePackages.kdeconnect-kde}/bin/kdeconnectd";
-          Restart = "on-failure";
-        };
-      };
-
-      systemd.user.services.kdeconnect-indicator = {
-        enable = true;
-        description = "KDE Connect Indicator";
-        wantedBy = [ "graphical-session.target" ];
-        after = [
-          "graphical-session.target"
-          "xdg-desktop-autostart.target"
-        ];
-        serviceConfig = {
-          Type = "simple";
-          ExecStart = "${pkgs.kdePackages.kdeconnect-kde}/bin/kdeconnect-indicator";
-          Restart = "on-failure";
-        };
-      };
-
-      environment.sessionVariables = {
+      home.sessionVariables = {
         WLR_NO_HARDWARE_CURSORS = "1";
         NIXOS_OZONE_WL = "1";
         GDK_BACKEND = "wayland"; # Essential for GTK apps in Wayland
@@ -178,38 +118,12 @@ in
         _JAVA_AWT_WM_NONREPARENTING = "1"; # For Java apps compatibility
       };
 
-      xdg.portal = {
-        enable = true;
-        extraPortals = with hyprland-packages; [
-          xdg-desktop-portal-hyprland
-          pkgs.xdg-desktop-portal-gtk
-          pkgs.xdg-desktop-portal-termfilechooser
-        ];
-        config = {
-          common."org.freedesktop.impl.portal.FileChooser" = "termfilechooser";
-          Hyprland = {
-            default = [
-              "hyprland"
-              "gtk"
-            ];
-            "org.freedesktop.impl.portal.FileChooser" = "termfilechooser";
-          };
-          "uwsm-hyprland" = {
-            default = [
-              "hyprland"
-              "gtk"
-            ];
-            "org.freedesktop.impl.portal.FileChooser" = "termfilechooser";
-          };
-        };
-      };
-
-      environment.variables = {
+      home.sessionVariables = {
         GTK_USE_PORTAL = "1";
         GDK_DEBUG = "portals";
       };
 
-      home-manager.users.cpuguy83.home.file.${fix_hyprlock_path} = {
+      home.file.${fix_hyprlock_path} = {
         text = ''
           #!${pkgs.bash}/bin/bash
 
@@ -260,7 +174,7 @@ in
         executable = true;
       };
 
-      home-manager.users.cpuguy83.systemd.user.services.fix-hyprlock = {
+      systemd.user.services.fix-hyprlock = {
         Unit = {
           Description = "Fix hyprlock after resume";
           After = [ "suspend.target" ];
@@ -274,7 +188,7 @@ in
         };
       };
 
-      home-manager.users.cpuguy83.services.hypridle = {
+      services.hypridle = {
         enable = true;
         settings = {
           general = {

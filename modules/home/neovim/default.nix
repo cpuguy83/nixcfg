@@ -23,7 +23,7 @@
 
     plugins.telescope = {
       enable = true;
-      luaConfig.post = builtins.readFile ./neovim/telescope.lua;
+      luaConfig.post = builtins.readFile ./telescope.lua;
     };
     # Needed by telescope
     plugins.web-devicons.enable = true;
@@ -72,7 +72,7 @@
       settings = {
         enable_mouse_support = true;
       };
-      luaConfig.post = builtins.readFile ./neovim/yazi.lua;
+      luaConfig.post = builtins.readFile ./yazi.lua;
     };
 
     plugins.dap = {
@@ -155,7 +155,7 @@
       listchars = "tab:▸ ";
     };
 
-    extraConfigLua = builtins.readFile ./neovim/extra.lua;
+    extraConfigLua = builtins.readFile ./extra.lua;
 
     keymaps = [
       {
