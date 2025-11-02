@@ -19,6 +19,8 @@
     plugins.treesitter.enable = true;
     plugins.neogit.enable = true;
 
+    plugins.nix.enable = true;
+
     plugins.telescope = {
       enable = true;
       luaConfig.post = builtins.readFile ./neovim/telescope.lua;
@@ -28,23 +30,28 @@
 
     plugins.copilot-lsp.enable = true;
     plugins.copilot-chat.enable = true;
+    plugins.copilot-cmp.enable = true;
     plugins.copilot-lua = {
       enable = true;
       settings.suggestion = {
-        enabled = true;
+        enabled = false;
         auto_trigger = false;
       };
-      settings.panel.enabled = true;
+      settings.panel.enabled = false;
     };
+
+    plugins.coq-nvim.enable = true;
 
     plugins.cmp = {
       enable = true;
+      autoEnableSources = true;
       settings = {
         sources = [
           { name = "nvim_lsp"; }
           { name = "path"; }
           { name = "buffer"; }
           { name = "luasnip"; }
+          { name = "copilot"; }
         ];
 
         mapping = {
@@ -58,8 +65,14 @@
       };
     };
 
-    plugins.nvim-tree = {
+    plugins.cmp-nvim-lsp.enable = true;
+
+    plugins.yazi = {
       enable = true;
+      settings = {
+        enable_mouse_support = true;
+      };
+      luaConfig.post = builtins.readFile ./neovim/yazi.lua;
     };
 
     plugins.dap = {
@@ -124,13 +137,10 @@
     };
 
     extraPlugins = with pkgs.vimPlugins; [
-      vim-nix
       vim-go
       vim-toml
       molokai
-      vim-fugitive
       vim-sensible
-      coc-nvim
     ];
 
     colorscheme = "molokai";
