@@ -29,6 +29,8 @@
     whitesur-icon-theme
     whitesur-cursors
 
+    gcr
+
     pkgs-unstable.codex
     pkgs-unstable.claude-code
   ];
