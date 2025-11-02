@@ -11,7 +11,6 @@ let
   inherit (lib) mkIf mkMerge;
   plugin-packages = inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system};
   hyprland-packages = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
-  hyprland = hyprland-packages.hyprland;
   fix_hyprlock_path = ".local/bin/fix-hyprlock.sh";
   yaziFilepickerConfig = pkgs.writeTextDir "yazi/config/yazi.toml" ''
     [manager]
@@ -23,13 +22,12 @@ in
   config = mkIf (cfg.enable) (mkMerge [
     (import ./shell.nix {
       inherit
-        home-manager
         pkgs
         inputs
         lib
         ;
     })
-    (import ./lockscreen.nix { inherit pkgs home-manager; })
+    (import ./lockscreen.nix { inherit pkgs; })
     (import ./settings.nix {
       inherit
         pkgs
@@ -39,7 +37,16 @@ in
         ;
     })
     ({
+      systemd.user.services.gnome.gnome-keyring.enable = true;
       systemd.user.services.gnome.glib-networking.enable = true;
+      systemd.user.services.polkit-gnome = {
+        Unit.Description = "Polkit GNOME authentication agent";
+        Service = {
+          ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
+          Restart = "on-failure";
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
+      };
 
       xdg.portal.extraPortals = [
         hyprland-packages.xdg-desktop-portal-hyprland
@@ -52,7 +59,6 @@ in
         ghostty
 
         pavucontrol
-        hyprpolkitagent
         kdePackages.dolphin
         brightnessctl
         playerctl
