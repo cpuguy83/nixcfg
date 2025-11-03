@@ -5,6 +5,10 @@
   hyprland-packages,
   ...
 }:
+let
+  brightnessScript = pkgs.writeScriptBin "hyprland-brightness" (builtins.readFile ./brightness.sh);
+  brightnessPath = pkgs.lib.getExe brightnessScript;
+in
 {
   home.file.".local/bin/exec_yazi" = {
     text = ''
@@ -93,8 +97,8 @@
         ", XF86AudioMute, exec, swayosd-client --output-volume mute-toggle"
         ", XF86AudioMicMute, exec, swayosd-client --input-volume mute-toggle"
         ", XF86AudioPlay, exec, playerctl play-pause"
-        ", XF86MonBrightnessUp, exec, swayosd-client --brightness +2"
-        ", XF86MonBrightnessDown, exec, swayosd-client --brightness -2"
+        ", XF86MonBrightnessUp, exec, ${brightnessPath} up 2"
+        ", XF86MonBrightnessDown, exec, ${brightnessPath} down 2"
       ];
 
       windowrule = [
