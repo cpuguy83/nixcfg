@@ -10,10 +10,6 @@ let
   onepassword = addons."1password-x-password-manager";
 in
 {
-  environment.systemPackages = [
-    pkgs-unstable.firefoxpwa
-  ];
-
   environment.sessionVariables.MOZ_ENBALE_WAYLAND = "1";
 
   home-manager.users.cpuguy83 = {
@@ -30,7 +26,6 @@ in
             ublock-origin
             sponsorblock
             gsconnect
-            pwas-for-firefox
             onepassword
           ];
           search.force = true;
@@ -97,7 +92,6 @@ in
         };
       };
 
-      nativeMessagingHosts = [ pkgs-unstable.firefoxpwa ];
       policies = {
         AutofillAddressEnabled = true;
         AutofillCreditCardEnabled = false;
