@@ -33,6 +33,8 @@
 
     pkgs-unstable.codex
     pkgs-unstable.claude-code
+
+    yubioath-flutter
   ];
 
   gtk = {
