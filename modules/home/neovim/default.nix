@@ -18,6 +18,7 @@
     plugins.lightline.enable = true;
     plugins.treesitter.enable = true;
     plugins.neogit.enable = true;
+    plugins.diffview.enable = true;
 
     plugins.nix.enable = true;
 
@@ -172,6 +173,11 @@
         mode = "n";
         key = "<leader>gs";
         action = "<cmd>Neogit<CR>";
+      }
+      {
+        mode = "n";
+        key = "<leader>diff";
+        action = "<cmd>DiffviewOpen<CR>";
       }
     ];
   };
