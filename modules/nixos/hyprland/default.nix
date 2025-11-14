@@ -10,7 +10,9 @@ let
   hyprPkg = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
 in
 {
-  imports = [ ./greetd.nix ];
+  imports = [
+    ./greetd.nix
+  ];
   config = lib.mkIf cfg.enable {
     security.pam.services.hyprlock.u2fAuth = true;
 
@@ -22,9 +24,9 @@ in
       # };
     };
 
-    programs.hyprland = {
-      package = hyprPkg.hyprland;
-      portalPackage = hyprPkg.xdg-desktop-portal-hyprland;
+    programs.hyprland = with hyprPkg; {
+      package = hyprland;
+      portalPackage = xdg-desktop-portal-hyprland;
       enable = true;
       withUWSM = true;
       xwayland.enable = true;

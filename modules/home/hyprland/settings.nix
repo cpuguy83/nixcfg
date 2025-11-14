@@ -1,5 +1,4 @@
 {
-  plugin-packages,
   inputs,
   pkgs,
   hyprland-packages,
@@ -8,6 +7,7 @@
 let
   brightnessScript = pkgs.writeScriptBin "hyprland-brightness" (builtins.readFile ./brightness.sh);
   brightnessPath = pkgs.lib.getExe brightnessScript;
+  plugins = inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system};
 in
 {
   home.file.".local/bin/exec_yazi" = {
@@ -21,13 +21,12 @@ in
 
   wayland.windowManager.hyprland = {
     enable = true;
-    package = null; # hyprland-packages.hyprland;
-    portalPackage = null; # hyprland-packages.xdg-desktop-portal-hyprland;
+    package = null;
+    portalPackage = null;
 
-    plugins = with plugin-packages; [
+    plugins = with plugins; [
       hyprbars
-      hyprexpo
-      inputs.hyprtasking.packages.${pkgs.system}.hyprtasking
+      pkgs.hyprtasking
     ];
 
     settings = {

@@ -23,7 +23,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hyprland.url = "github:hyprwm/hyprland/v0.51.1";
+    hyprland.url = "github:hyprwm/hyprland/v0.52.1";
     hyprland-plugins = {
       url = "github:hyprwm/hyprland-plugins";
       inputs.hyprland.follows = "hyprland";
@@ -41,7 +41,7 @@
 
     hyprtasking = {
       # url = "github:raybbian/hyprtasking";
-      url = "github:r00t3g/hyprtasking/9388b8ca1bd53a5bfa89b1a6caec7a801df0b6aa"; # fork with fixes for hyprland 0.51
+      url = "github:r00t3g/hyprtasking/9611bbd0db23bba9508da44f65989a7dc664d0a9"; # fork with fixes for hyprland 0.51
       inputs.hyprland.follows = "hyprland";
     };
 
@@ -61,10 +61,9 @@
 
   outputs =
     {
+      self,
       nixpkgs,
       nixpkgs-unstable,
-      home-manager,
-      hyprland,
       ...
     }@inputs:
     let
@@ -85,6 +84,8 @@
             (
               { ... }:
               {
+                nixpkgs.config.allowUnfree = true;
+
                 nix.settings.substituters = [
                   "https://hyprland.cachix.org"
                 ];
@@ -96,16 +97,17 @@
                 nix.settings.trusted-public-keys = [
                   "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
                 ];
-
-                nixpkgs.config.allowUnfree = true;
               }
             )
             ({
+
               nixpkgs.overlays = [
                 inputs.waybar.overlays.default
                 inputs.firefox-addons.overlays.default
                 inputs.nixd.overlays.default
+                # (import ./overlays/hyprtasking.nix { inherit inputs; })
               ];
+
               home-manager.useUserPackages = true;
               home-manager.useGlobalPkgs = true;
               home-manager.extraSpecialArgs = {

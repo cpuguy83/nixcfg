@@ -9,7 +9,6 @@
 with lib;
 let
   inherit (lib) mkIf mkMerge;
-  plugin-packages = inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system};
   hyprland-packages = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
   fix_hyprlock_path = ".local/bin/fix-hyprlock.sh";
   yaziFilepickerConfig = pkgs.writeTextDir "yazi/config/yazi.toml" ''
@@ -31,7 +30,6 @@ in
     (import ./settings.nix {
       inherit
         pkgs
-        plugin-packages
         inputs
         hyprland-packages
         ;
