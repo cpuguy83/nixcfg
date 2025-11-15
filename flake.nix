@@ -46,7 +46,7 @@
     };
 
     waybar = {
-      url = "github:Alexays/Waybar";
+      url = "github:Alexays/Waybar/0.14.0";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
@@ -105,7 +105,6 @@
                 inputs.waybar.overlays.default
                 inputs.firefox-addons.overlays.default
                 inputs.nixd.overlays.default
-                # (import ./overlays/hyprtasking.nix { inherit inputs; })
               ];
 
               home-manager.useUserPackages = true;
