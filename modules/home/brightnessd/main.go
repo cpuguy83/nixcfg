@@ -70,7 +70,7 @@ func i2cWrite(fd uintptr, addr uint16, data []byte) error {
 		return fmt.Errorf("i2c write ioctl failed: errno=%v", errno)
 	}
 
-	slog.Info("i2c write successful", "addr", fmt.Sprintf("0x%02x", addr), "bytes", len(data), "ret", ret)
+	slog.Debug("i2c write successful", "addr", fmt.Sprintf("0x%02x", addr), "bytes", len(data), "ret", ret)
 
 	return nil
 }
@@ -119,8 +119,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	connAliases := collectConnectorAliases(deviceBase)
+
 	h := handler{
-		dm: &DeviceManager{idx: devices},
+		dm: newDeviceManager(devices, connAliases),
 	}
 
 	for _, dev := range devices {
@@ -398,7 +400,7 @@ func detectDevices(base string) (map[string]*DeviceState, error) {
 			continue
 		}
 
-		st := newDeviceState(d, id, devPath)
+		st := newDeviceState(d, id, devPath, entry.Name())
 		if err := st.Load(); err != nil {
 			slog.Error("could not load initial brightness", "serial", serial, "error", err, "devPath", devPath)
 			d.Close()
@@ -484,6 +486,9 @@ type DeviceState struct {
 	EDID  *edid.Edid
 	cond  *sync.Cond
 	val   int
+	Conn  string
+	Alias []string
+	mon   string
 }
 
 func (s *DeviceState) Load() error {
@@ -525,6 +530,25 @@ func (s *DeviceState) Get() int {
 	return i
 }
 
+func (s *DeviceState) SetMonitorAlias(alias string) {
+	s.cond.L.Lock()
+	s.mon = strings.TrimSpace(alias)
+	s.cond.L.Unlock()
+}
+
+func (s *DeviceState) monitorTarget() string {
+	if s.mon != "" {
+		return s.mon
+	}
+	if len(s.Alias) > 0 {
+		return s.Alias[0]
+	}
+	if s.Conn != "" {
+		return s.Conn
+	}
+	return ""
+}
+
 // SetBrightness writes an absolute brightness value using DDC/CI (VCP code 0x10).
 // val is typically 0–100, but you can pass the device's full range if known.
 func setBrightness(fd int, val int) error {
@@ -537,19 +561,6 @@ func setBrightness(fd int, val int) error {
 	if err != nil {
 		return err
 	}
-
-	// TODO: Re-enable verification once read-after-write issue is resolved
-	// The monitor needs time to process the write before it can respond to reads
-	// Currently verification hangs, so disabled for now
-
-	//time.Sleep(200 * time.Millisecond)
-	//updated, _, err := readVCP(dev, 0x10)
-	//if err != nil {
-	//	return err
-	//}
-	//if int(updated) != val {
-	//	return fmt.Errorf("brightness verification failed: expected %d, got %d", val, updated)
-	//}
 
 	return nil
 }
@@ -571,12 +582,17 @@ func (s *DeviceState) Wait() {
 
 		prog := fmt.Sprintf("%.2f", float32(s.val)/100)
 		// Skip swayosd for now
-		if dt, err := exec.Command("swayosd-client", "--custom-progress", prog, "--custom-icon", "display-brightness-symbolic").CombinedOutput(); err != nil {
+		args := []string{"--custom-progress", prog, "--custom-icon", "display-brightness-symbolic"}
+		if mon := s.monitorTarget(); mon != "" {
+			args = append([]string{"--monitor", mon}, args...)
+		}
+
+		if dt, err := exec.Command("swayosd-client", args...).CombinedOutput(); err != nil {
 			slog.Error("could not show osd", "error", err, "output", string(dt))
 			continue
 		}
 
-		slog.Info("set brightness", "brightness", s.val, "progress", prog)
+		slog.Debug("set brightness", "brightness", s.val, "progress", prog)
 	}
 }
 
@@ -612,15 +628,16 @@ func (m *message) UnmarshalText(data string) error {
 	m.monitor = mon
 
 	op, extra, ok := strings.Cut(extra, " ")
+	op = strings.ToLower(op)
 
 	switch op {
-	case "+", "add", "ADD":
+	case "+", "add":
 		m.op = OpAdd
-	case "-", "sub", "SUB":
+	case "-", "sub":
 		m.op = OpSub
-	case "set", "SET", "=":
+	case "set", "=":
 		m.op = OpSet
-	case "get", "GET":
+	case "get":
 		m.op = OpGet
 	default:
 		return fmt.Errorf("invalid operation: %s", op)
@@ -666,29 +683,49 @@ func (h *handler) Handle(msg *message) {
 		state.Set(msg.step)
 	}
 
+	state.SetMonitorAlias(msg.monitor)
 	state.Wake()
 }
 
 type DeviceManager struct {
-	mu  sync.Mutex
-	idx map[string]*DeviceState
+	mu          sync.Mutex
+	idx         map[string]*DeviceState
+	ali         map[string]string
+	connAliases map[string][]string
+}
+
+func newDeviceManager(devices map[string]*DeviceState, connAliases map[string][]string) *DeviceManager {
+	dm := &DeviceManager{
+		idx:         devices,
+		ali:         make(map[string]string),
+		connAliases: connAliases,
+	}
+
+	for id, st := range devices {
+		dm.addAlias(id, id)
+		dm.registerStateAliases(id, st)
+	}
+
+	return dm
 }
 
 func (m *DeviceManager) Get(id string) (*DeviceState, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	d, ok := m.idx[id]
+	canonical := m.lookupAlias(id)
+
+	d, ok := m.idx[canonical]
 	if ok {
 		return d, nil
 	}
 
 	m.mu.Unlock()
-	dev, err := lookupDevice(deviceBase, id)
+	dev, err := lookupDevice(deviceBase, canonical)
 	m.mu.Lock()
 
 	// Handle case where another goroutine added this while we were unlocked
-	d, ok = m.idx[id]
+	d, ok = m.idx[canonical]
 	if ok {
 		d.Dev.Close()
 		return d, nil
@@ -698,9 +735,52 @@ func (m *DeviceManager) Get(id string) (*DeviceState, error) {
 		if err := dev.Load(); err != nil {
 			return nil, err
 		}
-		m.idx[id] = dev
+		m.idx[canonical] = dev
+		m.addAlias(canonical, canonical)
+		m.registerStateAliases(canonical, dev)
 	}
 	return dev, err
+}
+
+func (m *DeviceManager) registerStateAliases(id string, st *DeviceState) {
+	if st == nil {
+		return
+	}
+	for _, alias := range st.Alias {
+		m.addAlias(alias, id)
+	}
+	for _, alias := range m.connAliases[id] {
+		m.addAlias(alias, id)
+	}
+}
+
+func (m *DeviceManager) addAlias(alias, canonical string) {
+	alias = strings.TrimSpace(alias)
+	if alias == "" {
+		return
+	}
+	if m.ali == nil {
+		m.ali = make(map[string]string)
+	}
+	key := strings.ToLower(alias)
+	if _, ok := m.ali[key]; ok {
+		return
+	}
+	m.ali[key] = canonical
+}
+
+func (m *DeviceManager) lookupAlias(id string) string {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return id
+	}
+	if m.ali == nil {
+		return id
+	}
+	if canon, ok := m.ali[strings.ToLower(id)]; ok {
+		return canon
+	}
+	return id
 }
 
 func lookupDevice(base string, serial string) (*DeviceState, error) {
@@ -739,7 +819,7 @@ func lookupDevice(base string, serial string) (*DeviceState, error) {
 				continue
 			}
 			if d != nil {
-				return newDeviceState(d, nil, p), nil
+				return newDeviceState(d, nil, p, entry.Name()), nil
 			}
 		}
 
@@ -775,13 +855,13 @@ func lookupDevice(base string, serial string) (*DeviceState, error) {
 			continue
 		}
 
-		return newDeviceState(d, id, p), nil
+		return newDeviceState(d, id, p, entry.Name()), nil
 	}
 
 	return nil, nil
 }
 
-func newDeviceState(d *i2c.Device, id *edid.Edid, devPath string) *DeviceState {
+func newDeviceState(d *i2c.Device, id *edid.Edid, devPath string, connector string) *DeviceState {
 	// Open raw file descriptor for I2C_RDWR ioctl (for writes)
 	fd, err := syscall.Open(devPath, syscall.O_RDWR, 0)
 	if err != nil {
@@ -791,10 +871,96 @@ func newDeviceState(d *i2c.Device, id *edid.Edid, devPath string) *DeviceState {
 		slog.Debug("opened raw i2c device", "path", devPath, "fd", fd)
 	}
 
+	alias := connectorAliases(connector)
+	slog.Info("device aliases", "connector", connector, "aliases", alias)
+
 	return &DeviceState{
 		Dev:   d,
 		i2cFd: fd,
 		EDID:  id,
 		cond:  sync.NewCond(&sync.Mutex{}),
+		Conn:  connector,
+		Alias: alias,
 	}
+}
+
+func connectorAliases(connector string) []string {
+	var aliases []string
+	connector = strings.TrimSpace(connector)
+	if connector == "" {
+		return aliases
+	}
+
+	aliases = append(aliases, connector)
+	if short := trimConnectorPrefix(connector); short != "" && short != connector {
+		aliases = append(aliases, short)
+	}
+
+	return aliases
+}
+
+func trimConnectorPrefix(connector string) string {
+	if connector == "" {
+		return ""
+	}
+	parts := strings.SplitN(connector, "-", 2)
+	if len(parts) != 2 {
+		return connector
+	}
+	if strings.HasPrefix(parts[0], "card") {
+		return parts[1]
+	}
+	return connector
+}
+
+func collectConnectorAliases(base string) map[string][]string {
+	out := make(map[string][]string)
+
+	for entry, err := range dirIter(base, 20) {
+		if err != nil {
+			continue
+		}
+
+		if !isDirOrLinkDir(base, entry.Name()) {
+			continue
+		}
+
+		dt, err := os.ReadFile(filepath.Join(base, entry.Name(), "edid"))
+		if err != nil || len(dt) == 0 {
+			continue
+		}
+
+		id, err := edid.NewEdid(dt)
+		if err != nil {
+			continue
+		}
+
+		serial := strings.TrimSpace(id.MonitorSerialNumber)
+		if serial == "" {
+			serial = entry.Name()
+		}
+
+		out[serial] = append(out[serial], connectorAliases(entry.Name())...)
+	}
+
+	return out
+}
+
+func isDirOrLinkDir(base, name string) bool {
+	entryPath := filepath.Join(base, name)
+	info, err := os.Lstat(entryPath)
+	if err != nil {
+		return false
+	}
+	if info.IsDir() {
+		return true
+	}
+	if info.Mode()&os.ModeSymlink == 0 {
+		return false
+	}
+	target, err := os.Stat(entryPath)
+	if err != nil {
+		return false
+	}
+	return target.IsDir()
 }
