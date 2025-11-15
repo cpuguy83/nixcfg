@@ -74,6 +74,33 @@
       };
     in
     {
+      homeConfigurations = {
+        cpuguy83 = inputs.home-manager.lib.homeManagerConfiguration {
+          pkgs = nixpkgs.legacyPackages.${system};
+          extraSpecialArgs = {
+            inherit inputs pkgs-unstable;
+          };
+          modules = [
+            {
+              home.username = "cpuguy83";
+              home.homeDirectory = "/home/cpuguy83";
+              nixpkgs.config.allowUnfree = true;
+              nixpkgs.overlays = [
+                inputs.waybar.overlays.default
+                inputs.firefox-addons.overlays.default
+                inputs.nixd.overlays.default
+              ];
+            }
+            ./home.nix
+            ./overlays
+          ];
+        };
+      };
+
+      packages.${system} = {
+        homeConfigurations.cpuguy83 = self.homeConfigurations.cpuguy83.activationPackage;
+      };
+
       nixosConfigurations = {
         yavin4 = nixpkgs.lib.nixosSystem {
           specialArgs = {
