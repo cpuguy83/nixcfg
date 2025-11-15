@@ -2,6 +2,7 @@
 
 {
   imports = [
+    ./brightnessd
     ./hyprland
     ./kdeconnect
     ./neovim

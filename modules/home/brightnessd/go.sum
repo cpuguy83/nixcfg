@@ -1,4 +1,2 @@
 github.com/anoopengineer/edidparser v0.0.0-20240602223913-86ca9ed3d2b0 h1:rTfysyBCL7LPbq9GFpQbllvKT8vEI93lQUwksMMxHMI=
 github.com/anoopengineer/edidparser v0.0.0-20240602223913-86ca9ed3d2b0/go.mod h1:fEt61NePh3ZMxA+g3iC4CaGzY9lEsHRUkYJY2x0lBAw=
-golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546 h1:mgKeJMpvi0yx/sU5GsxQ7p6s2wtOnGAHZWCHUM4KGzY=
-golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546/go.mod h1:j/pmGrbnkbPtQfxEe5D0VQhZC6qKbfKifgD0oM7sR70=

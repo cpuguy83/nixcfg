@@ -1,37 +1,15 @@
 #!/usr/bin/env bash
 
-set -eux -o pipefail
+set -euo pipefail
 
 cmd="$1"
 shift
 
-get_bus_number() {
-	local id="$1"
-
-	# NOTE: These bus numbers are *NOT* the normal bus numbers
-	# These monitors (Samsung NEO G7) do not support DDC over DP.
-	# Subsequently I have added HDMI connects to them so I can control over DDC.
-	# Obviously this is pretty device specific...
-	# Sorry future me if/when this is a problem, I am forever in your debt as I *will* absolutely forget about this.
-	local DP1_BUS=12
-	local DP2_BUS=10
-
-	case "${id}" in
-		"DP-1")
-			echo "${DP1_BUS}"
-			;;
-		"DP-2")
-			echo "${DP2_BUS}"
-			;;
-		*)
-			echo "Unknown monitor: ${id}" >&2
-			return 1
-			;;
-	esac
-}
+socket="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/brightnessd.sock"
 
 focused() {
-	local id="$(hyprctl -j activeworkspace 2>/dev/null | jq -r '.monitor // empty' || true)"
+	local id
+	id="$(hyprctl -j activeworkspace 2>/dev/null | jq -r '.monitor // empty' || true)"
 	if [ -z "${id}" ]; then
 		id="$(hyprctl -j monitors 2>/dev/null | jq -r 'map(select(.focused).name)[0] // empty' || true)"
 	fi
@@ -39,55 +17,94 @@ focused() {
 	echo "${id}"
 }
 
+ensure_socket() {
+	if [ -S "${socket}" ]; then
+		return 0
+	fi
+
+	systemctl --user start brightnessd.socket >/dev/null 2>&1 || true
+
+	for _ in $(seq 1 10); do
+		if [ -S "${socket}" ]; then
+			return 0
+		fi
+		sleep 0.05
+	done
+
+	echo "brightnessd socket not available at ${socket}" >&2
+	exit 1
+}
+
+send_brightness() {
+	local monitor="$1"
+	local op="$2"
+	local value="${3:-}"
+
+	if [ -z "${monitor}" ]; then
+		echo "No monitor focused" >&2
+		exit 1
+	fi
+
+	ensure_socket
+
+	local payload="${monitor} ${op}"
+	if [ -n "${value}" ]; then
+		payload="${payload} ${value}"
+	fi
+
+	local response
+	if ! response="$(printf '%s\n' "${payload}" | socat - "UNIX-CONNECT:${socket}")"; then
+		echo "Failed to send brightness request" >&2
+		exit 1
+	fi
+
+	if [[ "${response}" != OK* ]]; then
+		echo "brightnessd error: ${response}" >&2
+		exit 1
+	fi
+}
+
 brightness_up() {
-	local monitor="$(focused)"
-	local bus="$(get_bus_number ${monitor})"
-	local current="$(ddcutil --bus=${bus} getvcp 10)"
-
+	local monitor
+	monitor="$(focused)"
 	local step="${1:-10}"
-	local cur=$(echo "$current" | awk -F'current value = *' '{print $2}' | awk -F',' '{print $1}' | tr -d ' ')
-	local v=$(( cur + step ))
-	(( v > 100 )) && v=100
-
-	ddcutil --bus=${bus} setvcp 10 ${v}
-	swayosd-client --monitor "${monitor}" --custom-progress "$(awk "BEGIN {print $v/100}")"
+	send_brightness "${monitor}" "+" "${step}"
 }
 
 brightness_down() {
-	local monitor="$(focused)"
-	local bus="$(get_bus_number ${monitor})"
-	local current="$(ddcutil --bus=${bus} getvcp 10 | awk -F'current value = *' '{print $2}' | awk -F',' '{print $1}' | tr -d ' ')"
-
+	local monitor
+	monitor="$(focused)"
 	local step="${1:-10}"
-	local v=$(( current - step ))
-	(( v < 0 )) && v=0
-
-	ddcutil --bus=${bus} setvcp 10 ${v}
-	swayosd-client --monitor "${monitor}" --custom-progress "$(awk "BEGIN {print $v/100}")"
+	send_brightness "${monitor}" "-" "${step}"
 }
 
 brightness_set() {
-	local monitor="$(focused)"
-	local bus="$(get_bus_number ${monitor})"
+	local monitor
+	monitor="$(focused)"
 
 	local value="${1:-50}"
-	(( value < 0 )) && value=0
-	(( value > 100 )) && value=100
+	if (( value < 0 )); then
+		value=0
+	fi
+	if (( value > 100 )); then
+		value=100
+	fi
 
-	ddcutil --bus=${bus} setvcp 10 ${value}
-	swayosd-client --monitor "${monitor}" --custom-progress "$(awk "BEGIN {print $value/100}")"
+	send_brightness "${monitor}" "set" "${value}"
 }
 
 case "${cmd}" in
 	up)
-		brightness_up $@
+		brightness_up "$@"
 		;;
 	down)
-		brightness_down $@
+		brightness_down "$@"
 		;;
 	set)
-		brightness_set $@
+		brightness_set "$@"
 		;;
 	*)
 		echo "Unknown command: ${cmd}" >&2
+		exit 1
+		;;
 esac
