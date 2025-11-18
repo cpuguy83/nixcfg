@@ -7,6 +7,9 @@ shutdown_services() {
 	sudo systemctl stop intune-daemon.service intune-daemon.socket
 	systemctl stop --user microsoft-identity-broker.service
 	systemctl stop --user intune-agent.service
+	systemctl --user stop 'dbus-:1.2-com.microsoft.identity.broker1@*.service'
+	systemctl reload --user dbus
+	sudo systemctl reload dbus
 }
 
 remove_state() {

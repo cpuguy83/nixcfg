@@ -15,10 +15,10 @@ let
   # NixOS is not a supported OS for Intune and this is part of the compliance
   # checks. This is a workaround to make it look like we are running Ubuntu.
   spoofedOSRelease = pkgs.writeText "intune-fake-os-release" ''
-    PRETTY_NAME="Ubuntu 24.04.2 LTS"
+    PRETTY_NAME="Ubuntu 24.04.3 LTS"
     NAME="Ubuntu"
     VERSION_ID="24.04"
-    VERSION="24.04.2 LTS (Noble Numbat)"
+    VERSION="24.04.3 LTS (Noble Numbat)"
     VERSION_CODENAME=noble
     ID=ubuntu
     ID_LIKE=debian
@@ -51,7 +51,127 @@ in
         microsoft-identity-broker = pkgs-unstable.microsoft-identity-broker;
         intune-portal = pkgs-unstable.intune-portal;
       })
+
+      (final: prev: {
+        # microsoft-identity-broker = prev.microsoft-identity-broker.overrideAttrs (previousAttrs: rec {
+        #   nativeBuildInputs = (previousAttrs.nativeBuildInputs or [ ]) ++ [ pkgs.makeWrapper ];
+        #   postInstall = (previousAttrs.postInstall or "") + ''
+        #     for bin in microsoft-identity-broker microsoft-identity-device-broker; do
+        #       if [ -f "$out/bin/$bin" ]; then
+        #         wrapProgram "$out/bin/$bin" \
+        #           --set GIO_EXTRA_MODULES ${pkgs.glib-networking}/lib/gio/modules
+        #       fi
+        #     done
+        #   '';
+        # });
+
+        intune-portal = prev.intune-portal.overrideAttrs (previousAttrs: rec {
+          version = "1.2511.7-noble";
+
+          src = pkgs.fetchurl {
+            url = "https://packages.microsoft.com/ubuntu/24.04/prod/pool/main/i/intune-portal/intune-portal_${version}_amd64.deb";
+            sha256 = "sha256-MHvAmkemx28ZNcVloFNxJ03YbxrgVPvB7OOMYR6Oyo8=";
+          };
+
+          nativeBuildInputs = (previousAttrs.nativeBuildInputs or [ ]) ++ [ pkgs.makeWrapper ];
+
+          postInstall = (previousAttrs.postInstall or "") + ''
+            for bin in intune-portal intune-agent intune-daemon; do
+              if [ -f "$out/bin/$bin" ]; then
+                wrapProgram "$out/bin/$bin" \
+                  --set GIO_EXTRA_MODULES ${pkgs.glib-networking}/lib/gio/modules
+              fi
+            done
+          '';
+        });
+
+        microsoft-identity-broker = prev.microsoft-identity-broker.overrideAttrs (previousAttrs: rec {
+          # version = "2.0.3";
+          # src = pkgs.fetchurl {
+          #   url = "https://packages.microsoft.com/ubuntu/24.04/prod/pool/main/m/microsoft-identity-broker/microsoft-identity-broker_${version}_amd64.deb";
+          #   sha256 = "sha256-vorPf5pvNLABwntiDdfDSiubg1jbHaKK/o0fFkbZ000=";
+          # };
+
+          # nativeBuildInputs =
+          #   (previousAttrs.nativeBuildInputs or [ ])
+          #   ++ (with pkgs; [
+          #     dpkg
+          #     makeWrapper
+          #     zip
+          #     autoPatchelfHook
+          #   ]);
+
+          # buildInputs = with pkgs; [
+          #   atk
+          #   cairo
+          #   curl
+          #   dbus
+          #   gdk-pixbuf
+          #   glib
+          #   gtk3
+          #   harfbuzz
+          #   libsecret
+          #   libsoup_3
+          #   libuuid
+          #   openssl_3
+          #   p11-kit
+          #   pango
+          #   stdenv.cc.cc.lib
+          #   systemd
+          #   webkitgtk_4_1
+          #   xorg.libX11
+          #   zlib
+          # ];
+
+          # buildPhase = ''
+          #   runHook preBuild
+          #   runHook postBuild
+          # '';
+
+          # installPhase = ''
+          #   runHook preInstall
+          #   mkdir -p $out
+          #   if [ -d usr ]; then
+          #     cp -a usr/. $out/
+          #   fi
+          #   runHook postInstall
+          # '';
+
+          postInstall = (previousAttrs.postInstall or "") + ''
+            for bin in microsoft-identity-broker microsoft-identity-device-broker; do
+              if [ -f "$out/bin/$bin" ]; then
+                wrapProgram "$out/bin/$bin" \
+                  --set GIO_EXTRA_MODULES ${pkgs.glib-networking}/lib/gio/modules
+              fi
+            done
+          '';
+
+          # postInstall = ''
+          #   for bin in microsoft-identity-broker microsoft-identity-device-broker; do
+          #     if [ -f "$out/bin/$bin" ]; then
+          #       wrapProgram "$out/bin/$bin" \
+          #         --set GIO_EXTRA_MODULES ${pkgs.glib-networking}/lib/gio/modules
+          #     fi
+          #   done
+
+          #   if [ -f "$out/lib/systemd/system/microsoft-identity-device-broker.service" ]; then
+          #     substituteInPlace "$out/lib/systemd/system/microsoft-identity-device-broker.service" \
+          #       --replace /usr/bin/microsoft-identity-device-broker "$out/bin/microsoft-identity-device-broker"
+          #   fi
+          #   if [ -f "$out/share/dbus-1/system-services/com.microsoft.identity.devicebroker1.service" ]; then
+          #     substituteInPlace "$out/share/dbus-1/system-services/com.microsoft.identity.devicebroker1.service" \
+          #       --replace /usr/bin/microsoft-identity-device-broker "$out/bin/microsoft-identity-device-broker"
+          #   fi
+          #   if [ -f "$out/share/dbus-1/services/com.microsoft.identity.broker1.service" ]; then
+          #     substituteInPlace "$out/share/dbus-1/services/com.microsoft.identity.broker1.service" \
+          #       --replace /usr/bin/microsoft-identity-broker "$out/bin/microsoft-identity-broker"
+          #   fi
+          # '';
+        });
+      })
     ];
+
+    services.gnome.glib-networking.enable = true;
 
     services.intune.enable = true;
     security.polkit.enable = true;
@@ -102,8 +222,8 @@ in
     };
 
     environment.systemPackages = with pkgs; [
-      pkgs-unstable.intune-portal
-      pkgs-unstable.microsoft-identity-broker
+      pkgs.intune-portal
+      pkgs.microsoft-identity-broker
       libsecret
       entra-sso
 
@@ -130,6 +250,14 @@ in
     programs.azurevpnclient.enable = true;
 
     systemd.user.services.intune-agent = {
+      serviceConfig = {
+        BindReadOnlyPaths = [
+          "${spoofedOSRelease}:/etc/os-release"
+        ];
+      };
+    };
+
+    systemd.services.intune-daemon = {
       serviceConfig = {
         BindReadOnlyPaths = [
           "${spoofedOSRelease}:/etc/os-release"
