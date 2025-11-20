@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, pkgs-unstable, ... }:
 
 let
   brightnessdBin = pkgs.buildGoModule {
@@ -6,6 +6,11 @@ let
     version = "unstable-2024-11-14";
     src = ./.;
     vendorHash = "sha256-j1p8vZKM6y7xbITII4LrgrWyllQjVGeczXNEseKSeoU=";
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postInstall = ''
+      wrapProgram $out/bin/brightnessd \
+        --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs-unstable.swayosd ]}
+    '';
   };
 in
 {
