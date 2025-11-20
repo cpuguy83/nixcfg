@@ -25,7 +25,7 @@
 
     hyprland.url = "github:hyprwm/hyprland/v0.52.1";
     hyprland-plugins = {
-      url = "github:hyprwm/hyprland-plugins";
+      url = "github:hyprwm/hyprland-plugins/v0.52.0";
       inputs.hyprland.follows = "hyprland";
     };
 
@@ -46,7 +46,7 @@
     };
 
     waybar = {
-      url = "github:Alexays/Waybar/0.14.0";
+      url = "github:Alexays/Waybar";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
