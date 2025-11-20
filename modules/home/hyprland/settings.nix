@@ -152,6 +152,7 @@ in
 
       misc = {
         focus_on_activate = true;
+        vrr = 1;
       };
     };
   };
