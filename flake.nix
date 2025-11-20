@@ -85,6 +85,7 @@
               home.username = "cpuguy83";
               home.homeDirectory = "/home/cpuguy83";
               nixpkgs.config.allowUnfree = true;
+
               nixpkgs.overlays = [
                 inputs.waybar.overlays.default
                 inputs.firefox-addons.overlays.default
@@ -98,7 +99,7 @@
       };
 
       packages.${system} = {
-        homeConfigurations.cpuguy83 = self.homeConfigurations.cpuguy83.activationPackage;
+        home-cpuguy83 = self.homeConfigurations.cpuguy83.activationPackage;
       };
 
       nixosConfigurations = {
