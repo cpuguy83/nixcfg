@@ -35,6 +35,7 @@
     pkgs-unstable.claude-code
 
     yubioath-flutter
+    teams-for-linux
   ];
 
   gtk = {
