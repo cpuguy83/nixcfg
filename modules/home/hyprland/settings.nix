@@ -53,6 +53,8 @@ in
       general = {
         resize_on_border = true;
         hover_icon_on_border = true;
+        gaps_out = 6;
+        gaps_in = 4;
       };
       monitor = [
         "DP-1,preferred,auto-right,auto"
