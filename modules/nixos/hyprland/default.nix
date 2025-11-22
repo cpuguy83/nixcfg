@@ -14,8 +14,6 @@ in
     ./greetd.nix
   ];
   config = lib.mkIf cfg.enable {
-    security.pam.services.hyprlock.u2fAuth = true;
-
     programs.uwsm = {
       enable = true;
       # waylandCompositors.hyprland = {
