@@ -35,6 +35,9 @@
     "amdgpu.sg_display=0"
     "amd_iommu=on"
     "amd_pstate=active"
+
+    "mem_sleep_default=deep"
+    "usbcore.autosuspend=-1"
   ];
   boot.kernelModules = [
     "amdgpu"
