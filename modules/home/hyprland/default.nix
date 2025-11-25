@@ -26,7 +26,7 @@ in
         lib
         ;
     })
-    (import ./lockscreen.nix { inherit pkgs; })
+    (import ./lockscreen.nix { inherit pkgs-unstable; })
     (import ./settings.nix {
       inherit
         pkgs
