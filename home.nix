@@ -36,6 +36,9 @@
 
     yubioath-flutter
     teams-for-linux
+
+    protonup-qt
+    gamescope
   ];
 
   gtk = {
