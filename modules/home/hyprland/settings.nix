@@ -45,7 +45,6 @@ in
       "$cursor_size" = "24";
       exec-once = [
         "$terminal"
-        "uwsm app -- gnome-keyring-daemon --start --components=secrets"
         "hyprctl setcursor $cursor $cursor_size"
         # "uwsm app -- wl-paste --type text --watch cliphist store"
         # "uwsm app -- wl-paste --type image --watch cliphist store"
@@ -64,6 +63,14 @@ in
         "DP-3,disable"
         "HDMI-A-3,disable"
       ];
+
+      experimental = {
+        xx_color_management_v4 = true;
+      };
+
+      render = {
+        cm_auto_hdr = 2;
+      };
 
       "$menu" = "uwsm app -- fuzzel";
       bind = [
@@ -117,6 +124,7 @@ in
         # Stupid Zoom workplace window that always comes up when you open zoom...
         "float, class:^(zoom)$, initialTitle:^(Zoom Workplace - Free account)$"
         "size 40%, class:^(zoom)$, initialTitle:^(Zoom Workplace - Free account)$"
+        "novrr, class:^(steam|zoom|Zoom|teams|discord)"
       ];
 
       decoration = {
@@ -154,7 +162,7 @@ in
 
       misc = {
         focus_on_activate = true;
-        vrr = 1;
+        vrr = 2;
       };
     };
   };

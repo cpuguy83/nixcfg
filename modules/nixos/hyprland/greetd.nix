@@ -1,21 +1,18 @@
 { pkgs, ... }:
-let
-  tuigreet = pkgs.greetd.tuigreet;
-in
 {
   services.greetd = {
     enable = true;
     restart = true;
     settings = {
       default_session = {
-        command = "${tuigreet}/bin/tuigreet --asterisks --remember --remember-user-session --time --cmd 'uwsm start hyprland-uwsm.desktop'";
+        command = "${pkgs.tuigreet}/bin/tuigreet --asterisks --remember --remember-user-session --time --cmd 'uwsm start hyprland-uwsm.desktop'";
         user = "cpuguy83";
       };
     };
   };
 
   environment.systemPackages = with pkgs; [
-    greetd.tuigreet
+    tuigreet
   ];
 
   security.pam.services.greetd.enableGnomeKeyring = true;

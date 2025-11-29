@@ -2,13 +2,19 @@
   description = "Flake for my main system";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-25.05";
+    nixpkgs.url = "nixpkgs/nixos-25.11-small";
     nixpkgs-unstable.url = "nixpkgs/nixos-unstable";
 
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     lanzaboote = {
-      url = "github:nix-community/lanzaboote/v0.4.2";
+      url = "github:nix-community/lanzaboote/v0.4.3";
       # Optional but recommended to limit the size of your system closure.
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.rust-overlay.follows = "rust-overlay";
     };
 
     zen-browser = {
@@ -19,7 +25,7 @@
     };
 
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.05";
+      url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -87,6 +93,7 @@
               nixpkgs.config.allowUnfree = true;
 
               nixpkgs.overlays = [
+                inputs.rust-overlay.overlays.default
                 inputs.waybar.overlays.default
                 inputs.firefox-addons.overlays.default
                 inputs.nixd.overlays.default

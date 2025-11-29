@@ -129,7 +129,7 @@
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     git
-    vim_configurable
+    vim-full
     curl
     tpm2-tss
     sbctl
@@ -202,17 +202,12 @@
       vial
       yubikey-personalization
     ];
-
-    # Try to work around issue with yubikey not allowing pin authentication after suspend.
-    extraRules = ''
-      ACTION=="add", ATTR{idVendor}=="1050", TEST=="power/control", ATTR{power/control}="on"
-    '';
   };
 
   fonts = {
     enableDefaultPackages = true;
     packages = with pkgs; [
-      ubuntu_font_family
+      ubuntu-classic
       nerd-fonts.fira-code
       nerd-fonts.fira-mono
       nerd-fonts.dejavu-sans-mono
@@ -220,7 +215,7 @@
       nerd-fonts.jetbrains-mono
       inter
       noto-fonts
-      noto-fonts-emoji
+      noto-fonts-color-emoji
       noto-fonts-cjk-sans
       corefonts
     ];
@@ -271,4 +266,15 @@
     ];
     wantedBy = [ "default.target" ];
   };
+
+  services.openssh = {
+    enable = true;
+    settings = {
+      PermitRootLogin = "no";
+      PasswordAuthentication = false;
+    };
+  };
+  users.users.cpuguy83.openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA4pqaYnbOf62H1Ud3rEc7KP0IBwgjzD7akIjYaKpMBf"
+  ];
 }
