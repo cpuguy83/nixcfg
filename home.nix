@@ -41,6 +41,16 @@
     gamescope
   ];
 
+  programs.starship = {
+    enable = true;
+    enableBashIntegration = true;
+    settings = {
+      format = ''
+        $nix_shell$all
+      '';
+    };
+  };
+
   gtk = {
     enable = true;
     theme = {
