@@ -97,8 +97,6 @@
       stow
       fzy
       fzf
-      starship
-      hey-mail
       nil # nix language server
       go
       azure-cli
@@ -189,7 +187,13 @@
   programs.nh.enable = true;
 
   # Steamy stuff
-  programs.steam.enable = true;
+  programs.steam = {
+    enable = true;
+    remotePlay.openFirewall = true;
+    extraCompatPackages = with pkgs; [
+      proton-ge-bin
+    ];
+  };
   hardware.i2c.enable = true;
   hardware.graphics.enable32Bit = true;
   hardware.graphics.enable = true;
