@@ -47,5 +47,10 @@
   boot.blacklistedKernelModules = [ "k10temp" ];
   boot.extraModulePackages = [ config.boot.kernelPackages.zenpower ];
 
+  environment.variables.AMD_VULKAN_ICD = "RADV";
+
+  # AMD GPU controller
+  services.lact.enable = true;
+
   services.fstrim.enable = true;
 }
