@@ -105,8 +105,8 @@ in
         ", XF86AudioMute, exec, swayosd-client --output-volume mute-toggle"
         ", XF86AudioMicMute, exec, swayosd-client --input-volume mute-toggle"
         ", XF86AudioPlay, exec, playerctl play-pause"
-        ", XF86MonBrightnessUp, exec, ${brightnessPath} up 2"
-        ", XF86MonBrightnessDown, exec, ${brightnessPath} down 2"
+        ", XF86MonBrightnessUp, exec, ${brightnessPath} up 4"
+        ", XF86MonBrightnessDown, exec, ${brightnessPath} down 4"
       ];
 
       windowrule = [
@@ -162,7 +162,7 @@ in
 
       misc = {
         focus_on_activate = true;
-        vrr = 2;
+        vrr = 3;
       };
     };
   };
