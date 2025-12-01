@@ -80,13 +80,13 @@
         truncate_to_repo = false;
         style = "fg:panel bg:rose";
         repo_root_style = "fg:panel bg:rose";
-        format = "[  $path ]($style)[](fg:rose bg:cyan)";
+        format = "[  $path ]($style)[](fg:rose)";
       };
 
       git_branch = {
         symbol = "";
         style = "fg:panel bg:cyan";
-        format = "[ $symbol $branch ]($style)[](fg:cyan)";
+        format = "[](fg:rose bg:cyan)[ $symbol $branch ]($style)[](fg:cyan)";
       };
 
       status = {
