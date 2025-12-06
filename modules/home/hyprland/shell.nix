@@ -245,4 +245,17 @@
       };
     };
   };
+
+  systemd.user.services.waybar = {
+    Unit = {
+      After = [
+        "pipewire.service"
+        "wireplumber.service"
+      ];
+      Requires = [
+        "pipewire.service"
+        "wireplumber.service"
+      ];
+    };
+  };
 }
