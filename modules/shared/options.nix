@@ -13,4 +13,18 @@ in
       "HDMI-A-1,disable"
     ];
   };
+
+  options.mine.desktop.hyprland.lockScreenMonitor = lib.mkOption {
+    type = with types; nullOr str;
+    default = null;
+    description = "Monitor to target for hyprlock widgets; null uses Hyprlock defaults.";
+    example = "eDP-1";
+  };
+
+  options.mine.msft-corp = {
+    enable = mkEnableOption {
+      description = "Microsoft services integration";
+      default = false;
+    };
+  };
 }

@@ -3,6 +3,7 @@
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
 {
+  config,
   pkgs,
   pkgs-unstable,
   inputs,
@@ -10,9 +11,7 @@
 }:
 {
   imports = [
-    ./hardware.nix
     ./overlays
-    ./osd.nix
     ./modules/shared
     ./modules/nixos
     (import "${inputs.home-manager}/nixos")
@@ -29,8 +28,6 @@
     dates = "daily";
     options = "--delete-older-than 30d";
   };
-
-  networking.hostName = "yavin4"; # Define your hostname.
 
   # Enable networking
   networking.networkmanager.enable = true;
@@ -56,7 +53,6 @@
   # Enable the X11 windowing system.
   # You can disable this if you're only using the Wayland session.
   services.xserver.enable = true;
-  services.xserver.videoDrivers = [ "amdgpu" ];
 
   # Configure keymap in X11
   services.xserver.xkb = {
@@ -195,9 +191,6 @@
       proton-ge-bin
     ];
   };
-  hardware.i2c.enable = true;
-  hardware.graphics.enable32Bit = true;
-  hardware.graphics.enable = true;
 
   services.udev = {
     packages = with pkgs; [
@@ -243,8 +236,6 @@
     };
   };
 
-  msft-corp.enable = true;
-
   programs.kdeconnect.enable = true;
   services.dbus.packages = with pkgs; [
     kdePackages.kdeconnect-kde
@@ -282,4 +273,13 @@
   users.users.cpuguy83.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA4pqaYnbOf62H1Ud3rEc7KP0IBwgjzD7akIjYaKpMBf"
   ];
+
+  virtualisation.docker = {
+    package = pkgs.docker_28; # explicitly use the overridden version
+    enable = true;
+    daemon.settings = {
+      experimental = true;
+      features.containerd-snapshotter = true;
+    };
+  };
 }

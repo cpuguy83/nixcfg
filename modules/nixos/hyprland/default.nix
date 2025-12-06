@@ -14,6 +14,20 @@ in
     ./greetd.nix
   ];
   config = lib.mkIf cfg.enable {
+    nix.settings = {
+      substituters = lib.mkAfter [
+        "https://hyprland.cachix.org"
+      ];
+
+      trusted-substituters = lib.mkAfter [
+        "https://hyprland.cachix.org"
+      ];
+
+      trusted-public-keys = lib.mkAfter [
+        "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
+      ];
+    };
+
     programs.uwsm = {
       enable = true;
       # waylandCompositors.hyprland = {

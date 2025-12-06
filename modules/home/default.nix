@@ -7,5 +7,7 @@
     ./kdeconnect
     ./neovim
     ./zen-browser
+    ./starship
+    ./msft-corp
   ];
 }

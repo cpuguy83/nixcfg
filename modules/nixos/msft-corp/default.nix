@@ -3,14 +3,13 @@
   pkgs-unstable,
   config,
   lib,
+  inputs,
   ...
 }:
 
 with lib;
 let
-  cfg = config.msft-corp;
-  call = pkgs.lib.callPackageWith pkgs;
-  entra-sso = call ./entra-sso.nix { };
+  cfg = config.mine.msft-corp;
 
   # NixOS is not a supported OS for Intune and this is part of the compliance
   # checks. This is a workaround to make it look like we are running Ubuntu.
@@ -32,12 +31,9 @@ let
 
 in
 {
-  options.msft-corp = {
-    enable = mkEnableOption {
-      description = "Microsoft services integration";
-      default = false;
-    };
-  };
+  imports = [
+    inputs.azurevpnclient.nixosModules.azurevpnclient
+  ];
 
   config = mkIf cfg.enable {
     # Make sure that the unstable channel is used for these packages
@@ -225,7 +221,7 @@ in
       pkgs.intune-portal
       pkgs.microsoft-identity-broker
       libsecret
-      entra-sso
+      linux-entra-sso-host
 
       openconnect
       gpclient
@@ -276,10 +272,6 @@ in
         mkdir -m 0755 -p /bin
         ln -sfn ${pkgs.bash}/bin/bash /bin/bash
       '';
-    };
-
-    home-manager.users.cpuguy83.home.file.".mozilla/native-messaging-hosts/linux_entra_sso.json" = {
-      source = "${entra-sso}/lib/mozilla/native-messaging-hosts/linux_entra_sso.json";
     };
   };
 }

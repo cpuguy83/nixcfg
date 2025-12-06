@@ -81,7 +81,7 @@
     in
     {
       homeConfigurations = {
-        cpuguy83 = inputs.home-manager.lib.homeManagerConfiguration {
+        "cpuguy83@yavin4" = inputs.home-manager.lib.homeManagerConfiguration {
           pkgs = nixpkgs.legacyPackages.${system};
           extraSpecialArgs = {
             inherit inputs pkgs-unstable;
@@ -91,22 +91,16 @@
               home.username = "cpuguy83";
               home.homeDirectory = "/home/cpuguy83";
               nixpkgs.config.allowUnfree = true;
-
-              nixpkgs.overlays = [
-                inputs.rust-overlay.overlays.default
-                inputs.waybar.overlays.default
-                inputs.firefox-addons.overlays.default
-                inputs.nixd.overlays.default
-              ];
             }
             ./home.nix
+            ./hosts/yavin4/home.nix
             ./overlays
           ];
         };
       };
 
       packages.${system} = {
-        home-cpuguy83 = self.homeConfigurations.cpuguy83.activationPackage;
+        "home-cpuguy83@yavin4" = self.homeConfigurations."cpuguy83@yavin4".activationPackage;
       };
 
       nixosConfigurations = {
@@ -116,32 +110,7 @@
           };
 
           modules = [
-            (
-              { ... }:
-              {
-                nixpkgs.config.allowUnfree = true;
-
-                nix.settings.substituters = [
-                  "https://hyprland.cachix.org"
-                ];
-
-                nix.settings.trusted-substituters = [
-                  "https://hyprland.cachix.org"
-                ];
-
-                nix.settings.trusted-public-keys = [
-                  "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
-                ];
-              }
-            )
-            ({
-
-              nixpkgs.overlays = [
-                inputs.waybar.overlays.default
-                inputs.firefox-addons.overlays.default
-                inputs.nixd.overlays.default
-              ];
-
+            {
               home-manager.useUserPackages = true;
               home-manager.useGlobalPkgs = true;
               home-manager.extraSpecialArgs = {
@@ -152,14 +121,13 @@
               home-manager.users.cpuguy83 = {
                 imports = [
                   ./home.nix
+                  ./hosts/yavin4/home.nix
                 ];
               };
-            })
+            }
 
-            inputs.azurevpnclient.nixosModules.azurevpnclient
-            ./modules.nix
             ./configuration.nix
-            inputs.lanzaboote.nixosModules.lanzaboote
+            ./hosts/yavin4/system.nix
           ];
         };
       };
