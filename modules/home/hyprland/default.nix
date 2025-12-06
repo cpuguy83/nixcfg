@@ -30,6 +30,8 @@ in
     (import ./settings.nix {
       inherit
         pkgs
+        config
+        lib
         inputs
         hyprland-packages
         ;

@@ -2,12 +2,15 @@
   inputs,
   pkgs,
   hyprland-packages,
+  lib,
+  config,
   ...
 }:
 let
   brightnessScript = pkgs.writeScriptBin "hyprland-brightness" (builtins.readFile ./brightness.sh);
   brightnessPath = pkgs.lib.getExe brightnessScript;
   plugins = inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system};
+  cfg = config.mine.desktop.hyprland;
 in
 {
   home.file.".local/bin/exec_yazi" = {
@@ -55,14 +58,7 @@ in
         gaps_out = 6;
         gaps_in = 4;
       };
-      monitor = [
-        "DP-1,preferred,auto-right,auto"
-        "DP-2,preferred,auto-left,auto"
-
-        # DP-3 is used purely as
-        "DP-3,disable"
-        "HDMI-A-3,disable"
-      ];
+      monitor = lib.mkDefault cfg.monitors;
 
       experimental = {
         xx_color_management_v4 = true;

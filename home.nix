@@ -144,5 +144,15 @@
   };
 
   services.gnome-keyring.enable = true;
-  mine.desktop.hyprland.enable = true;
+  mine.desktop.hyprland = {
+    enable = true;
+    monitors = [
+      "DP-1,preferred,auto-right,auto"
+      "DP-2,preferred,auto-left,auto"
+
+      # These are used as backchannels to DP-1 and DP-2 for DDC/CI
+      "HDMI-A-1,disable"
+      "HDMI-A-3,disable"
+    ];
+  };
 }
