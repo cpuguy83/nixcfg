@@ -39,6 +39,10 @@
 
     protonup-qt
     gamescope
+
+    go
+    gcc
+    gnumake
   ];
 
   programs.starship = {
