@@ -91,6 +91,7 @@
       "audio"
       "render"
       "input"
+      "i2c"
     ];
     packages = with pkgs; [
       pkgs-unstable.ghostty
