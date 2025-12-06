@@ -2,7 +2,7 @@
   description = "Flake for my main system";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-25.11-small";
+    nixpkgs.url = "nixpkgs/nixos-25.11";
     nixpkgs-unstable.url = "nixpkgs/nixos-unstable";
 
     rust-overlay = {
@@ -29,7 +29,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hyprland.url = "github:hyprwm/hyprland/v0.52.1";
+    hyprland.url = "github:hyprwm/hyprland/v0.52.2";
     hyprland-plugins = {
       url = "github:hyprwm/hyprland-plugins/v0.52.0";
       inputs.hyprland.follows = "hyprland";
