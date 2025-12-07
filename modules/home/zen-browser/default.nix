@@ -111,7 +111,7 @@ in
       ExtensionSettings = {
         "linux-entra-sso@example.com" = {
           installation_mode = "force_installed";
-          install_url = "https://github.com/siemens/linux-entra-sso/releases/download/v1.5.1/linux_entra_sso-1.5.1.xpi";
+          install_url = "https://github.com/siemens/linux-entra-sso/releases/download/v1.7.1/linux_entra_sso-1.7.1.xpi";
         };
       };
     };
