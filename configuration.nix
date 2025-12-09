@@ -275,7 +275,7 @@
   ];
 
   virtualisation.docker = {
-    package = pkgs.docker_28; # explicitly use the overridden version
+    package = pkgs-unstable.docker;
     enable = true;
     daemon.settings = {
       experimental = true;
