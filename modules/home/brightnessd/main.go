@@ -136,6 +136,17 @@ func (s *DeviceState) Load() error {
 
 func (s *DeviceState) Add(i int) {
 	s.cond.L.Lock()
+
+	if s.val == 0 {
+		// first make sure we have the current brightness
+		v, err := readBrightness(s.Dev)
+		if err != nil {
+			slog.Error("could not read current brightness", "error", err, "device", s.Name)
+		} else {
+			s.val = v
+		}
+	}
+
 	s.val += i
 	if s.val < 0 {
 		s.val = 0
