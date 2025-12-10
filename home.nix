@@ -42,6 +42,8 @@
     gcc
     gnumake
 
+    signal-desktop
+
     pkgs-unstable.docker-buildx
     pkgs-unstable.docker-client
   ];
