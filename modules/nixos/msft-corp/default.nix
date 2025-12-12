@@ -75,7 +75,10 @@ in
             for bin in intune-portal intune-agent intune-daemon; do
               if [ -f "$out/bin/$bin" ]; then
                 wrapProgram "$out/bin/$bin" \
-                  --set GIO_EXTRA_MODULES ${pkgs.glib-networking}/lib/gio/modules
+                  --set GIO_EXTRA_MODULES "${pkgs.glib-networking}/lib/gio/modules" \
+                  --prefix GST_PLUGIN_SYSTEM_PATH_1_0 : "${pkgs.gst_all_1.gst-plugins-base}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-good}/lib/gstreamer-1.0" \
+                  --set WEBKIT_DISABLE_COMPOSITING_MODE 1 \
+                  --set WEBKIT_DISABLE_DMABUF_RENDERER 1
               fi
             done
           '';
@@ -87,6 +90,7 @@ in
           #   url = "https://packages.microsoft.com/ubuntu/24.04/prod/pool/main/m/microsoft-identity-broker/microsoft-identity-broker_${version}_amd64.deb";
           #   sha256 = "sha256-vorPf5pvNLABwntiDdfDSiubg1jbHaKK/o0fFkbZ000=";
           # };
+          # src = ./microsoft-identity-broker_2.0.3_amd64.deb;
 
           # nativeBuildInputs =
           #   (previousAttrs.nativeBuildInputs or [ ])
@@ -146,7 +150,10 @@ in
           #   for bin in microsoft-identity-broker microsoft-identity-device-broker; do
           #     if [ -f "$out/bin/$bin" ]; then
           #       wrapProgram "$out/bin/$bin" \
-          #         --set GIO_EXTRA_MODULES ${pkgs.glib-networking}/lib/gio/modules
+          #         --set GIO_EXTRA_MODULES "${pkgs.glib-networking}/lib/gio/modules" \
+          #         --prefix GST_PLUGIN_SYSTEM_PATH_1_0 : "${pkgs.gst_all_1.gst-plugins-base}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-good}/lib/gstreamer-1.0" \
+          #         --set WEBKIT_DISABLE_COMPOSITING_MODE 1 \
+          #         --set WEBKIT_DISABLE_DMABUF_RENDERER 1
           #     fi
           #   done
 
