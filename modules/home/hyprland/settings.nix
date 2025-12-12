@@ -113,6 +113,9 @@ in
         "float, class:^(steam)$, title:^(Steam)$"
         "size 60%, class:^(steam)$, title:^(Steam)$"
 
+        "float, class:^(Intune-portal)$"
+        "size 35%, class:^(Intune-portal)$"
+
         # NOTE: The zoom app sucks, and so do these rules...
         # Zoom Meeting windows
         "float, class:^(zoom)$, initialTitle:^(Meeting)$"
