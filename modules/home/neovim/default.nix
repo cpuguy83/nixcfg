@@ -1,4 +1,9 @@
-{ pkgs, pkgs-unstable, ... }:
+{
+  lib,
+  pkgs,
+  pkgs-unstable,
+  ...
+}:
 
 {
   home.packages = with pkgs-unstable; [
@@ -6,6 +11,10 @@
     nixd
     nixfmt-rfc-style
   ];
+
+  programs.bash.bashrcExtra = lib.mkAfter ''
+    export EDITOR=nvim
+  '';
 
   programs.nixvim = {
     enable = true;
@@ -178,6 +187,11 @@
         mode = "n";
         key = "<leader>diff";
         action = "<cmd>DiffviewOpen<CR>";
+      }
+      {
+        mode = "n";
+        key = "<leader>yy";
+        action = "<cmd>Yazi<CR>";
       }
     ];
   };
