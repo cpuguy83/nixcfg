@@ -7,16 +7,6 @@ shift
 
 socket="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/brightnessd.sock"
 
-focused() {
-	local id
-	id="$(hyprctl -j activeworkspace 2>/dev/null | jq -r '.monitor // empty' || true)"
-	if [ -z "${id}" ]; then
-		id="$(hyprctl -j monitors 2>/dev/null | jq -r 'map(select(.focused).name)[0] // empty' || true)"
-	fi
-
-	echo "${id}"
-}
-
 ensure_socket() {
 	if [ -S "${socket}" ]; then
 		return 0
@@ -35,7 +25,7 @@ ensure_socket() {
 	exit 1
 }
 
-send_brightness() {
+send_command() {
 	local monitor="$1"
 	local op="$2"
 	local value="${3:-}"
@@ -65,22 +55,18 @@ send_brightness() {
 }
 
 brightness_up() {
-	local monitor
-	monitor="$(focused)"
-	local step="${1:-10}"
+	step="${1:-10}"
 	send_brightness "${monitor}" "+" "${step}"
 }
 
 brightness_down() {
-	local monitor
-	monitor="$(focused)"
+	local monitor="$(parse_args_monitor $@)"
 	local step="${1:-10}"
 	send_brightness "${monitor}" "-" "${step}"
 }
 
 brightness_set() {
-	local monitor
-	monitor="$(focused)"
+	local monitor="$(get_monitor $@)"
 
 	local value="${1:-50}"
 	if (( value < 0 )); then
@@ -93,15 +79,40 @@ brightness_set() {
 	send_brightness "${monitor}" "set" "${value}"
 }
 
+
+brightness_restore() {
+	local monitor="$(get_monitor $@)"
+	send_brightness "${monitor}" restore
+}
+
 case "${cmd}" in
 	up)
-		brightness_up "$@"
+		if [ $# -ne 2 ]; then
+			echo "Usage: $0 up <monitor> <step>" >&2
+			exit 1
+		fi
+		send_command "$1" "+" "$2"
 		;;
 	down)
-		brightness_down "$@"
+		if [ $# -ne 2 ]; then
+			echo "Usage: $0 down <monitor> <step>" >&2
+			exit 1
+		fi
+		send_command "$1" "-" "$2"
 		;;
 	set)
-		brightness_set "$@"
+		if [ $# -ne 2 ]; then
+			echo "Usage: $0 set <monitor> <value>" >&2
+			exit 1
+		fi
+		send_command "$1" "set" "$2"
+		;;
+	restore)
+		if [ $# -ne 1 ]; then
+			echo "Usage: $0 restore <monitor>" >&2
+			exit 1
+		fi
+		send_command "$1" "restore"
 		;;
 	*)
 		echo "Unknown command: ${cmd}" >&2

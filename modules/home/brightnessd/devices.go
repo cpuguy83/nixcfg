@@ -42,6 +42,26 @@ func getDDCDeviceI2C(devPath string) (*DDCDevice, string, error) {
 	return nil, "", nil
 }
 
+func getEDIDSerial(dev string) (string, error) {
+	dt, err := os.ReadFile(filepath.Join(dev, "edid"))
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return "", fmt.Errorf("could not read edid: %w", err)
+		}
+		return "", nil
+	}
+
+	if len(dt) == 0 {
+		return "", nil
+	}
+
+	id, err := edid.NewEdid(dt)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(id.MonitorSerialNumber), nil
+}
+
 func detectDevices(base string) (map[string]*DeviceState, error) {
 	out := make(map[string]*DeviceState)
 
@@ -79,35 +99,14 @@ func detectDevices(base string) (map[string]*DeviceState, error) {
 
 		// Try to read EDID from sysfs
 		// Note: sysfs files may report size 0 but still contain data
-		dt, err := os.ReadFile(filepath.Join(devicePath, "edid"))
-		var id *edid.Edid
-		var serial string
-
+		serial, err := getEDIDSerial(devicePath)
 		if err != nil {
-			if !errors.Is(err, os.ErrNotExist) {
-				slog.Error("could not read edid", "error", err)
-				dev.Close()
-				continue
-			}
-			// No EDID file, use device name
-			serial = entry.Name()
-		} else if len(dt) == 0 {
-			// EDID file empty, use device name
-			slog.Debug("edid data is empty in sysfs, using device name", "device", entry.Name())
-			serial = entry.Name()
-		} else {
-			// Parse EDID
-			id, err = edid.NewEdid(dt)
-			if err != nil {
-				slog.Error("could not parse edid", "error", err)
-				dev.Close()
-				continue
-			}
+			slog.Error("could not get edid serial", "error", err)
+		}
 
-			serial = strings.TrimSpace(id.MonitorSerialNumber)
-			if serial == "" {
-				serial = entry.Name()
-			}
+		if serial == "" {
+			serial = entry.Name()
+			slog.Info("edid serial not found, using device name", "device", serial)
 		}
 
 		if _, ok := out[serial]; ok {
@@ -116,7 +115,7 @@ func detectDevices(base string) (map[string]*DeviceState, error) {
 			continue
 		}
 
-		st := newDeviceState(dev, id, devPath, entry.Name())
+		st := newDeviceState(dev, devPath, entry.Name())
 		if err := st.Load(); err != nil {
 			slog.Error("could not load initial brightness", "serial", serial, "error", err, "devPath", devPath)
 			dev.Close()
@@ -245,28 +244,17 @@ func lookupDevice(base string, serial string) (*DeviceState, error) {
 				continue
 			}
 			if dev != nil {
-				return newDeviceState(dev, nil, p, entry.Name()), nil
+				return newDeviceState(dev, p, entry.Name()), nil
 			}
 		}
 
-		dt, err := os.ReadFile(filepath.Join(base, entry.Name(), "edid"))
+		edidSerial, err := getEDIDSerial(filepath.Join(base, entry.Name()))
 		if err != nil {
-			if !errors.Is(err, os.ErrNotExist) {
-				slog.Error("could not read edid", "error", err)
-			}
-			continue
-		}
-		if len(dt) == 0 {
+			slog.Error("could not read edid", "error", err)
 			continue
 		}
 
-		id, err := edid.NewEdid(dt)
-		if err != nil {
-			slog.Error("could not parse edid", "error", err)
-			continue
-		}
-
-		if strings.TrimSpace(id.MonitorSerialNumber) != serial {
+		if edidSerial != serial {
 			continue
 		}
 
@@ -281,7 +269,7 @@ func lookupDevice(base string, serial string) (*DeviceState, error) {
 			continue
 		}
 
-		return newDeviceState(dev, id, p, entry.Name()), nil
+		return newDeviceState(dev, p, entry.Name()), nil
 	}
 
 	return nil, nil

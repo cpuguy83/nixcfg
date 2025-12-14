@@ -12,11 +12,12 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-
-	"github.com/anoopengineer/edidparser/edid"
 )
 
-const deviceBase = "/sys/class/drm"
+const (
+	deviceBase  = "/sys/class/drm"
+	allMonitors = "ALL"
+)
 
 func main() {
 	devices, err := detectDevices(deviceBase)
@@ -113,18 +114,22 @@ func messageIter(rdr io.Reader) iter.Seq2[*message, error] {
 
 type DeviceState struct {
 	Dev   *DDCDevice
-	EDID  *edid.Edid
 	cond  *sync.Cond
 	val   int
 	Name  string
 	Alias []string
 	mon   string
+
+	prev int
 }
 
 func (s *DeviceState) Load() error {
 	s.cond.L.Lock()
 	defer s.cond.L.Unlock()
+	return s.load()
+}
 
+func (s *DeviceState) load() error {
 	v, err := readBrightness(s.Dev)
 	if err != nil {
 		return err
@@ -134,17 +139,22 @@ func (s *DeviceState) Load() error {
 	return nil
 }
 
+func (s *DeviceState) init() error {
+	if s.val != 0 {
+		return nil
+	}
+	return s.load()
+}
+
 func (s *DeviceState) Add(i int) {
 	s.cond.L.Lock()
 
-	if s.val == 0 {
-		// first make sure we have the current brightness
-		v, err := readBrightness(s.Dev)
-		if err != nil {
-			slog.Error("could not read current brightness", "error", err, "device", s.Name)
-		} else {
-			s.val = v
-		}
+	if err := s.init(); err != nil {
+		slog.Error("could not read current brightness", "error", err, "device", s.Name)
+	}
+
+	if s.val > 0 {
+		s.prev = s.val
 	}
 
 	s.val += i
@@ -160,15 +170,31 @@ func (s *DeviceState) Add(i int) {
 
 func (s *DeviceState) Set(i int) {
 	s.cond.L.Lock()
+
+	s.prev = s.val
 	s.val = i
 	s.cond.L.Unlock()
 }
 
 func (s *DeviceState) Get() int {
 	s.cond.L.Lock()
+
+	if err := s.init(); err != nil {
+		slog.Error("could not read current brightness", "error", err, "device", s.Name)
+	}
+
 	i := s.val
 	s.cond.L.Unlock()
 	return i
+}
+
+func (s *DeviceState) Restore() {
+	s.cond.L.Lock()
+	if s.prev != 0 {
+		s.val = s.prev
+		s.prev = 0
+	}
+	s.cond.L.Unlock()
 }
 
 func (s *DeviceState) SetMonitorAlias(alias string) {
@@ -247,6 +273,7 @@ const (
 	OpSub
 	OpSet
 	OpGet
+	OpRestore
 )
 
 type handler struct {
@@ -254,9 +281,10 @@ type handler struct {
 }
 
 type message struct {
-	monitor string
-	op      Op
-	step    int
+	monitor    string
+	op         Op
+	step       int
+	checkpoint bool
 }
 
 func (m *message) UnmarshalText(data string) error {
@@ -279,11 +307,13 @@ func (m *message) UnmarshalText(data string) error {
 		m.op = OpSet
 	case "get":
 		m.op = OpGet
+	case "restore":
+		m.op = OpRestore
 	default:
 		return fmt.Errorf("invalid operation: %s", op)
 	}
 
-	if m.op != OpGet {
+	if m.op != OpGet && m.op != OpRestore {
 		if !ok {
 			return fmt.Errorf("invalid input: missing value: %s", data)
 		}
@@ -297,31 +327,38 @@ func (m *message) UnmarshalText(data string) error {
 }
 
 func (h *handler) Handle(msg *message) error {
-	state, err := h.dm.Get(msg.monitor)
-	if err != nil {
-		return fmt.Errorf("could not get device state for %s: %w", msg.monitor, err)
-	}
-
-	if state == nil {
-		return fmt.Errorf("no device found for monitor %s", msg.monitor)
-	}
-
-	switch msg.op {
-	case OpAdd:
-		state.Add(msg.step)
-	case OpSub:
-		state.Add(-msg.step)
-	case OpGet:
-		state.Add(0)
-	case OpSet:
-		if msg.step < 0 || msg.step > 100 {
-			return fmt.Errorf("brightness value out of range (0-100): %d", msg.step)
+	for state, err := range h.dm.Lookup(msg.monitor) {
+		if err != nil {
+			return fmt.Errorf("could not get device state for %s: %w", msg.monitor, err)
 		}
-		state.Set(msg.step)
-	}
 
-	state.SetMonitorAlias(msg.monitor)
-	state.Wake()
+		if state == nil {
+			return fmt.Errorf("no device found for monitor %s", msg.monitor)
+		}
+
+		switch msg.op {
+		case OpAdd:
+			state.Add(msg.step)
+		case OpSub:
+			state.Add(-msg.step)
+		case OpGet:
+			state.Add(0)
+		case OpSet:
+			if msg.step < 0 || msg.step > 100 {
+				return fmt.Errorf("brightness value out of range (0-100): %d", msg.step)
+			}
+			state.Set(msg.step)
+		case OpRestore:
+			state.Restore()
+		}
+
+		// TODO: I'm not sure this is actually needed and is a remnant of messing around with different designs
+		if msg.monitor != allMonitors {
+			state.SetMonitorAlias(msg.monitor)
+		}
+
+		state.Wake()
+	}
 
 	return nil
 }
@@ -346,6 +383,24 @@ func newDeviceManager(devices map[string]*DeviceState, deviceAliases map[string]
 	}
 
 	return dm
+}
+
+func (m *DeviceManager) Lookup(ref string) iter.Seq2[*DeviceState, error] {
+	return func(yield func(*DeviceState, error) bool) {
+		if ref != allMonitors {
+			yield(m.Get(ref))
+			return
+		}
+
+		m.mu.Lock()
+		defer m.mu.Unlock()
+
+		for _, dev := range m.idx {
+			if !yield(dev, nil) {
+				return
+			}
+		}
+	}
 }
 
 func (m *DeviceManager) Get(id string) (*DeviceState, error) {
@@ -380,6 +435,7 @@ func (m *DeviceManager) Get(id string) (*DeviceState, error) {
 		m.idx[canonical] = dev
 		m.addAlias(canonical, canonical)
 		m.registerStateAliases(canonical, dev)
+		//TODO: Lookup potential aliases
 	}
 	return dev, err
 }
@@ -425,7 +481,7 @@ func (m *DeviceManager) lookupAlias(id string) string {
 	return id
 }
 
-func newDeviceState(dev *DDCDevice, id *edid.Edid, devPath string, name string) *DeviceState {
+func newDeviceState(dev *DDCDevice, devPath string, name string) *DeviceState {
 	if dev == nil {
 		slog.Warn("invalid ddc device for new state", "path", devPath)
 	}
@@ -435,7 +491,6 @@ func newDeviceState(dev *DDCDevice, id *edid.Edid, devPath string, name string) 
 
 	return &DeviceState{
 		Dev:   dev,
-		EDID:  id,
 		cond:  sync.NewCond(&sync.Mutex{}),
 		Name:  name,
 		Alias: alias,

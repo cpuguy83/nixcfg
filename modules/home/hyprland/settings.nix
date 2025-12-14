@@ -7,8 +7,14 @@
   ...
 }:
 let
-  brightnessScript = pkgs.writeScriptBin "hyprland-brightness" (builtins.readFile ./brightness.sh);
-  brightnessPath = pkgs.lib.getExe brightnessScript;
+  brightnessPath = pkgs.lib.getExe (
+    pkgs.writeScriptBin "hyprland-brightness" (builtins.readFile ./brightness.sh)
+  );
+
+  getMonitorPath = pkgs.lib.getExe (
+    pkgs.writeScriptBin "hyprland-get-monitor" (builtins.readFile ./get_active_monitor.sh)
+  );
+
   plugins = inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system};
   cfg = config.mine.desktop.hyprland;
 in
@@ -101,8 +107,8 @@ in
         ", XF86AudioMute, exec, swayosd-client --output-volume mute-toggle"
         ", XF86AudioMicMute, exec, swayosd-client --input-volume mute-toggle"
         ", XF86AudioPlay, exec, playerctl play-pause"
-        ", XF86MonBrightnessUp, exec, ${brightnessPath} up 4"
-        ", XF86MonBrightnessDown, exec, ${brightnessPath} down 4"
+        ", XF86MonBrightnessUp, exec, ${brightnessPath} up $(${getMonitorPath}) 4"
+        ", XF86MonBrightnessDown, exec, ${brightnessPath} down $(${getMonitorPath}) 4"
       ];
 
       windowrule = [
