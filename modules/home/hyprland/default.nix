@@ -82,7 +82,6 @@ in
         ghostty
 
         pavucontrol
-        kdePackages.dolphin
         brightnessctl
         playerctl
         glib-networking
