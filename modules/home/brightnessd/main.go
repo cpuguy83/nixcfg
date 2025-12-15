@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
@@ -33,7 +34,11 @@ func main() {
 	}
 
 	for _, dev := range devices {
-		go dev.Wait()
+		go func() {
+			for val, err := range dev.ensureBrightness() {
+				notify(dev.monitorTarget(), val, err)
+			}
+		}()
 	}
 
 	listener, err := activatedListener()
@@ -68,6 +73,25 @@ func main() {
 	}
 
 	os.Exit(ec)
+}
+
+func notify(mon string, val int, err error) {
+	var args []string
+	if err != nil {
+		args = []string{"--custom-icon", "dialog-error", "--custom-message", err.Error()}
+	} else {
+		prog := fmt.Sprintf("%.2f", float32(val)/100)
+		args = []string{"--custom-progress", prog, "--custom-icon", "display-brightness-symbolic"}
+	}
+
+	if mon != "" {
+		args = append([]string{"--monitor", mon}, args...)
+	}
+
+	if dt, err := exec.Command("swayosd-client", args...).CombinedOutput(); err != nil {
+		slog.Error("could not show osd", "error", err, "output", string(dt))
+		return
+	}
 }
 
 func readBrightness(dev *DDCDevice) (int, error) {
@@ -120,7 +144,8 @@ type DeviceState struct {
 	Alias []string
 	mon   string
 
-	prev int
+	prev   int
+	ensure bool
 }
 
 func (s *DeviceState) Load() error {
@@ -193,6 +218,7 @@ func (s *DeviceState) Restore() {
 	if s.prev != 0 {
 		s.val = s.prev
 		s.prev = 0
+		s.ensure = true
 	}
 	s.cond.L.Unlock()
 }
@@ -213,8 +239,6 @@ func (s *DeviceState) monitorTarget() string {
 	return s.Name
 }
 
-// SetBrightness writes an absolute brightness value using DDC/CI.
-// val is typically 0–100, but you can pass the device's full range if known.
 func setBrightness(dev *DDCDevice, val int) error {
 	if dev == nil {
 		return fmt.Errorf("ddc device not available")
@@ -222,34 +246,51 @@ func setBrightness(dev *DDCDevice, val int) error {
 	return dev.WriteVCP(vcpBrightness, uint8(val))
 }
 
-func (s *DeviceState) Wait() {
-	s.cond.L.Lock()
-	defer s.cond.L.Unlock()
+func (s *DeviceState) ensureBrightness() iter.Seq2[int, error] {
+	return func(yield func(int, error) bool) {
+		for desired := range s.wait() {
+			for attempts := range 20 {
+				if err := setBrightness(s.Dev, desired); err != nil {
+					if !yield(-1, err) {
+						return
+					}
+					continue
+				}
 
-	for {
-		s.cond.Wait()
+				if !s.ensure {
+					if !yield(desired, nil) {
+						return
+					}
+					break
+				}
 
-		slog.Debug("attempting to set brightness", "value", s.val)
-
-		err := setBrightness(s.Dev, s.val)
-		if err != nil {
-			slog.Error("Could not set brightness", "error", err)
-			continue
+				actual, err := readBrightness(s.Dev)
+				if err != nil {
+					if !yield(-1, err) {
+						return
+					}
+				}
+				if actual == desired {
+					break
+				}
+				time.Sleep(250 * time.Millisecond)
+				slog.Debug("retrying brightness set", "device", s.Name, "desired", desired, "actual", actual, "attempts", attempts)
+			}
 		}
+	}
+}
 
-		prog := fmt.Sprintf("%.2f", float32(s.val)/100)
-		// Skip swayosd for now
-		args := []string{"--custom-progress", prog, "--custom-icon", "display-brightness-symbolic"}
-		if mon := s.monitorTarget(); mon != "" {
-			args = append([]string{"--monitor", mon}, args...)
+func (s *DeviceState) wait() iter.Seq[int] {
+	return func(yield func(int) bool) {
+		s.cond.L.Lock()
+		defer s.cond.L.Unlock()
+
+		for {
+			s.cond.Wait()
+			if !yield(s.val) {
+				return
+			}
 		}
-
-		if dt, err := exec.Command("swayosd-client", args...).CombinedOutput(); err != nil {
-			slog.Error("could not show osd", "error", err, "output", string(dt))
-			continue
-		}
-
-		slog.Debug("set brightness", "brightness", s.val, "progress", prog)
 	}
 }
 
@@ -352,8 +393,11 @@ func (h *handler) Handle(msg *message) error {
 			state.Restore()
 		}
 
-		// TODO: I'm not sure this is actually needed and is a remnant of messing around with different designs
 		if msg.monitor != allMonitors {
+			// HACK: Make sure the notifier callback knows the correct monitor
+			// since DDC device may not map to the actual monitor being used.
+			// e.g. I have DP for the display, but the monitor doesn't support DDC over DP,
+			// so I have an HDMI back-channel for DDC communication.
 			state.SetMonitorAlias(msg.monitor)
 		}
 

@@ -22,7 +22,6 @@ let
     set -euo pipefail
 
     ${pkgs.hyprland}/bin/hyprctl dispatch dpms on
-    ${pkgs.coreutils}/bin/sleep 1
     ${brightnessPath} restore ALL
   '';
   dpmsRestorePath = pkgs.lib.getExe dpmsRestoreScript;
