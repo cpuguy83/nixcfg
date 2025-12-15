@@ -11,6 +11,21 @@ let
   inherit (lib) mkIf mkMerge;
   hyprland-packages = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
   fix_hyprlock_path = ".local/bin/fix-hyprlock.sh";
+  brightnessScript = pkgs.writeScriptBin "hyprland-brightness" (builtins.readFile ./brightness.sh);
+  brightnessPath = pkgs.lib.getExe brightnessScript;
+  getMonitorScript = pkgs.writeScriptBin "hyprland-get-monitor" (
+    builtins.readFile ./get_active_monitor.sh
+  );
+  getMonitorPath = pkgs.lib.getExe getMonitorScript;
+  dpmsRestoreScript = pkgs.writeScriptBin "hyprland-dpms-brightness-restore" ''
+    #!${pkgs.bash}/bin/bash
+    set -euo pipefail
+
+    ${pkgs.hyprland}/bin/hyprctl dispatch dpms on
+    ${pkgs.coreutils}/bin/sleep 1
+    ${brightnessPath} restore ALL
+  '';
+  dpmsRestorePath = pkgs.lib.getExe dpmsRestoreScript;
   yaziFilepickerConfig = pkgs.writeTextDir "yazi/config/yazi.toml" ''
     [manager]
     show_hidden = false
@@ -40,6 +55,8 @@ in
         lib
         inputs
         hyprland-packages
+        brightnessPath
+        getMonitorPath
         ;
     })
     ({
@@ -212,8 +229,8 @@ in
           listener = [
             {
               timeout = 150; # 2.5 minutes
-              on-timeout = "brightnessctl -s set 10";
-              on-resume = "brightnessctl -r";
+              on-timeout = "${brightnessPath} set ALL 10";
+              on-resume = "${brightnessPath} restore ALL";
             }
             {
               timeout = 600; # 10 minutes
@@ -222,7 +239,7 @@ in
             {
               timeout = 1800; # 30 minutes
               on-timeout = "hyprctl dispatch dpms off";
-              on-resume = "hyprctl dispatch dpms on && brightnessctl -r";
+              on-resume = dpmsRestorePath;
             }
           ];
         };

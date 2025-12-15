@@ -4,17 +4,11 @@
   hyprland-packages,
   lib,
   config,
+  brightnessPath,
+  getMonitorPath,
   ...
 }:
 let
-  brightnessPath = pkgs.lib.getExe (
-    pkgs.writeScriptBin "hyprland-brightness" (builtins.readFile ./brightness.sh)
-  );
-
-  getMonitorPath = pkgs.lib.getExe (
-    pkgs.writeScriptBin "hyprland-get-monitor" (builtins.readFile ./get_active_monitor.sh)
-  );
-
   plugins = inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system};
   cfg = config.mine.desktop.hyprland;
 in
