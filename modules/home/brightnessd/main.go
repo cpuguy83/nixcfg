@@ -249,7 +249,7 @@ func setBrightness(dev *DDCDevice, val int) error {
 func (s *DeviceState) ensureBrightness() iter.Seq2[int, error] {
 	return func(yield func(int, error) bool) {
 		for desired := range s.wait() {
-			for attempts := range 20 {
+			for attempts := range 60 {
 				if err := setBrightness(s.Dev, desired); err != nil {
 					if !yield(-1, err) {
 						return
@@ -270,9 +270,14 @@ func (s *DeviceState) ensureBrightness() iter.Seq2[int, error] {
 						return
 					}
 				}
+
 				if actual == desired {
+					if !yield(desired, nil) {
+						return
+					}
 					break
 				}
+
 				time.Sleep(250 * time.Millisecond)
 				slog.Debug("retrying brightness set", "device", s.Name, "desired", desired, "actual", actual, "attempts", attempts)
 			}
