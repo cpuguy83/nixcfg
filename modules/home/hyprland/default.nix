@@ -19,9 +19,15 @@ let
   getMonitorPath = pkgs.lib.getExe getMonitorScript;
   dpmsRestoreScript = pkgs.writeScriptBin "hyprland-dpms-brightness-restore" ''
     #!${pkgs.bash}/bin/bash
-    set -euo pipefail
 
-    ${pkgs.hyprland}/bin/hyprctl dispatch dpms on
+    for i in 1 2 3 4 5; do
+      if ${pkgs.hyprland}/bin/hyprctl monitors -j | ${pkgs.jq}/bin/jq -e 'all(.dpmsStatus == true)' >/dev/null; then
+        break
+      fi
+      ${pkgs.hyprland}/bin/hyprctl dispatch dpms on
+      ${pkgs.coreutils}/bin/sleep 5
+    done
+
     ${brightnessPath} restore ALL
   '';
   dpmsRestorePath = pkgs.lib.getExe dpmsRestoreScript;
@@ -228,7 +234,7 @@ in
             {
               timeout = 150; # 2.5 minutes
               on-timeout = "${brightnessPath} set ALL 10";
-              on-resume = "${brightnessPath} restore ALL";
+              on-resume = dpmsRestorePath;
             }
             {
               timeout = 600; # 10 minutes
@@ -237,7 +243,7 @@ in
             {
               timeout = 1800; # 30 minutes
               on-timeout = "hyprctl dispatch dpms off";
-              on-resume = dpmsRestorePath;
+              on-resume = "hyprctl dispatch dpms on";
             }
           ];
         };
