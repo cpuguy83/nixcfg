@@ -29,9 +29,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hyprland.url = "github:hyprwm/hyprland/v0.52.2";
+    hyprland.url = "github:hyprwm/hyprland/v0.53.1";
     hyprland-plugins = {
-      url = "github:hyprwm/hyprland-plugins/v0.52.0";
+      url = "github:hyprwm/hyprland-plugins/v0.53.0";
       inputs.hyprland.follows = "hyprland";
     };
 
@@ -46,8 +46,8 @@
     };
 
     hyprtasking = {
-      # url = "github:raybbian/hyprtasking";
-      url = "github:r00t3g/hyprtasking/9611bbd0db23bba9508da44f65989a7dc664d0a9"; # fork with fixes for hyprland 0.51
+      url = "github:raybbian/hyprtasking";
+      # url = "github:r00t3g/hyprtasking/9611bbd0db23bba9508da44f65989a7dc664d0a9"; # fork with fixes for hyprland 0.51
       inputs.hyprland.follows = "hyprland";
     };
 

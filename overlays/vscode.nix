@@ -4,7 +4,7 @@ self: super: {
     src = (
       builtins.fetchTarball {
         url = "https://code.visualstudio.com/sha/download?build=insider&os=linux-x64";
-        sha256 = "0ajy3zqrc8fcixk5zk7xc4w066dqxz36fhrdkdpr80h05zqb4cpj";
+        sha256 = "1yhca3x9w338ajhmpwpg7sxw4afbpdvax5fnfw0mr68142nsbdb1";
       }
     );
     version = "latest";

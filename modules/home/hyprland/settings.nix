@@ -10,6 +10,7 @@
 }:
 let
   plugins = inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system};
+  hyprtasking = inputs.hyprtasking.packages.${pkgs.stdenv.hostPlatform.system};
   cfg = config.mine.desktop.hyprland;
 in
 {
@@ -29,7 +30,7 @@ in
 
     plugins = with plugins; [
       hyprbars
-      pkgs.hyprtasking
+      hyprtasking.default
     ];
 
     settings = {
@@ -59,10 +60,6 @@ in
         gaps_in = 4;
       };
       monitor = lib.mkDefault cfg.monitors;
-
-      experimental = {
-        xx_color_management_v4 = true;
-      };
 
       render = {
         cm_auto_hdr = 2;
@@ -106,24 +103,17 @@ in
       ];
 
       windowrule = [
-        "float, class:^com\\.mitchellh\\.ghostty\\.filepicker$"
-        "size 40% 40%, class:^com\\.mitchellh\\.ghostty\\.filepicker$"
-        "float, class:(microsoft-azurevpnclient)"
-
-        "float, class:^(steam)$, title:^(Steam)$"
-        "size 60%, class:^(steam)$, title:^(Steam)$"
-
-        "float, class:^(Intune-portal)$"
-        "size 35%, class:^(Intune-portal)$"
+        "match:class ^com\\.mitchellh\\.ghostty\\.filepicker$, float on, size (monitor_h*0.4) (monitor_w*0.6)"
+        "match:class (microsoft-azurevpnclient), float on"
+        "match:class ^(steam)$, match:title ^(Steam)$, float on, size (monitor_h*0.6)"
+        "match:class ^(Intune-portal)$, float on, size (monitor_h*0.35)"
 
         # NOTE: The zoom app sucks, and so do these rules...
         # Zoom Meeting windows
-        "float, class:^(zoom)$, initialTitle:^(Meeting)$"
-        "size 40%, class:^(zoom)$, initialTitle:^(Meeting)$"
+        "match:class ^(zoom)$, match:initial_title ^(Meeting)$, float on, size (monitor_h*0.4)"
         # Stupid Zoom workplace window that always comes up when you open zoom...
-        "float, class:^(zoom)$, initialTitle:^(Zoom Workplace - Free account)$"
-        "size 40%, class:^(zoom)$, initialTitle:^(Zoom Workplace - Free account)$"
-        "novrr, class:^(steam|zoom|Zoom|teams|discord)"
+        "match:class ^(zoom)$ match:initial_title ^(Zoom Workplace - Free account)$, float on, size (monitor_h*0.4)"
+        "no_vrr match:class ^(steam|zoom|Zoom|teams|discord)"
       ];
 
       decoration = {

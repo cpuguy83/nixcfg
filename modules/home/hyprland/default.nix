@@ -99,6 +99,9 @@ in
         seahorse # gnome-keyring GUI
 
         xdg-desktop-portal-termfilechooser
+
+        # This is promising, but very early
+        # hyprlauncher
       ];
 
       programs.fuzzel = {
@@ -108,6 +111,34 @@ in
           launch-prefix = "uwsm app --";
         };
       };
+
+      # programs.rofi = {
+      #   enable = true;
+      #   plugins = with pkgs; [
+      #     rofi-systemd
+      #     rofi-calc
+      #     rofi-vpn
+      #     rofi-emoji
+      #   ];
+
+      #   terminal = "ghostty";
+
+      #   modes = [
+      #     "drun"
+      #     "window"
+      #     "calc"
+      #     "run"
+      #     "emoji"
+      #     "ssh"
+      #     "systemd"
+      #   ];
+
+      #   theme = "gruvbox-dark-hard";
+
+      #   extraConfig = {
+      #     show-icons = true;
+      #   };
+      # };
 
       home.file.".config/xdg-desktop-portal-termfilechooser/ghostty-wrapper.sh" = {
         text = ''
