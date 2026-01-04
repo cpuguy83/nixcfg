@@ -282,4 +282,14 @@
       features.containerd-snapshotter = true;
     };
   };
+
+  systemd.services.docker.environment = {
+    OTEL_EXPORTER_OTLP_ENDPOINT = "http://127.0.0.1:4318";
+    OTEL_EXPORTER_OTLP_PROTOCOL = "http/protobuf";
+  };
+
+  systemd.services.containerd.environment = {
+    OTEL_EXPORTER_OTLP_ENDPOINT = "http://127.0.0.1:4318";
+    OTEL_EXPORTER_OTLP_PROTOCOL = "http/protobuf";
+  };
 }
