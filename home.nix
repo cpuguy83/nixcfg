@@ -73,4 +73,5 @@
 
   services.gnome-keyring.enable = true;
   mine.desktop.hyprland.enable = true;
+  programs.command-not-found.enable = true;
 }
