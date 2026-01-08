@@ -9,7 +9,7 @@
   home.packages = with pkgs-unstable; [
     ripgrep
     nixd
-    nixfmt-rfc-style
+    nixfmt
   ];
 
   programs.bash.bashrcExtra = lib.mkAfter ''
