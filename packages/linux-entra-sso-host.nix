@@ -20,7 +20,7 @@ in
 
 stdenv.mkDerivation rec {
   pname = "linux-entra-sso-host";
-  version = "1.7.1"; # update as needed
+  version = "1.7.2"; # update as needed
 
   nativeBuildInputs = [
     makeWrapper
@@ -36,7 +36,7 @@ stdenv.mkDerivation rec {
     owner = "siemens";
     repo = "linux-entra-sso";
     rev = "v${version}";
-    sha256 = "sha256-8jDidADPdI3fs2tvNDu8kys8cB+RWTcMNSikasXJHAY=";
+    sha256 = "sha256-zBeFNTAluanKWTQPgZ/ul6qQoIKSbvsjH97X1l3BBVc=";
   };
 
   buildPhase = "true"; # No build step needed
