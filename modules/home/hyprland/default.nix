@@ -279,6 +279,20 @@ in
           ];
         };
       };
+
+      services.hyprpaper = {
+        enable = false;
+        settings = {
+          ipc = "on";
+          preload = [
+            "~/Pictures/Backgrounds/Yd15nN4-free-doctor-who-wallpapers.jpg"
+          ];
+          wallpaper = [
+            "DP-1,~/Pictures/Backgrounds/Yd15nN4-free-doctor-who-wallpapers.jpg"
+            "DP-2,~/Pictures/Backgrounds/Yd15nN4-free-doctor-who-wallpapers.jpg"
+          ];
+        };
+      };
     })
   ]);
 }
