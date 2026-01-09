@@ -8,5 +8,6 @@
     inputs.rust-overlay.overlays.default
     (import ./vscode.nix)
     (import ./linux-entra-sso-host.nix)
+    (import ./linux-entra-sso-host-mine.nix)
   ];
 }

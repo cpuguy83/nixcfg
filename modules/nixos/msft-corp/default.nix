@@ -85,91 +85,100 @@ in
         });
 
         microsoft-identity-broker = prev.microsoft-identity-broker.overrideAttrs (previousAttrs: rec {
-          # version = "2.0.3";
-          # src = pkgs.fetchurl {
-          #   url = "https://packages.microsoft.com/ubuntu/24.04/prod/pool/main/m/microsoft-identity-broker/microsoft-identity-broker_${version}_amd64.deb";
-          #   sha256 = "sha256-vorPf5pvNLABwntiDdfDSiubg1jbHaKK/o0fFkbZ000=";
-          # };
-          # src = ./microsoft-identity-broker_2.0.3_amd64.deb;
-
-          # nativeBuildInputs =
-          #   (previousAttrs.nativeBuildInputs or [ ])
-          #   ++ (with pkgs; [
-          #     dpkg
-          #     makeWrapper
-          #     zip
-          #     autoPatchelfHook
-          #   ]);
-
-          # buildInputs = with pkgs; [
-          #   atk
-          #   cairo
-          #   curl
-          #   dbus
-          #   gdk-pixbuf
-          #   glib
-          #   gtk3
-          #   harfbuzz
-          #   libsecret
-          #   libsoup_3
-          #   libuuid
-          #   openssl_3
-          #   p11-kit
-          #   pango
-          #   stdenv.cc.cc.lib
-          #   systemd
-          #   webkitgtk_4_1
-          #   xorg.libX11
-          #   zlib
-          # ];
-
-          # buildPhase = ''
-          #   runHook preBuild
-          #   runHook postBuild
-          # '';
-
-          # installPhase = ''
-          #   runHook preInstall
-          #   mkdir -p $out
-          #   if [ -d usr ]; then
-          #     cp -a usr/. $out/
-          #   fi
-          #   runHook postInstall
-          # '';
-
-          postInstall = (previousAttrs.postInstall or "") + ''
-            for bin in microsoft-identity-broker microsoft-identity-device-broker; do
-              if [ -f "$out/bin/$bin" ]; then
-                wrapProgram "$out/bin/$bin" \
-                  --set GIO_EXTRA_MODULES ${pkgs.glib-networking}/lib/gio/modules
-              fi
-            done
-          '';
-
-          # postInstall = ''
+          # postInstall = (previousAttrs.postInstall or "") + ''
           #   for bin in microsoft-identity-broker microsoft-identity-device-broker; do
           #     if [ -f "$out/bin/$bin" ]; then
           #       wrapProgram "$out/bin/$bin" \
-          #         --set GIO_EXTRA_MODULES "${pkgs.glib-networking}/lib/gio/modules" \
-          #         --prefix GST_PLUGIN_SYSTEM_PATH_1_0 : "${pkgs.gst_all_1.gst-plugins-base}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-good}/lib/gstreamer-1.0" \
-          #         --set WEBKIT_DISABLE_COMPOSITING_MODE 1 \
-          #         --set WEBKIT_DISABLE_DMABUF_RENDERER 1
+          #         --set GIO_EXTRA_MODULES ${pkgs.glib-networking}/lib/gio/modules
           #     fi
           #   done
-
-          #   if [ -f "$out/lib/systemd/system/microsoft-identity-device-broker.service" ]; then
-          #     substituteInPlace "$out/lib/systemd/system/microsoft-identity-device-broker.service" \
-          #       --replace /usr/bin/microsoft-identity-device-broker "$out/bin/microsoft-identity-device-broker"
-          #   fi
-          #   if [ -f "$out/share/dbus-1/system-services/com.microsoft.identity.devicebroker1.service" ]; then
-          #     substituteInPlace "$out/share/dbus-1/system-services/com.microsoft.identity.devicebroker1.service" \
-          #       --replace /usr/bin/microsoft-identity-device-broker "$out/bin/microsoft-identity-device-broker"
-          #   fi
-          #   if [ -f "$out/share/dbus-1/services/com.microsoft.identity.broker1.service" ]; then
-          #     substituteInPlace "$out/share/dbus-1/services/com.microsoft.identity.broker1.service" \
-          #       --replace /usr/bin/microsoft-identity-broker "$out/bin/microsoft-identity-broker"
-          #   fi
           # '';
+
+          version = "2.0.4";
+          src = pkgs.fetchurl {
+            url = "https://packages.microsoft.com/ubuntu/24.04/prod/pool/main/m/microsoft-identity-broker/microsoft-identity-broker_${version}_amd64.deb";
+            sha256 = "sha256-JbfmAwAFbjH8OaAoDcXdnD+Vvf4f17UATBTEpPTjBwM=";
+            # sha256 = "sha256-vorPf5pvNLABwntiDdfDSiubg1jbHaKK/o0fFkbZ000=";
+          };
+
+          nativeBuildInputs =
+            (previousAttrs.nativeBuildInputs or [ ])
+            ++ (with pkgs; [
+              dpkg
+              makeWrapper
+              zip
+              autoPatchelfHook
+            ]);
+
+          buildInputs = with pkgs; [
+            atk
+            cairo
+            curl
+            dbus
+            gdk-pixbuf
+            glib
+            gtk3
+            harfbuzz
+            libsecret
+            libsoup_3
+            libuuid
+            openssl_3
+            p11-kit
+            pango
+            stdenv.cc.cc.lib
+            systemd
+            webkitgtk_4_1
+            xorg.libX11
+            zlib
+          ];
+
+          buildPhase = ''
+            runHook preBuild
+            runHook postBuild
+          '';
+
+          installPhase = ''
+            runHook preInstall
+            mkdir -p $out/bin
+            # Copy usr/ contents
+            if [ -d usr ]; then
+              cp -a usr/. $out/
+            fi
+            # Copy binaries from /opt/ to /bin/ (2.0.4+ puts binaries in /opt/)
+            if [ -d opt/microsoft/identity-broker/bin ]; then
+              cp -a opt/microsoft/identity-broker/bin/* $out/bin/
+            fi
+            runHook postInstall
+          '';
+
+          postInstall = ''
+            for bin in microsoft-identity-broker microsoft-identity-device-broker; do
+              if [ -f "$out/bin/$bin" ]; then
+                wrapProgram "$out/bin/$bin" \
+                  --set GIO_EXTRA_MODULES "${pkgs.glib-networking}/lib/gio/modules" \
+                  --prefix GST_PLUGIN_SYSTEM_PATH_1_0 : "${pkgs.gst_all_1.gst-plugins-base}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-good}/lib/gstreamer-1.0" \
+                  --set WEBKIT_DISABLE_COMPOSITING_MODE 1 \
+                  --set WEBKIT_DISABLE_DMABUF_RENDERER 1
+              fi
+            done
+
+            # Fix paths in systemd service (2.0.4+ uses /opt/microsoft/identity-broker/bin/)
+            if [ -f "$out/lib/systemd/system/microsoft-identity-device-broker.service" ]; then
+              substituteInPlace "$out/lib/systemd/system/microsoft-identity-device-broker.service" \
+                --replace-quiet /usr/bin/microsoft-identity-device-broker "$out/bin/microsoft-identity-device-broker" \
+                --replace-quiet /opt/microsoft/identity-broker/bin/microsoft-identity-device-broker "$out/bin/microsoft-identity-device-broker"
+            fi
+            if [ -f "$out/share/dbus-1/system-services/com.microsoft.identity.devicebroker1.service" ]; then
+              substituteInPlace "$out/share/dbus-1/system-services/com.microsoft.identity.devicebroker1.service" \
+                --replace-quiet /usr/bin/microsoft-identity-device-broker "$out/bin/microsoft-identity-device-broker" \
+                --replace-quiet /opt/microsoft/identity-broker/bin/microsoft-identity-device-broker "$out/bin/microsoft-identity-device-broker"
+            fi
+            if [ -f "$out/share/dbus-1/services/com.microsoft.identity.broker1.service" ]; then
+              substituteInPlace "$out/share/dbus-1/services/com.microsoft.identity.broker1.service" \
+                --replace-quiet /usr/bin/microsoft-identity-broker "$out/bin/microsoft-identity-broker" \
+                --replace-quiet /opt/microsoft/identity-broker/bin/microsoft-identity-broker "$out/bin/microsoft-identity-broker"
+            fi
+          '';
         });
       })
     ];
@@ -228,7 +237,7 @@ in
       pkgs.intune-portal
       pkgs.microsoft-identity-broker
       libsecret
-      linux-entra-sso-host
+      linux-entra-sso-host-mine
 
       openconnect
       gpclient
