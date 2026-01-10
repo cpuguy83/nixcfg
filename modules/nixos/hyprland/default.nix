@@ -8,6 +8,26 @@
 let
   cfg = config.mine.desktop.hyprland;
   hyprPkg = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
+  hyprlandUWSMSession = pkgs.stdenvNoCC.mkDerivation {
+    pname = "hyprland-uwsm-session";
+    version = "1";
+
+    dontUnpack = true;
+
+    installPhase = ''
+      mkdir -p $out/share/wayland-sessions
+      cat > $out/share/wayland-sessions/hyprland-uwsm.desktop <<'EOF'
+      [Desktop Entry]
+      Name=Hyprland (UWSM)
+      Comment=Hyprland compositor managed by UWSM
+      Type=Application
+      DesktopNames=Hyprland
+      Exec=${pkgs.uwsm}/bin/uwsm start -e -D Hyprland ${hyprPkg.hyprland}/bin/start-hyprland
+      EOF
+    '';
+
+    passthru.providedSessions = [ "hyprland-uwsm" ];
+  };
 in
 {
   imports = [
@@ -30,11 +50,10 @@ in
 
     programs.uwsm = {
       enable = true;
-      # waylandCompositors.hyprland = {
-      #   prettyName = "Hyprland";
-      #   binPath = "${hyprPkg.hyprland}/bin/hyprland";
-      # };
+      waylandCompositors.hyprland.binPath = lib.mkForce "${hyprPkg.hyprland}/bin/start-hyprland";
     };
+
+    services.displayManager.sessionPackages = [ hyprlandUWSMSession ];
 
     programs.hyprland = with hyprPkg; {
       package = hyprland;
