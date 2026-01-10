@@ -141,6 +141,9 @@
     # Just needed for copilot
     nodejs_24
     vscode
+
+    erofs-utils
+    pkgs-unstable.nerdctl
   ];
 
   # Sets proper link paths for packages using binaries not compiled against nix
@@ -277,19 +280,58 @@
   virtualisation.docker = {
     package = pkgs-unstable.docker;
     enable = true;
+    logDriver = "local";
     daemon.settings = {
       experimental = true;
       features.containerd-snapshotter = true;
+      storage-driver = "overlayfs";
+      containerd = "/run/containerd/containerd.sock";
     };
   };
 
-  systemd.services.docker.environment = {
-    OTEL_EXPORTER_OTLP_ENDPOINT = "http://127.0.0.1:4318";
-    OTEL_EXPORTER_OTLP_PROTOCOL = "http/protobuf";
+  virtualisation.containerd = {
+    enable = true;
+    settings = {
+      plugins."io.containerd.service.v1.diff-service" = {
+        default = [
+          "erofs"
+          "walking"
+        ];
+        sync_fs = false;
+      };
+
+      plugins."io.containerd.differ.v1.erofs" = {
+        mkfs_options = [
+          "-T0"
+          "--mkfs-time"
+          "--sort=none"
+        ];
+      };
+    };
   };
 
-  systemd.services.containerd.environment = {
-    OTEL_EXPORTER_OTLP_ENDPOINT = "http://127.0.0.1:4318";
-    OTEL_EXPORTER_OTLP_PROTOCOL = "http/protobuf";
+  systemd.services.docker = {
+    environment = {
+      OTEL_EXPORTER_OTLP_ENDPOINT = "http://127.0.0.1:4318";
+      OTEL_EXPORTER_OTLP_PROTOCOL = "http/protobuf";
+    };
+    after = [
+      "containerd.service"
+    ];
+
+    path = [
+      pkgs.erofs-utils
+    ];
+  };
+
+  systemd.services.containerd = {
+    environment = {
+      OTEL_EXPORTER_OTLP_ENDPOINT = "http://127.0.0.1:4318";
+      OTEL_EXPORTER_OTLP_PROTOCOL = "http/protobuf";
+    };
+
+    path = [
+      pkgs.erofs-utils
+    ];
   };
 }
