@@ -63,6 +63,11 @@
     nixd = {
       url = "github:nix-community/nixd";
     };
+
+    opencode = {
+      url = "github:anomalyco/opencode";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
   };
 
   outputs =

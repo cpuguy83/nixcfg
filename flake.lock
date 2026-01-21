@@ -835,6 +835,26 @@
         "type": "github"
       }
     },
+    "opencode": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1769026667,
+        "narHash": "sha256-eb1/wrjtUY+v/y/Yj0LfgSsoFvzyGHKzejGrp2WDhLY=",
+        "owner": "anomalyco",
+        "repo": "opencode",
+        "rev": "7e609cc612de05d6a743002fe852a599cd46fd8e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "anomalyco",
+        "repo": "opencode",
+        "type": "github"
+      }
+    },
     "pre-commit-hooks": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -897,6 +917,7 @@
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nixvim": "nixvim",
+        "opencode": "opencode",
         "rust-overlay": "rust-overlay",
         "waybar": "waybar",
         "zen-browser": "zen-browser"

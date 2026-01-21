@@ -31,6 +31,7 @@
 
     pkgs-unstable.codex
     pkgs-unstable.claude-code
+    opencode
 
     yubioath-flutter
     teams-for-linux
