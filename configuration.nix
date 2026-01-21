@@ -224,12 +224,12 @@
       antialias = true;
       hinting = {
         enable = true;
-        style = "full";
-        autohint = true;
+        style = "slight";
+        autohint = false;
       };
       subpixel = {
-        rgba = "rgb";
-        lcdfilter = "default";
+        rgba = "none";
+        lcdfilter = "none";
       };
       defaultFonts = {
         serif = [ "Noto Serif" ];
