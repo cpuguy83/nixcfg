@@ -62,6 +62,7 @@
 
     nixd = {
       url = "github:nix-community/nixd";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
     opencode = {
