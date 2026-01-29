@@ -105,16 +105,16 @@ in
       ];
 
       windowrule = [
-        "match:class ^com\\.mitchellh\\.ghostty\\.filepicker$, float on, size (monitor_h*0.4) (monitor_w*0.6)"
+        "match:class ^com\\.mitchellh\\.ghostty\\.filepicker$, float on, size (monitor_w*0.4) (monitor_h*0.4)"
         "match:class (microsoft-azurevpnclient), float on"
-        "match:class ^(steam)$, match:title ^(Steam)$, float on, size (monitor_h*0.6)"
-        "match:class ^(Intune-portal)$, float on, size (monitor_h*0.35)"
+        "match:class ^(steam)$, match:title ^(Steam)$, float on, size (monitor_w*0.4) (monitor_h*0.6)"
+        "match:class ^(Intune-portal)$, float on, size (monitor_w*0.35) (monitor_h*0.35)"
 
         # NOTE: The zoom app sucks, and so do these rules...
         # Zoom Meeting windows
-        "match:class ^(zoom)$, match:initial_title ^(Meeting)$, float on, size (monitor_h*0.4)"
+        "match:class ^(zoom)$, match:initial_title ^(Meeting)$, float on, size (monitor_w*0.4) (monitor_h*0.4)"
         # Stupid Zoom workplace window that always comes up when you open zoom...
-        "match:class ^(zoom)$ match:initial_title ^(Zoom Workplace - Free account)$, float on, size (monitor_h*0.4)"
+        "match:class ^(zoom)$ match:initial_title ^(Zoom Workplace - Free account)$, float on, size (monitor_w*40) (monitor_h*0.4)"
         "no_vrr match:class ^(steam|zoom|Zoom|teams|discord)"
       ];
 
