@@ -29,11 +29,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hyprland.url = "github:hyprwm/hyprland/v0.53.1";
-    hyprland-plugins = {
-      url = "github:hyprwm/hyprland-plugins/v0.53.0";
-      inputs.hyprland.follows = "hyprland";
-    };
+    hyprland.url = "github:hyprwm/hyprland/v0.53.3";
+    # hyprland-plugins = {
+    #   url = "github:hyprwm/hyprland-plugins/v0.53.0";
+    #   inputs.hyprland.follows = "hyprland";
+    # };
 
     firefox-addons = {
       url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
@@ -47,7 +47,7 @@
 
     hyprtasking = {
       url = "github:raybbian/hyprtasking";
-      # url = "github:r00t3g/hyprtasking/9611bbd0db23bba9508da44f65989a7dc664d0a9"; # fork with fixes for hyprland 0.51
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
       inputs.hyprland.follows = "hyprland";
     };
 

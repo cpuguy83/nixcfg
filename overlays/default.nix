@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, pkgs-unstable, ... }:
 
 {
   nixpkgs.overlays = [
@@ -10,5 +10,6 @@
     (import ./vscode.nix)
     (import ./linux-entra-sso-host.nix)
     (import ./linux-entra-sso-host-mine.nix)
+    (import ./hyprtasking.nix { inherit inputs pkgs-unstable; })
   ];
 }

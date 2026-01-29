@@ -9,7 +9,6 @@
 with lib;
 let
   inherit (lib) mkIf mkMerge;
-  hyprland-packages = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
   fix_hyprlock_path = ".local/bin/fix-hyprlock.sh";
   brightnessScript = pkgs.writeScriptBin "hyprland-brightness" (builtins.readFile ./brightness.sh);
   brightnessPath = pkgs.lib.getExe brightnessScript;
@@ -21,10 +20,10 @@ let
     #!${pkgs.bash}/bin/bash
 
     for i in 1 2 3 4 5; do
-      if ${pkgs.hyprland}/bin/hyprctl monitors -j | ${pkgs.jq}/bin/jq -e 'all(.dpmsStatus == true)' >/dev/null; then
+      if ${pkgs-unstable.hyprland}/bin/hyprctl monitors -j | ${pkgs.jq}/bin/jq -e 'all(.dpmsStatus == true)' >/dev/null; then
         break
       fi
-      ${pkgs.hyprland}/bin/hyprctl dispatch dpms on
+      ${pkgs-unstable.hyprland}/bin/hyprctl dispatch dpms on
       ${pkgs.coreutils}/bin/sleep 5
     done
 
@@ -56,10 +55,10 @@ in
     (import ./settings.nix {
       inherit
         pkgs
+        pkgs-unstable
         config
         lib
         inputs
-        hyprland-packages
         brightnessPath
         getMonitorPath
         ;
@@ -77,7 +76,7 @@ in
       };
 
       xdg.portal.extraPortals = [
-        hyprland-packages.xdg-desktop-portal-hyprland
+        pkgs-unstable.xdg-desktop-portal-hyprland
         pkgs.xdg-desktop-portal-gtk
       ];
 

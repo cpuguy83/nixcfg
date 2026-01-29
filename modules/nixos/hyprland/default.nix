@@ -1,5 +1,6 @@
 {
   pkgs,
+  pkgs-unstable,
   inputs,
   lib,
   config,
@@ -7,27 +8,6 @@
 }:
 let
   cfg = config.mine.desktop.hyprland;
-  hyprPkg = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system};
-  hyprlandUWSMSession = pkgs.stdenvNoCC.mkDerivation {
-    pname = "hyprland-uwsm-session";
-    version = "1";
-
-    dontUnpack = true;
-
-    installPhase = ''
-      mkdir -p $out/share/wayland-sessions
-      cat > $out/share/wayland-sessions/hyprland-uwsm.desktop <<'EOF'
-      [Desktop Entry]
-      Name=Hyprland (UWSM)
-      Comment=Hyprland compositor managed by UWSM
-      Type=Application
-      DesktopNames=Hyprland
-      Exec=${pkgs.uwsm}/bin/uwsm start -e -D Hyprland ${hyprPkg.hyprland}/bin/start-hyprland
-      EOF
-    '';
-
-    passthru.providedSessions = [ "hyprland-uwsm" ];
-  };
 in
 {
   imports = [
@@ -50,24 +30,19 @@ in
 
     programs.uwsm = {
       enable = true;
-      waylandCompositors.hyprland.binPath = lib.mkForce "${hyprPkg.hyprland}/bin/start-hyprland";
+      waylandCompositors.hyprland = {
+        binPath = lib.mkForce "${pkgs-unstable.hyprland}/bin/start-hyprland";
+        prettyName = "Hyprland";
+        comment = "Hyprland compositor managed by UWSM";
+      };
     };
 
-    services.displayManager.sessionPackages = [ hyprlandUWSMSession ];
-
-    programs.hyprland = with hyprPkg; {
+    programs.hyprland = with pkgs-unstable; {
       package = hyprland;
       portalPackage = xdg-desktop-portal-hyprland;
       enable = true;
       withUWSM = true;
       xwayland.enable = true;
-    };
-
-    systemd.user.services.xdg-desktop-portal-termfilechooser = {
-      description = "Portal service (terminal file chooser implementation)";
-      wantedBy = [ "graphical-session.target" ];
-      partOf = [ "graphical-session.target" ];
-      after = [ "graphical-session.target" ];
     };
   };
 }

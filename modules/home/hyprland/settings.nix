@@ -1,7 +1,7 @@
 {
   inputs,
   pkgs,
-  hyprland-packages,
+  pkgs-unstable,
   lib,
   config,
   brightnessPath,
@@ -9,7 +9,7 @@
   ...
 }:
 let
-  plugins = inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system};
+  # plugins = inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system};
   hyprtasking = inputs.hyprtasking.packages.${pkgs.stdenv.hostPlatform.system};
   cfg = config.mine.desktop.hyprland;
 in
@@ -28,9 +28,10 @@ in
     package = null;
     portalPackage = null;
 
-    plugins = with plugins; [
+    plugins = with pkgs-unstable.hyprlandPlugins; [
       hyprbars
-      hyprtasking.default
+      # hyprtasking.default
+      pkgs.hyprtasking
     ];
 
     settings = {
@@ -90,6 +91,7 @@ in
         "HYPRCURSOR_SIZE,$cursor_size"
         "XCURSOR_THEME,$cursor"
         "XCURSOR_SIZE,$cursor_size"
+        "XDG_CURRENT_DESKTOP,Hyprland"
       ];
 
       bindle = [
