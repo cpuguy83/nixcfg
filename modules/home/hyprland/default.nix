@@ -97,7 +97,7 @@ in
 
         seahorse # gnome-keyring GUI
 
-        xdg-desktop-portal-termfilechooser
+        pkgs-unstable.xdg-desktop-portal-termfilechooser
 
         # This is promising, but very early
         # hyprlauncher
@@ -157,7 +157,7 @@ in
 
           export TERMCMD="${lib.getExe pkgs.ghostty} --class=com.mitchellh.ghostty.filepicker --title='Yazi File Picker' -e"
 
-          exec ${pkgs.xdg-desktop-portal-termfilechooser}/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh "$@"
+          exec ${pkgs-unstable.xdg-desktop-portal-termfilechooser}/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh "$@"
         '';
         executable = true;
       };
