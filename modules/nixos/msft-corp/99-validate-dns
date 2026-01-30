@@ -1,0 +1,76 @@
+#!/bin/bash
+# /etc/NetworkManager/dispatcher.d/99-validate-vpn-dns
+# vim: set et ts=4 sw=4:
+IFACE="$1"
+STATUS="$2"
+
+# Filter out bad DNS servers returned by Azure VPN Client (or others).
+
+LOG_NAME=$(basename "$0")
+function log_msg() {
+    local msg="$1"
+    echo "$LOG_NAME: $msg" >&2
+}
+
+# Only consider tun/tap interfaces
+IF_TYPE=$(nmcli -t -f DEVICE,TYPE device | grep "^$IFACE:" | cut -d: -f2)
+[[ "$IF_TYPE" == "tun" || "$IF_TYPE" == "tap" ]] || exit 0
+
+case "$STATUS" in
+up)
+    # Wait for DNS servers to be assigned (max 10s)
+    TIMEOUT=10
+    COUNT=0
+    log_msg "Waiting for $IF_TYPE interface $IFACE to receive DNS configs."
+    while true; do
+        DNS_SERVERS=$(resolvectl dns "$IFACE" | cut -d: -f2- | grep '[[:digit:]]')
+        #log_msg "DEBUG: $IF_TYPE interface $IFACE has the following DNS servers assigned: $DNS_SERVERS"
+        [[ -n "$DNS_SERVERS" ]] && break
+        ((COUNT++))
+        if [[ $COUNT -ge $TIMEOUT ]]; then
+            log_msg "Timedout waiting to receive DNS configs for $IF_TYPE interface $IFACE."
+            exit 0
+        fi
+        sleep 1
+    done
+
+    # 1. Get current DNS servers
+    DNS_SERVERS=$(resolvectl dns "$IFACE" | cut -d: -f2-)
+    log_msg "$IF_TYPE interface $IFACE has the following DNS servers assigned: $DNS_SERVERS"
+    [[ -z "$DNS_SERVERS" ]] && exit 0
+
+    # 2. Get search domains
+    SEARCH_DOMAINS=$(resolvectl domain "$IFACE" | cut -d: -f2-)
+    log_msg "$IF_TYPE interface $IFACE has the following search domains assigned: $SEARCH_DOMAINS"
+    [[ -z "$SEARCH_DOMAINS" ]] && exit 0
+
+    # Pick first non-trivial domain
+    TEST_DOMAIN=$(echo "$SEARCH_DOMAINS" | sed 's/ /\n/g' | grep '[[:alpha:]]' | grep -v '^~' | head -n1)
+    if [[ -z "$TEST_DOMAIN" ]]; then
+        log_msg "$IF_TYPE interface $IFACE had no usable search domains to test with."
+        exit 0
+    else
+        log_msg "$IF_TYPE interface $IFACE testing with search domain $TEST_DOMAIN"
+    fi
+
+    # 3. Test each DNS server
+    WORKING_DNS=()
+    for dns in $DNS_SERVERS; do
+        if dig @"$dns" "$TEST_DOMAIN" +short +time=2 | grep -q .; then
+            WORKING_DNS+=("$dns")
+        else
+            log_msg "WARNING: DNS server $dns for $IF_TYPE interface $IFACE was unable to resolve $TEST_DOMAIN from search domains list."
+        fi
+    done
+
+    # 4. Reapply only working servers
+    if [[ ${#WORKING_DNS[@]} -gt 0 ]]; then
+        log_msg "Setting new DNS server list for $IF_TYPE interface $IFACE: ${WORKING_DNS[*]}"
+        resolvectl dns "$IFACE" "${WORKING_DNS[@]}"
+    fi
+
+    ;;
+down)
+    # Optional cleanup
+    ;;
+esac

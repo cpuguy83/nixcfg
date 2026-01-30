@@ -29,6 +29,18 @@ let
     LOGO=ubuntu-logo
   '';
 
+  vpnDNSDispatcher = pkgs.writeShellApplication {
+    name = "99-validate-dns";
+    runtimeInputs = with pkgs; [
+      networkmanager # nmcli
+      systemd # resolvectl
+      dnsutils # dig
+      coreutils # basename, cut
+      gnugrep # grep
+      gnused # sed
+    ];
+    text = builtins.readFile ./99-validate-dns;
+  };
 in
 {
   imports = [
@@ -213,6 +225,11 @@ in
       MrY=
       -----END CERTIFICATE-----
     '';
+
+    environment.etc."NetworkManager/dispatcher.d/99-validate-dns" = {
+      source = "${vpnDNSDispatcher}/bin/99-validate-dns";
+      mode = "0755";
+    };
 
     # Min password requirements for intune
     security.pam.services.passwd.rules.password.pwquality = {
