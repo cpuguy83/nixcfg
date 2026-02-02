@@ -49,6 +49,8 @@
 
     pkgs-unstable.docker-buildx
     pkgs-unstable.docker-client
+
+    libnotify # for notify-send (send system notifications)
   ];
 
   gtk = {
