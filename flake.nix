@@ -69,6 +69,12 @@
       url = "github:anomalyco/opencode";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
+
+    handy = {
+      url = "github:cpuguy83/nix-handy-tts";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      inputs.rust-overlay.follows = "rust-overlay";
+    };
   };
 
   outputs =

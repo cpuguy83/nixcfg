@@ -6,6 +6,7 @@
     inputs.firefox-addons.overlays.default
     inputs.nixd.overlays.default
     inputs.rust-overlay.overlays.default
+    inputs.handy.overlays.default
     (import ./opencode.nix { inherit inputs; })
     (import ./vscode.nix)
     (import ./linux-entra-sso-host.nix)

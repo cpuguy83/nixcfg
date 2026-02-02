@@ -257,6 +257,47 @@
         "type": "github"
       }
     },
+    "handy": {
+      "inputs": {
+        "handy-src": "handy-src",
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ],
+        "rust-overlay": [
+          "rust-overlay"
+        ]
+      },
+      "locked": {
+        "lastModified": 1769793806,
+        "narHash": "sha256-Cap47ODnsgqP4mpH/T49R78Jtg+E0vKHzGSCM43dtAo=",
+        "owner": "cpuguy83",
+        "repo": "nix-handy-tts",
+        "rev": "a238626045d5d8f7b9891aeb38424b01ee2a0e99",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cpuguy83",
+        "repo": "nix-handy-tts",
+        "type": "github"
+      }
+    },
+    "handy-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1768869098,
+        "narHash": "sha256-Hr61/97y1pWSB9KJ/cI/j5YyjpHimOc4az/Oh+kEoG4=",
+        "owner": "cjpais",
+        "repo": "Handy",
+        "rev": "f38b52e123220f2f45d044ff679df2f511addec6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cjpais",
+        "ref": "v0.7.0",
+        "repo": "Handy",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -861,6 +902,7 @@
       "inputs": {
         "azurevpnclient": "azurevpnclient",
         "firefox-addons": "firefox-addons",
+        "handy": "handy",
         "home-manager": "home-manager",
         "hyprland": "hyprland",
         "hyprtasking": "hyprtasking",
