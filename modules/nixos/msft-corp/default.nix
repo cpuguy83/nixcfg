@@ -106,11 +106,10 @@ in
           #   done
           # '';
 
-          version = "2.5.0";
+          version = "2.5.1";
           src = pkgs.fetchurl {
             url = "https://packages.microsoft.com/ubuntu/24.04/prod/pool/main/m/microsoft-identity-broker/microsoft-identity-broker_${version}-noble_amd64.deb";
-            sha256 = "sha256-zid9kjjz3mBfJFfiYUoqlIyQSsR041JN3Ib+JFSSEbE="; # 2.5.0
-            # sha256 = "sha256-JbfmAwAFbjH8OaAoDcXdnD+Vvf4f17UATBTEpPTjBwM="; # 2.0.4
+            sha256 = "sha256-vHr//tYo73lPGP6kvqr5pXC4zKwXDmmffE0SVXDEuik=";
           };
 
           nativeBuildInputs =
