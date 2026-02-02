@@ -53,6 +53,26 @@
         "type": "github"
       }
     },
+    "calbar": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1770063351,
+        "narHash": "sha256-zx+9cHI3FqiO14ybJetXjkSVYPW4JoIrd/KjnWZgrnk=",
+        "owner": "cpuguy83",
+        "repo": "calbar",
+        "rev": "b1cc1a6e235f08cbf002f9f2911e1894755488da",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cpuguy83",
+        "repo": "calbar",
+        "type": "github"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1754269165,
@@ -901,6 +921,7 @@
     "root": {
       "inputs": {
         "azurevpnclient": "azurevpnclient",
+        "calbar": "calbar",
         "firefox-addons": "firefox-addons",
         "handy": "handy",
         "home-manager": "home-manager",

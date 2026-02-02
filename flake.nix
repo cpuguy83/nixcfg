@@ -75,6 +75,11 @@
       inputs.nixpkgs.follows = "nixpkgs-unstable";
       inputs.rust-overlay.follows = "rust-overlay";
     };
+
+    calbar = {
+      url = "github:cpuguy83/calbar";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
   };
 
   outputs =
