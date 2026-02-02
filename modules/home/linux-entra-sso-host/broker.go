@@ -27,6 +27,9 @@ const (
 	// Default authority
 	defaultAuthority = "https://login.microsoftonline.com/common"
 
+	// Native client redirect URI (for OAuth2 token flows)
+	nativeClientRedirectURI = "https://login.microsoftonline.com/common/oauth2/nativeclient"
+
 	// Protocol version
 	protocolVersion = "0.0"
 )
@@ -213,7 +216,6 @@ func (b *Broker) AcquirePrtSsoCookie(account map[string]any, ssoURL string) (map
 
 func (b *Broker) AcquireTokenSilently(account map[string]any, scopes []string) (map[string]any, error) {
 	request := map[string]any{
-		"account":        account,
 		"authParameters": b.getAuthParameters(account, scopes, ""),
 	}
 
@@ -244,7 +246,7 @@ func (b *Broker) getAuthParameters(account map[string]any, scopes []string, ssoU
 		"authority":         authority,
 		"authorizationType": authType,
 		"clientId":          edgeBrowserClientID,
-		"redirectUri":       b.sessionID,
+		"redirectUri":       nativeClientRedirectURI,
 		"requestedScopes":   scopes,
 	}
 
