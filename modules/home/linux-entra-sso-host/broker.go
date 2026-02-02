@@ -158,7 +158,7 @@ func (b *Broker) callMethod(method string, params any) (map[string]any, error) {
 func (b *Broker) GetAccounts() ([]map[string]any, error) {
 	context := map[string]any{
 		"clientId":    edgeBrowserClientID,
-		"redirectUri": b.sessionID,
+		"redirectUri": nativeClientRedirectURI,
 	}
 
 	resp, err := b.callMethod("getAccounts", context)
