@@ -10,7 +10,7 @@ let
       pkgs.pulseaudio
       pkgs.coreutils
       pkgs.gawk
-      pkgs-unstable.swayosd
+      pkgs.swayosd
     ];
     text = ''
       set -euo pipefail
@@ -77,10 +77,10 @@ let
   };
 in
 {
-  services.udev.packages = [ pkgs-unstable.swayosd ];
+  services.udev.packages = [ pkgs.swayosd ];
 
   environment.systemPackages = [
-    pkgs-unstable.swayosd
+    pkgs.swayosd
   ];
 
   systemd.user.services.sway-osd = {
@@ -92,7 +92,7 @@ in
     ];
     serviceConfig = {
       Type = "simple";
-      ExecStart = "${pkgs-unstable.swayosd}/bin/swayosd-server";
+      ExecStart = "${pkgs.swayosd}/bin/swayosd-server";
       Restart = "on-failure";
     };
   };
@@ -123,7 +123,7 @@ in
     serviceConfig = {
       Type = "dbus";
       BusName = "org.erikreider.swayosd";
-      ExecStart = "${pkgs-unstable.swayosd}/bin/swayosd-libinput-backend";
+      ExecStart = "${pkgs.swayosd}/bin/swayosd-libinput-backend";
       Restart = "on-failure";
     };
   };
