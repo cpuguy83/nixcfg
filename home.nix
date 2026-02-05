@@ -2,9 +2,15 @@
   pkgs,
   pkgs-unstable,
   inputs,
+  lib,
   ...
 }:
 
+let
+  darkMode = true;
+  themeSuffix = if darkMode then "Dark" else "Light";
+  colorScheme = if darkMode then "prefer-dark" else "prefer-light";
+in
 {
   home.stateVersion = "24.11";
 
@@ -58,16 +64,22 @@
     enable = true;
     theme = {
       package = pkgs.whitesur-gtk-theme;
-      name = "WhiteSur-Light";
+      name = "WhiteSur-${themeSuffix}";
     };
 
     iconTheme = {
       package = pkgs.whitesur-icon-theme;
-      name = "WhiteSur-Light";
+      name = "WhiteSur-${lib.toLower themeSuffix}";
     };
     cursorTheme = {
       package = pkgs.whitesur-cursors;
-      name = "WhiteSur-cursors-light";
+      name = "WhiteSur-cursors";
+    };
+  };
+
+  dconf.settings = {
+    "org/gnome/desktop/interface" = {
+      color-scheme = colorScheme;
     };
   };
 
