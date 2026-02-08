@@ -154,6 +154,18 @@ in
                 exclude = true;
                 case_insensitive = true;
               }
+              {
+                field = "title";
+                contains = "maternity";
+                exclude = true;
+                case_insensitive = true;
+              }
+              {
+                field = "title";
+                contains = "paternity";
+                exclude = true;
+                case_insensitive = true;
+              }
             ];
           };
         }
