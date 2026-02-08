@@ -58,6 +58,8 @@ in
     pkgs-unstable.docker-client
 
     libnotify # for notify-send (send system notifications)
+
+    easyeffects
   ];
 
   gtk = {
