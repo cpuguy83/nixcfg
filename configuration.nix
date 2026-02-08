@@ -248,8 +248,6 @@
   services.flatpak.enable = true;
 
   security.pam.services.login.enableGnomeKeyring = true;
-  security.pam.services.su.enableGnomeKeyring = true;
-  security.pam.services.sudo.enableGnomeKeyring = true;
 
   systemd.user.services.udisks2.enable = true;
 
