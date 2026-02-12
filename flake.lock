@@ -60,11 +60,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1770319239,
-        "narHash": "sha256-8VASNzwf7CaWOBRRfDD9g5qcWb9sgFfDgzsUBEcJ15U=",
+        "lastModified": 1770576079,
+        "narHash": "sha256-X1dCtYwLScuvlSP5iE9AXL8jS0aM1qGzaywwp8UCsmw=",
         "owner": "cpuguy83",
         "repo": "calbar",
-        "rev": "b0f12fb5374f1c341c734f8c63cd84e1bfb0b647",
+        "rev": "2b0dd35b2799b7ceb6088914df12d07bd68f5cae",
         "type": "github"
       },
       "original": {
