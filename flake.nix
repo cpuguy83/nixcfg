@@ -71,6 +71,11 @@
     };
 
     handy = {
+      url = "github:cjpais/handy";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+
+    handy-mine = {
       url = "github:cpuguy83/nix-handy-tts";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
       inputs.rust-overlay.follows = "rust-overlay";

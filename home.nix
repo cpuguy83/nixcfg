@@ -16,7 +16,7 @@ in
 
   imports = [
     inputs.nixvim.homeModules.nixvim
-    inputs.handy.homeManagerModules.default
+    inputs.handy-mine.homeManagerModules.default
     inputs.calbar.homeManagerModules.default
 
     ./modules/home
