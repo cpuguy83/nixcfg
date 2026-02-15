@@ -82,6 +82,7 @@ in
         "SHIFT $mod, v, exec, hyprctl dispatch togglefloating"
         "SHIFT $mod, p, exec, 1password --quick-access"
         "$mod, F11, fullscreen"
+        "$mod SHIFT, SPACE, exec, pkill -USR2 -n handy"
       ];
 
       env = [
