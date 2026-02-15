@@ -10,7 +10,6 @@
 }:
 let
   # plugins = inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system};
-  hyprtasking = inputs.hyprtasking.packages.${pkgs.stdenv.hostPlatform.system};
   cfg = config.mine.desktop.hyprland;
 in
 {
@@ -30,7 +29,6 @@ in
 
     plugins = with pkgs-unstable.hyprlandPlugins; [
       hyprbars
-      # hyprtasking.default
       pkgs.hyprtasking
     ];
 
