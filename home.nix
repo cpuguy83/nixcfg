@@ -101,7 +101,7 @@ in
     enable = true;
     settings = {
       sync = {
-        interval = "5m";
+        interval = "10m";
         output = "~/.local/share/calbar/calendar.ics";
       };
       sources = [
