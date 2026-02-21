@@ -18,3 +18,12 @@ window#waybar.empty {
   background-color: transparent;
 }
 
+#custom-pw-profile.live {
+  color: #ff4444;
+  font-weight: bold;
+}
+
+#custom-pw-profile.normal {
+  color: inherit;
+}
+

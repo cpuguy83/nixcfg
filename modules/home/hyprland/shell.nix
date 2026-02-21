@@ -1,5 +1,16 @@
 { pkgs, ... }:
 
+let
+  pw-profile-toggle = pkgs.writeShellApplication {
+    name = "pw-profile-toggle";
+    runtimeInputs = [
+      pkgs.pipewire
+      pkgs.gnugrep
+      pkgs.gnused
+    ];
+    text = builtins.readFile ./pw-profile-toggle.sh;
+  };
+in
 {
   services.swaync = {
     enable = true;
@@ -111,6 +122,7 @@
           "mpris"
         ];
         modules-right = [
+          "custom/pw-profile"
           "custom/password"
           "group/audio"
           "bluetooth"
@@ -185,6 +197,15 @@
           format = " 󱕵 ";
           on-click = "1password --quick-access";
           on-click-right = "1password";
+        };
+
+        "custom/pw-profile" = {
+          format = "{}";
+          return-type = "json";
+          exec = "${pw-profile-toggle}/bin/pw-profile-toggle status";
+          on-click = "${pw-profile-toggle}/bin/pw-profile-toggle toggle";
+          interval = 5;
+          tooltip = true;
         };
 
         "custom/azvpn" = {
