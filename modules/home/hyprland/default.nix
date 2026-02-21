@@ -262,7 +262,7 @@ in
 
           listener = [
             {
-              timeout = 150; # 2.5 minutes
+              timeout = 1800; # 30 minutes
               on-timeout = "${brightnessPath} set ALL 10";
               on-resume = dpmsRestorePath;
             }
