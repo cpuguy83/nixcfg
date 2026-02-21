@@ -107,6 +107,17 @@ in
       };
       sources = [
         {
+          name = "iCloud";
+          type = "icloud";
+          username_cmd = "op read op://calbar/icloud/username";
+          password_cmd = "op read op://calbar/icloud/password";
+        }
+        {
+          name = "Gmail Personal";
+          type = "ics";
+          url_cmd = "op read op://calbar/gmail-personal/url";
+        }
+        {
           name = "CNCF";
           type = "ics";
           url = "https://calendar.google.com/calendar/ical/linuxfoundation.org_o5avjlvt2cae9bq7a95emc4740%40group.calendar.google.com/public/basic.ics";
