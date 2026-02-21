@@ -60,6 +60,7 @@ in
     libnotify # for notify-send (send system notifications)
 
     easyeffects
+    helvum
   ];
 
   gtk = {

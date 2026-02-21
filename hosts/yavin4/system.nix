@@ -3,6 +3,7 @@
   imports = [
     ./hardware.nix
     ./shared.nix
+    ../../modules/nixos/audio/id4
   ];
 
   networking.hostName = "yavin4";
