@@ -78,7 +78,7 @@
     handy-mine = {
       url = "github:cpuguy83/nix-handy-tts";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
-      inputs.rust-overlay.follows = "rust-overlay";
+      inputs.handy.follows = "handy";
     };
 
     calbar = {

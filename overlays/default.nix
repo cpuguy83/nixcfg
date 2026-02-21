@@ -3,7 +3,20 @@
 {
   nixpkgs.overlays = [
     inputs.waybar.overlays.default
-    inputs.firefox-addons.overlays.default
+    (
+      final: prev:
+      let
+        libMozilla = import "${inputs.firefox-addons}/../../lib/mozilla.nix" { lib = final.lib; };
+        buildMozillaXpiAddon = libMozilla.mkBuildMozillaXpiAddon {
+          inherit (final) fetchurl stdenv;
+        };
+      in
+      {
+        firefox-addons = final.callPackage "${inputs.firefox-addons}" {
+          inherit buildMozillaXpiAddon;
+        };
+      }
+    )
     inputs.nixd.overlays.default
     inputs.rust-overlay.overlays.default
     inputs.handy-mine.overlays.default
