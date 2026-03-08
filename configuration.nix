@@ -149,6 +149,9 @@
   # Sets proper link paths for packages using binaries not compiled against nix
   # (i.e. vscode's nodejs).
   programs.nix-ld.enable = true;
+  programs.nix-ld.libraries = with pkgs; [
+    icu
+  ];
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 

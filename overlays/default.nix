@@ -21,10 +21,15 @@
     inputs.rust-overlay.overlays.default
     inputs.handy-mine.overlays.default
     inputs.calbar.overlays.default
-    (import ./opencode.nix { inherit inputs; })
+    (import ./opencode.nix { inherit pkgs-unstable; })
     (import ./vscode.nix)
     (import ./linux-entra-sso-host.nix)
     (import ./linux-entra-sso-host-mine.nix)
     (import ./hyprtasking.nix { inherit inputs pkgs-unstable; })
+    (final: _prev: {
+      opencode = pkgs-unstable.opencode;
+      hyprland = pkgs-unstable.hyprland;
+      hyprlandPlugins = pkgs-unstable.hyprlandPlugins;
+    })
   ];
 }

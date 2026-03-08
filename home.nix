@@ -41,6 +41,22 @@ in
     pkgs-unstable.codex
     pkgs-unstable.claude-code
     opencode
+    (pkgs.symlinkJoin {
+      name = "github-copilot-cli-wrapped";
+      paths = [ pkgs-unstable.github-copilot-cli ];
+      nativeBuildInputs = [ pkgs.makeWrapper ];
+      postBuild = ''
+        wrapProgram $out/bin/copilot \
+          --prefix LD_LIBRARY_PATH : "${
+            pkgs.lib.makeLibraryPath [
+              pkgs.libsecret
+              pkgs.glib
+              pkgs.stdenv.cc.cc.lib
+              pkgs.openssl
+            ]
+          }"
+      '';
+    })
 
     yubioath-flutter
     teams-for-linux
@@ -61,6 +77,7 @@ in
 
     easyeffects
     helvum
+
   ];
 
   gtk = {

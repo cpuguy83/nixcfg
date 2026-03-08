@@ -29,7 +29,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hyprland.url = "github:hyprwm/hyprland/v0.53.3";
+    hyprland.url = "github:hyprwm/hyprland/v0.54.1";
     # hyprland-plugins = {
     #   url = "github:hyprwm/hyprland-plugins/v0.53.0";
     #   inputs.hyprland.follows = "hyprland";
@@ -46,7 +46,7 @@
     };
 
     hyprtasking = {
-      url = "github:raybbian/hyprtasking";
+      url = "github:yerlotic/hyprtasking";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
       inputs.hyprland.follows = "hyprland";
     };
@@ -71,12 +71,12 @@
     };
 
     handy = {
-      url = "github:cjpais/handy";
+      url = "github:cjpais/handy/v0.7.8";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
     handy-mine = {
-      url = "github:cpuguy83/nix-handy-tts";
+      url = "github:cpuguy83/nix-handy-stt";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
       inputs.handy.follows = "handy";
     };

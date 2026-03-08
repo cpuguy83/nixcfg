@@ -1,5 +1,4 @@
 {
-  inputs,
   pkgs,
   pkgs-unstable,
   lib,
@@ -28,7 +27,7 @@ in
     portalPackage = null;
 
     plugins = with pkgs-unstable.hyprlandPlugins; [
-      hyprbars
+      # hyprbars
       pkgs.hyprtasking
     ];
 
