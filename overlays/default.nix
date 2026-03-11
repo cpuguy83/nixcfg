@@ -1,4 +1,8 @@
-{ inputs, pkgs-unstable, ... }:
+{
+  inputs,
+  pkgs-unstable,
+  ...
+}:
 
 {
   nixpkgs.overlays = [
@@ -30,6 +34,7 @@
       opencode = pkgs-unstable.opencode;
       hyprland = pkgs-unstable.hyprland;
       hyprlandPlugins = pkgs-unstable.hyprlandPlugins;
+      ghostty = inputs.ghostty.packages.${final.stdenv.hostPlatform.system}.default;
     })
   ];
 }

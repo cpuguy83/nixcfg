@@ -90,7 +90,7 @@
       "i2c"
     ];
     packages = with pkgs; [
-      pkgs-unstable.ghostty
+      ghostty
       stow
       fzy
       fzf

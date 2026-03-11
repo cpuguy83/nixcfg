@@ -85,6 +85,11 @@
       url = "github:cpuguy83/calbar";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
+
+    ghostty = {
+      url = "github:ghostty-org/ghostty";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
   };
 
   outputs =

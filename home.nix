@@ -104,6 +104,12 @@ in
   };
 
   programs.bash.enable = true;
+
+  programs.ghostty = {
+    enable = true;
+    enableBashIntegration = true;
+  };
+
   programs.fzf = {
     enable = true;
     enableBashIntegration = true;
