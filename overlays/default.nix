@@ -31,7 +31,7 @@
     (import ./linux-entra-sso-host-mine.nix)
     (import ./hyprtasking.nix { inherit inputs pkgs-unstable; })
     (final: _prev: {
-      opencode = pkgs-unstable.opencode;
+      opencode = inputs.opencode.packages.${final.stdenv.hostPlatform.system}.default;
       hyprland = pkgs-unstable.hyprland;
       hyprlandPlugins = pkgs-unstable.hyprlandPlugins;
       ghostty = inputs.ghostty.packages.${final.stdenv.hostPlatform.system}.default;
