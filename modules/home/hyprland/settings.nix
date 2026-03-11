@@ -41,7 +41,7 @@ in
       # ghostty +new-windows does not work with `-e` in GTK-land.
       # Instead just execute a new ghostty.
       # See https://github.com/ghostty-org/ghostty/issues/8862
-      "$file_manager" = "uwsm app -- ghostty -e ~/.local/bin/exec_yazi";
+      "$file_manager" = "uwsm app -- ghostty --class=yazi --title=yazi -e ~/.local/bin/exec_yazi";
 
       "$cursor" = "WhiteSur-cursors-light";
       "$cursor_size" = "24";
@@ -71,7 +71,7 @@ in
         "$mod, SPACE, exec, $menu"
         "$mod, P, pseudo,"
         "$mod, J, togglesplit,"
-        "$mod, E, exec, [float; size 40%] $file_manager"
+        "$mod, E, exec, $file_manager"
         "$mod, L, exec, hyprlock"
         # "$mod, TAB, hyprexpo:expo, toggle"
         "$mod, TAB, hyprtasking:toggle, all"
@@ -103,6 +103,7 @@ in
       ];
 
       windowrule = [
+        "match:title ^(yazi)$, float on, size (monitor_w*0.4) (monitor_h*0.4)"
         "match:class ^com\\.mitchellh\\.ghostty\\.filepicker$, float on, size (monitor_w*0.4) (monitor_h*0.4)"
         "match:class (microsoft-azurevpnclient), float on"
         "match:class ^(steam)$, match:title ^(Steam)$, float on, size (monitor_w*0.4) (monitor_h*0.6)"
