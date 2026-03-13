@@ -25,13 +25,18 @@
     inputs.rust-overlay.overlays.default
     inputs.handy-mine.overlays.default
     inputs.calbar.overlays.default
-    (import ./opencode.nix { inherit pkgs-unstable; })
     (import ./vscode.nix)
     (import ./linux-entra-sso-host.nix)
     (import ./linux-entra-sso-host-mine.nix)
     (import ./hyprtasking.nix { inherit inputs pkgs-unstable; })
     (final: _prev: {
-      opencode = inputs.opencode.packages.${final.stdenv.hostPlatform.system}.default;
+      opencode =
+        (inputs.opencode.packages.${final.stdenv.hostPlatform.system}.default).overrideAttrs
+          (oldAttrs: {
+            postPatch = (oldAttrs.postPatch or "") + ''
+              patch -p1 < ${../patches/opencode-1m-context.patch}
+            '';
+          });
       hyprland = pkgs-unstable.hyprland;
       hyprlandPlugins = pkgs-unstable.hyprlandPlugins;
       ghostty = inputs.ghostty.packages.${final.stdenv.hostPlatform.system}.default;

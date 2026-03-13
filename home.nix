@@ -40,7 +40,26 @@ in
 
     pkgs-unstable.codex
     pkgs-unstable.claude-code
-    opencode
+    (pkgs.symlinkJoin {
+      name = "opencode-wrapped";
+      paths = [ pkgs.opencode ];
+      nativeBuildInputs = [ pkgs.makeWrapper ];
+      postBuild = ''
+        wrapProgram $out/bin/opencode \
+          --prefix PATH : "${
+            pkgs.lib.makeBinPath [
+              pkgs.python3
+              pkgs.file
+              pkgs.ripgrep
+              pkgs.fd
+              pkgs.jq
+              pkgs.tree
+              pkgs.curl
+              pkgs.bat
+            ]
+          }"
+      '';
+    })
     (pkgs.symlinkJoin {
       name = "github-copilot-cli-wrapped";
       paths = [ pkgs-unstable.github-copilot-cli ];
