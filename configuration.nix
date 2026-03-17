@@ -151,6 +151,23 @@
   programs.nix-ld.enable = true;
   programs.nix-ld.libraries = with pkgs; [
     icu
+    stdenv.cc.cc.lib # libstdc++.so.6
+    dbus # libdbus-1.so.3
+    util-linux # libuuid.so.1
+    curl # libcurl.so.4
+    openssl # libcrypto.so.3
+    glib # libgio, libgobject, libglib, libgmodule
+    libsecret # libsecret-1.so.0
+    p11-kit # libp11-kit.so.0
+    xorg.libX11 # libX11.so.6
+    webkitgtk_4_1 # libwebkit2gtk-4.1, libjavascriptcoregtk-4.1
+    gtk3 # libgtk-3, libgdk-3
+    pango # libpangocairo, libpango
+    harfbuzz # libharfbuzz.so.0
+    atk # libatk-1.0.so.0
+    cairo # libcairo.so.2, libcairo-gobject.so.2
+    gdk-pixbuf # libgdk_pixbuf-2.0.so.0
+    libsoup_3 # libsoup-3.0.so.0
   ];
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
