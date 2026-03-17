@@ -11,7 +11,7 @@
     };
 
     lanzaboote = {
-      url = "github:nix-community/lanzaboote/v0.4.3";
+      url = "github:nix-community/lanzaboote/v1.0.0";
       # Optional but recommended to limit the size of your system closure.
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-overlay.follows = "rust-overlay";
@@ -29,7 +29,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hyprland.url = "github:hyprwm/hyprland/v0.54.1";
+    hyprland.url = "github:hyprwm/hyprland/v0.54.2";
     # hyprland-plugins = {
     #   url = "github:hyprwm/hyprland-plugins/v0.53.0";
     #   inputs.hyprland.follows = "hyprland";
@@ -46,7 +46,7 @@
     };
 
     hyprtasking = {
-      url = "github:yerlotic/hyprtasking";
+      url = "github:raybbian/hyprtasking";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
       inputs.hyprland.follows = "hyprland";
     };
@@ -71,7 +71,7 @@
     };
 
     handy = {
-      url = "github:cjpais/handy/v0.7.8";
+      url = "github:cjpais/handy";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
