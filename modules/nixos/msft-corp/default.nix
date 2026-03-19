@@ -175,6 +175,9 @@ in
       networkmanager-openconnect
       git-credential-manager
 
+      opensc
+      pcsc-tools
+
       mokutil
       efitools
       dmidecode
@@ -219,5 +222,13 @@ in
         ln -sfn ${pkgs.bash}/bin/bash /bin/bash
       '';
     };
+
+    services.pcscd.enable = true;
+
+    # Register OpenSC PKCS#11 module with p11-kit so all PKCS#11-aware
+    # applications (browsers, curl, etc.) can discover YubiKey PIV certs.
+    environment.etc."pkcs11/modules/opensc.module".text = ''
+      module: ${pkgs.opensc}/lib/opensc-pkcs11.so
+    '';
   };
 }

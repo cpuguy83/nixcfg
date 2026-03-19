@@ -26,6 +26,13 @@ in
           gsconnect
           onepassword
         ];
+
+        settings = {
+          # Automatically load client certificates from OS PKCS#11 modules
+          # (discovered via p11-kit) for smart card / YubiKey PIV auth.
+          "security.osclientcerts.autoload" = true;
+        };
+
         search.force = true;
         search.engines = {
           nix-packages = {
@@ -106,6 +113,12 @@ in
         Locked = true;
         Cryptomining = true;
         Fingerprinting = true;
+      };
+
+      SecurityDevices = {
+        Add = {
+          "OpenSC PKCS#11" = "${pkgs.opensc}/lib/opensc-pkcs11.so";
+        };
       };
 
       ExtensionSettings = {
