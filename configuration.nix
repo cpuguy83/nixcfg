@@ -112,10 +112,6 @@
       libreoffice-fresh
 
       zed-editor
-
-      (azure-cli.withExtensions [
-        azure-cli-extensions.azure-devops
-      ])
     ];
   };
 

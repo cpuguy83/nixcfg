@@ -16,6 +16,10 @@ in
 
     home.packages = with pkgs; [
       pkgs-unstable.microsoft-edge
+
+      (azure-cli.withExtensions [
+        azure-cli-extensions.azure-devops
+      ])
     ];
 
     # Register OpenSC PKCS#11 module in the NSS database used by Chromium-based
