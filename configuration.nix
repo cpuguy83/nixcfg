@@ -96,7 +96,6 @@
       fzf
       nil # nix language server
       go
-      azure-cli
       zoom-us
       thunderbird
       vulkan-tools
@@ -113,6 +112,10 @@
       libreoffice-fresh
 
       zed-editor
+
+      (azure-cli.withExtensions [
+        azure-cli-extensions.azure-devops
+      ])
     ];
   };
 

@@ -14,7 +14,7 @@ in
       source = "${pkgs.linux-entra-sso-host-mine}/lib/mozilla/native-messaging-hosts/linux_entra_sso.json";
     };
 
-    home.packages = [
+    home.packages = with pkgs; [
       pkgs-unstable.microsoft-edge
     ];
 
