@@ -83,18 +83,6 @@ diff -ruN a/packages/opencode/src/plugin/copilot.ts b/packages/opencode/src/plug
        }
  
        const session = await sdk.session
-diff -ruN a/packages/opencode/src/provider/provider.ts b/packages/opencode/src/provider/provider.ts
---- a/packages/opencode/src/provider/provider.ts	2026-03-12 16:20:58.979686031 -0700
-+++ b/packages/opencode/src/provider/provider.ts	2026-03-12 17:05:01.025643550 -0700
-@@ -178,7 +178,7 @@
-         options: {
-           headers: {
-             "anthropic-beta":
--              "claude-code-20250219,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14",
-+              "claude-code-20250219,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14,context-1m-2025-08-07",
-           },
-         },
-       }
 diff -ruN a/packages/opencode/src/provider/transform.ts b/packages/opencode/src/provider/transform.ts
 --- a/packages/opencode/src/provider/transform.ts	2026-03-12 16:20:58.982686123 -0700
 +++ b/packages/opencode/src/provider/transform.ts	2026-03-12 17:56:28.687408657 -0700
@@ -167,8 +155,8 @@ diff -ruN a/packages/opencode/src/provider/transform.ts b/packages/opencode/src/
      if (["openai", "azure"].includes(providerID)) {
 diff -ruN a/packages/opencode/src/session/compaction.ts b/packages/opencode/src/session/compaction.ts
 --- a/packages/opencode/src/session/compaction.ts	2026-03-12 16:20:58.985686215 -0700
-+++ b/packages/opencode/src/session/compaction.ts	2026-03-12 17:07:44.197668498 -0700
-@@ -29,10 +29,10 @@
++++ b/packages/opencode/src/session/compaction.ts	2026-03-26 12:00:00.000000000 -0700
+@@ -29,20 +29,20 @@
  
    const COMPACTION_BUFFER = 20_000
  
@@ -181,6 +169,17 @@ diff -ruN a/packages/opencode/src/session/compaction.ts b/packages/opencode/src/
      if (context === 0) return false
  
      const count =
+       input.tokens.total ||
+       input.tokens.input + input.tokens.output + input.tokens.cache.read + input.tokens.cache.write
+ 
+     const reserved =
+       config.compaction?.reserved ?? Math.min(COMPACTION_BUFFER, ProviderTransform.maxOutputTokens(input.model))
+-    const usable = input.model.limit.input
++    const usable = input.model.limit.input && !input.variant
+       ? input.model.limit.input - reserved
+       : context - ProviderTransform.maxOutputTokens(input.model)
+     return count >= usable
+   }
 diff -ruN a/packages/opencode/src/session/processor.ts b/packages/opencode/src/session/processor.ts
 --- a/packages/opencode/src/session/processor.ts	2026-03-12 16:20:58.987686276 -0700
 +++ b/packages/opencode/src/session/processor.ts	2026-03-12 17:07:59.522141768 -0700

@@ -66,8 +66,7 @@
     };
 
     opencode = {
-      url = "github:anomalyco/opencode";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      url = "github:anomalyco/opencode/v1.3.3";
     };
 
     handy = {

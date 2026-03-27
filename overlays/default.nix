@@ -36,6 +36,15 @@
             postPatch = (oldAttrs.postPatch or "") + ''
               patch -p1 < ${../patches/opencode-1m-context.patch}
             '';
+            buildPhase = ''
+              runHook preBuild
+
+              cd ./packages/opencode
+              bun --bun ./script/build.ts --single --skip-install --skip-embed-web-ui
+              bun --bun ./script/schema.ts schema.json
+
+              runHook postBuild
+            '';
           });
       hyprland = pkgs-unstable.hyprland;
       hyprlandPlugins = pkgs-unstable.hyprlandPlugins;

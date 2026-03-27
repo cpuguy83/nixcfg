@@ -57,10 +57,10 @@ in
     nixpkgs.overlays = lib.mkAfter [
       (final: prev: {
         intune-portal = pkgs-unstable.intune-portal.overrideAttrs (previousAttrs: rec {
-          version = "1.2603.21";
+          version = "1.2603.31";
           src = pkgs.fetchurl {
             url = "https://packages.microsoft.com/ubuntu/24.04/prod/pool/main/i/intune-portal/intune-portal_${version}-noble_amd64.deb";
-            sha256 = "sha256-3UHLu4Kd4HtNkH7AaUT4Zx6wvU0UZnBXQ2ae7lh2Ucg=";
+            sha256 = "sha256-0braaXnRa04CUQdJx0ZFwe5qfjsJNzTtGqaKQV5Z6Yw=";
           };
 
           nativeBuildInputs = previousAttrs.nativeBuildInputs ++ [
