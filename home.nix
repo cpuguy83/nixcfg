@@ -1,9 +1,9 @@
-{
-  pkgs,
-  pkgs-unstable,
-  inputs,
-  lib,
-  ...
+{ config
+, pkgs
+, pkgs-unstable
+, inputs
+, lib
+, ...
 }:
 
 let
@@ -138,6 +138,8 @@ in
   mine.desktop.hyprland.enable = true;
   programs.command-not-found.enable = true;
 
+  home.sessionVariables.GITSIGN_CREDENTIAL_CACHE = "${config.xdg.cacheHome}/sigstore/gitsign/cache.sock";
+
   programs.git = {
     enable = true;
     settings = {
@@ -150,7 +152,6 @@ in
       gpg.format = "x509";
       gpg."x509".program = "${pkgs.gitsign}/bin/gitsign";
       gitsign.connectorID = "https://github.com/login/oauth";
-      gitsign.credentialCache = "$HOME/.cache/gitsign/credential-cache.sock";
       safe.directory = "/etc/nixos";
       init.defaultBranch = "main";
       grep.linenumber = true;
