@@ -1,8 +1,9 @@
-{ pkgs
-, pkgs-unstable
-, inputs
-, lib
-, ...
+{
+  pkgs,
+  pkgs-unstable,
+  inputs,
+  lib,
+  ...
 }:
 
 let
@@ -144,8 +145,8 @@ in
         name = "Brian Goff";
         email = "cpuguy83@gmail.com";
       };
-      commit.gpgsign = true;
-      tag.gpgsign = true;
+      commit.gpgsign = false;
+      tag.gpgsign = false;
       gpg.format = "x509";
       gpg."x509".program = "${pkgs.gitsign}/bin/gitsign";
       gitsign.connectorID = "https://github.com/login/oauth";
