@@ -2,12 +2,11 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{
-  config,
-  pkgs,
-  pkgs-unstable,
-  inputs,
-  ...
+{ config
+, pkgs
+, pkgs-unstable
+, inputs
+, ...
 }:
 {
   imports = [
@@ -122,7 +121,6 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    git
     vim-full
     curl
     tpm2-tss

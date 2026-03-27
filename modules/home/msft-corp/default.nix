@@ -1,9 +1,8 @@
-{
-  config,
-  pkgs,
-  pkgs-unstable,
-  lib,
-  ...
+{ config
+, pkgs
+, pkgs-unstable
+, lib
+, ...
 }:
 let
   cfg = config.mine.msft-corp;
@@ -12,6 +11,24 @@ in
   config = lib.mkIf cfg.enable {
     home.file.".mozilla/native-messaging-hosts/linux_entra_sso.json" = {
       source = "${pkgs.linux-entra-sso-host-mine}/lib/mozilla/native-messaging-hosts/linux_entra_sso.json";
+    };
+
+    programs.git.settings = {
+      credential = {
+        credentialStore = "secretservice";
+        helper = [
+          ""
+          "/run/current-system/sw/bin/git-credential-manager"
+        ];
+        azreposCredentialType = "oauth";
+        msauthFlow = "devicecode";
+      };
+      "credential \"https://dev.azure.com\"".useHttpPath = true;
+      "credential \"azrepos:org/AzureContainerUpstream\"".azureAuthority =
+        "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47";
+      "credential \"azrepos:org/AzureContainerUpstream\"".username = "brgoff@microsoft.com";
+      "credential \"azrepos:org/Azure\"".azureAuthority =
+        "https://login.microsoftonline.com/organizations";
     };
 
     home.packages = with pkgs; [

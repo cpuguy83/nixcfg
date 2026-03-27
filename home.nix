@@ -1,9 +1,8 @@
-{
-  pkgs,
-  pkgs-unstable,
-  inputs,
-  lib,
-  ...
+{ pkgs
+, pkgs-unstable
+, inputs
+, lib
+, ...
 }:
 
 let
@@ -137,6 +136,37 @@ in
   services.gnome-keyring.enable = true;
   mine.desktop.hyprland.enable = true;
   programs.command-not-found.enable = true;
+
+  programs.git = {
+    enable = true;
+    settings = {
+      user = {
+        name = "Brian Goff";
+        email = "cpuguy83@gmail.com";
+      };
+      commit.gpgsign = true;
+      tag.gpgsign = true;
+      gpg.format = "x509";
+      gpg."x509".program = "${pkgs.gitsign}/bin/gitsign";
+      gitsign.connectorID = "https://github.com/login/oauth";
+      gitsign.credentialCache = "$HOME/.cache/gitsign/credential-cache.sock";
+      safe.directory = "/etc/nixos";
+      init.defaultBranch = "main";
+      grep.linenumber = true;
+      branch.sort = "-committerdate";
+      url."ssh://git@github.com/".insteadOf = "https://github.com/";
+    };
+  };
+
+  systemd.user.services.gitsign-credential-cache = {
+    Unit.Description = "Gitsign credential cache";
+    Install.WantedBy = [ "default.target" ];
+    Service = {
+      ExecStart = "${pkgs.gitsign}/bin/gitsign-credential-cache";
+      Restart = "on-failure";
+      Environment = "HOME=%h";
+    };
+  };
 
   services.handy.enable = true;
 
