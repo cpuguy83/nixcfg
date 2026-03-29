@@ -33,9 +33,6 @@
       opencode =
         (inputs.opencode.packages.${final.stdenv.hostPlatform.system}.default).overrideAttrs
           (oldAttrs: {
-            postPatch = (oldAttrs.postPatch or "") + ''
-              patch -p1 < ${../patches/opencode-1m-context.patch}
-            '';
             buildPhase = ''
               runHook preBuild
 

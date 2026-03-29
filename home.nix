@@ -1,9 +1,10 @@
-{ config
-, pkgs
-, pkgs-unstable
-, inputs
-, lib
-, ...
+{
+  config,
+  pkgs,
+  pkgs-unstable,
+  inputs,
+  lib,
+  ...
 }:
 
 let
@@ -138,7 +139,7 @@ in
   mine.desktop.hyprland.enable = true;
   programs.command-not-found.enable = true;
 
-  home.sessionVariables.GITSIGN_CREDENTIAL_CACHE = "${config.xdg.cacheHome}/sigstore/gitsign/cache.sock";
+  systemd.user.sessionVariables.GITSIGN_CREDENTIAL_CACHE = "${config.xdg.cacheHome}/sigstore/gitsign/cache.sock";
 
   programs.git = {
     enable = true;
