@@ -38,44 +38,50 @@
     # Needed by telescope
     plugins.web-devicons.enable = true;
 
-    plugins.copilot-lsp.enable = true;
+    plugins.copilot-lsp.enable = false;
     plugins.copilot-chat.enable = true;
-    plugins.copilot-cmp.enable = true;
+    plugins.copilot-cmp.enable = false;
     plugins.copilot-lua = {
       enable = true;
       settings.suggestion = {
-        enabled = false;
-        auto_trigger = false;
+        enabled = true;
+        auto_trigger = true;
       };
-      settings.panel.enabled = false;
+      settings.panel.enabled = true;
     };
 
-    plugins.coq-nvim.enable = true;
+    plugins.coq-nvim.enable = false;
 
-    plugins.cmp = {
+    plugins.blink-cmp-copilot.enable = true;
+    plugins.blink-cmp = {
       enable = true;
-      autoEnableSources = true;
       settings = {
-        sources = [
-          { name = "nvim_lsp"; }
-          { name = "path"; }
-          { name = "buffer"; }
-          { name = "luasnip"; }
-          { name = "copilot"; }
-        ];
-
-        mapping = {
-          "<C-d>" = "cmp.mapping.scroll_docs(-4)";
-          "<C-e>" = "cmp.mapping.close()";
-          "<C-f>" = "cmp.mapping.scroll_docs(4)";
-          "<CR>" = "cmp.mapping.confirm({ select = true })";
-          "<S-Tab>" = "cmp.mapping(cmp.mapping.select_prev_item(), {'i', 's'})";
-          "<Tab>" = "cmp.mapping(cmp.mapping.select_next_item(), {'i', 's'})";
+        keymap = {
+          "<Tab>" = [ "select_next" "snippet_forward" "fallback" ];
+          "<S-Tab>" = [ "select_prev" "snippet_backward" "fallback" ];
+          "<CR>" = [ "accept" "fallback" ];
+          "<C-e>" = [ "hide" "fallback" ];
+          "<C-space>" = [ "show" "show_documentation" "hide_documentation" ];
+        };
+        completion = {
+          documentation.auto_show = true;
+          ghost_text.enabled = true;
+        };
+        signature.enabled = true;
+        sources = {
+          default = [ "lsp" "path" "buffer" "copilot" ];
+          providers.copilot = {
+            async = true;
+            module = "blink-cmp-copilot";
+            name = "copilot";
+            score_offset = 100;
+          };
         };
       };
     };
 
-    plugins.cmp-nvim-lsp.enable = true;
+    plugins.cmp.enable = false;
+    plugins.cmp-nvim-lsp.enable = false;
 
     plugins.yazi = {
       enable = true;
@@ -170,7 +176,7 @@
     keymaps = [
       {
         mode = "i";
-        key = "<C-Space>";
+        key = "<M-Space>";
         action = ''<cmd>lua require("copilot.suggestion").next()<CR>'';
       }
       {
