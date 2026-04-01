@@ -161,6 +161,11 @@ in
     };
   };
 
+  programs.diff-so-fancy = {
+    enable = true;
+    enableGitIntegration = true;
+  };
+
   systemd.user.services.gitsign-credential-cache = {
     Unit.Description = "Gitsign credential cache";
     Install.WantedBy = [ "default.target" ];
