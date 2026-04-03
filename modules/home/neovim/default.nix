@@ -43,11 +43,8 @@
     plugins.copilot-cmp.enable = false;
     plugins.copilot-lua = {
       enable = true;
-      settings.suggestion = {
-        enabled = true;
-        auto_trigger = true;
-      };
-      settings.panel.enabled = true;
+      settings.suggestion.enabled = false;
+      settings.panel.enabled = false;
     };
 
     plugins.coq-nvim.enable = false;
@@ -57,11 +54,29 @@
       enable = true;
       settings = {
         keymap = {
-          "<Tab>" = [ "select_next" "snippet_forward" "fallback" ];
-          "<S-Tab>" = [ "select_prev" "snippet_backward" "fallback" ];
-          "<CR>" = [ "accept" "fallback" ];
-          "<C-e>" = [ "hide" "fallback" ];
-          "<C-space>" = [ "show" "show_documentation" "hide_documentation" ];
+          "<Tab>" = [
+            "select_next"
+            "snippet_forward"
+            "fallback"
+          ];
+          "<S-Tab>" = [
+            "select_prev"
+            "snippet_backward"
+            "fallback"
+          ];
+          "<CR>" = [
+            "accept"
+            "fallback"
+          ];
+          "<C-e>" = [
+            "hide"
+            "fallback"
+          ];
+          "<C-space>" = [
+            "show"
+            "show_documentation"
+            "hide_documentation"
+          ];
         };
         completion = {
           documentation.auto_show = true;
@@ -69,7 +84,12 @@
         };
         signature.enabled = true;
         sources = {
-          default = [ "lsp" "path" "buffer" "copilot" ];
+          default = [
+            "lsp"
+            "path"
+            "buffer"
+            "copilot"
+          ];
           providers.copilot = {
             async = true;
             module = "blink-cmp-copilot";
@@ -174,11 +194,7 @@
     extraConfigLua = builtins.readFile ./extra.lua;
 
     keymaps = [
-      {
-        mode = "i";
-        key = "<M-Space>";
-        action = ''<cmd>lua require("copilot.suggestion").next()<CR>'';
-      }
+
       {
         mode = "n";
         key = "<leader>b";
