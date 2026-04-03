@@ -40,7 +40,7 @@ in
     gcr
 
     pkgs-unstable.codex
-    pkgs-unstable.claude-code
+    # pkgs-unstable.claude-code
     (pkgs.symlinkJoin {
       name = "opencode-wrapped";
       paths = [ pkgs.opencode ];

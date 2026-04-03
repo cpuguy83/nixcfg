@@ -29,7 +29,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hyprland.url = "github:hyprwm/hyprland/v0.54.2";
+    hyprland.url = "github:hyprwm/hyprland/v0.54.3";
     # hyprland-plugins = {
     #   url = "github:hyprwm/hyprland-plugins/v0.53.0";
     #   inputs.hyprland.follows = "hyprland";
@@ -66,7 +66,7 @@
     };
 
     opencode = {
-      url = "github:anomalyco/opencode/v1.3.3";
+      url = "github:anomalyco/opencode/v1.3.13";
     };
 
     handy = {

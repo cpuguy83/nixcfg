@@ -3,7 +3,6 @@
   pkgs-unstable,
   ...
 }:
-
 {
   nixpkgs.overlays = [
     inputs.waybar.overlays.default
@@ -31,21 +30,23 @@
     (import ./hyprtasking.nix { inherit inputs pkgs-unstable; })
     (final: _prev: {
       opencode =
-        (inputs.opencode.packages.${final.stdenv.hostPlatform.system}.default).overrideAttrs
+        (inputs.opencode.packages.${final.stdenv.hostPlatform.system}.opencode).overrideAttrs
           (oldAttrs: {
-            buildPhase = ''
-              runHook preBuild
-
-              cd ./packages/opencode
-              bun --bun ./script/build.ts --single --skip-install --skip-embed-web-ui
-              bun --bun ./script/schema.ts schema.json
-
-              runHook postBuild
-            '';
+            node_modules = oldAttrs.node_modules.overrideAttrs {
+              outputHash = "sha256-C7y5FMI1pGEgMw/vcPoBhK9tw5uGg1bk0gPXPUUVhgU=";
+            };
           });
+      opencode-desktop = inputs.opencode.packages.${final.stdenv.hostPlatform.system}.desktop;
+      # (inputs.opencode.packages.${final.stdenv.hostPlatform.system}.opencode-desktop).overrideAttrs
+      #   (oldAttrs: {
+      #     node_modules = oldAttrs.node_modules.overrideAttrs {
+      #       outputHash = "sha256-C7y5FMI1pGEgMw/vcPoBhK9tw5uGg1bk0gPXPUUVhgU=";
+      #     };
+      #   });
       hyprland = pkgs-unstable.hyprland;
       hyprlandPlugins = pkgs-unstable.hyprlandPlugins;
       ghostty = inputs.ghostty.packages.${final.stdenv.hostPlatform.system}.default;
+      azure-cli = pkgs-unstable.azure-cli;
     })
   ];
 }
