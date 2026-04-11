@@ -1,0 +1,79 @@
+From e86ce08b86915314e1ca1646608607909ef6e289 Mon Sep 17 00:00:00 2001
+From: Sam Saffron <sam.saffron@gmail.com>
+Date: Sun, 23 Nov 2025 14:04:25 +1100
+Subject: [PATCH] stop with share token warning and UI, it is confusing
+
+---
+ hyprland-share-picker/main.cpp       |  5 +++--
+ hyprland-share-picker/mainpicker.cpp | 14 ++++++++++----
+ hyprland-share-picker/mainpicker.h   |  2 +-
+ 3 files changed, 14 insertions(+), 7 deletions(-)
+
+diff --git a/hyprland-share-picker/main.cpp b/hyprland-share-picker/main.cpp
+index 8effc1a..7f27d40 100644
+--- a/hyprland-share-picker/main.cpp
++++ b/hyprland-share-picker/main.cpp
+@@ -114,7 +114,8 @@ std::vector<SWindowEntry> getWindowsFromHyprctl() {
+ int main(int argc, char* argv[]) {
+     qputenv("QT_LOGGING_RULES", "qml=false");
+ 
+-    bool allowTokenByDefault = false;
++    bool allowTokenByDefault = true;
++    bool allowTokenSelection = getenv("XDPH_PICKER_ALLOW_TOKEN_SELECTION") != nullptr;
+     bool testMode = false;
+ 
+     for (int i = 1; i < argc; ++i) {
+@@ -139,7 +140,7 @@ int main(int argc, char* argv[]) {
+     QGuiApplication::setDesktopFileName("org.hyprland.xdg-desktop-portal-hyprland");
+ 
+     MainPicker w;
+-    w.init(WINDOWLIST, allowTokenByDefault);
++    w.init(WINDOWLIST, allowTokenByDefault, allowTokenSelection);
+ 
+     WaylandCapture* waylandCapture = new WaylandCapture(&w);
+ 
+diff --git a/hyprland-share-picker/mainpicker.cpp b/hyprland-share-picker/mainpicker.cpp
+index e615002..f96c67b 100644
+--- a/hyprland-share-picker/mainpicker.cpp
++++ b/hyprland-share-picker/mainpicker.cpp
+@@ -24,9 +24,14 @@ MainPicker::~MainPicker()
+     delete ui;
+ }
+ 
+-void MainPicker::init(const std::vector<SWindowEntry>& windows, bool allowToken) {
+-    if (allowToken)
+-        ui->checkBox->setCheckState(Qt::Checked);
++void MainPicker::init(const std::vector<SWindowEntry>& windows, bool allowToken, bool showTokenCheckbox) {
++    if (showTokenCheckbox) {
++        ui->checkBox->setVisible(true);
++        if (allowToken)
++            ui->checkBox->setCheckState(Qt::Checked);
++    } else {
++        ui->checkBox->setVisible(false);
++    }
+ 
+     // Populate screens
+     const auto SCREENS = QGuiApplication::screens();
+@@ -211,7 +216,8 @@ void MainPicker::onCancel() {
+ 
+ void MainPicker::finish(const std::string& result) {
+     std::cout << "[SELECTION]";
+-    std::cout << (ui->checkBox->isChecked() ? "r" : "");
++    // If checkbox is not visible, always allow restore token
++    std::cout << (ui->checkBox->isVisible() ? (ui->checkBox->isChecked() ? "r" : "") : "r");
+     std::cout << "/";
+     std::cout << result << "\n";
+ 
+diff --git a/hyprland-share-picker/mainpicker.h b/hyprland-share-picker/mainpicker.h
+index d5f04c1..2952689 100644
+--- a/hyprland-share-picker/mainpicker.h
++++ b/hyprland-share-picker/mainpicker.h
+@@ -28,7 +28,7 @@ class MainPicker : public QDialog
+     MainPicker(QWidget *parent = nullptr);
+     ~MainPicker();
+ 
+-    void init(const std::vector<SWindowEntry>& windows, bool allowToken);
++    void init(const std::vector<SWindowEntry>& windows, bool allowToken, bool showTokenCheckbox);
+     void updateWindowPreview(unsigned long long handle, const QImage& image);
+ 
+ protected:

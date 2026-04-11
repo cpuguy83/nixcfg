@@ -1,0 +1,509 @@
+diff --git a/hyprland-share-picker/CMakeLists.txt b/hyprland-share-picker/CMakeLists.txt
+index 61f46f0..2cf4b20 100644
+--- a/hyprland-share-picker/CMakeLists.txt
++++ b/hyprland-share-picker/CMakeLists.txt
+@@ -63,6 +63,14 @@ add_custom_command(
+     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+ )
+ 
++add_custom_command(
++    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/protocols/wlr-screencopy-unstable-v1.cpp
++           ${CMAKE_CURRENT_BINARY_DIR}/protocols/wlr-screencopy-unstable-v1.hpp
++    COMMAND ${HYPRWAYLAND_SCANNER} --client ${CMAKE_CURRENT_SOURCE_DIR}/../protocols/wlr-screencopy-unstable-v1.xml
++            ${CMAKE_CURRENT_BINARY_DIR}/protocols/
++    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
++)
++
+ set(PROTOCOL_SOURCES
+     ${CMAKE_CURRENT_BINARY_DIR}/protocols/hyprland-toplevel-export-v1.cpp
+     ${CMAKE_CURRENT_BINARY_DIR}/protocols/hyprland-toplevel-export-v1.hpp
+@@ -70,6 +78,8 @@ set(PROTOCOL_SOURCES
+     ${CMAKE_CURRENT_BINARY_DIR}/protocols/wlr-foreign-toplevel-management-unstable-v1.hpp
+     ${CMAKE_CURRENT_BINARY_DIR}/protocols/wayland.cpp
+     ${CMAKE_CURRENT_BINARY_DIR}/protocols/wayland.hpp
++    ${CMAKE_CURRENT_BINARY_DIR}/protocols/wlr-screencopy-unstable-v1.cpp
++    ${CMAKE_CURRENT_BINARY_DIR}/protocols/wlr-screencopy-unstable-v1.hpp
+ )
+ 
+ include_directories(${CMAKE_CURRENT_BINARY_DIR}/protocols)
+diff --git a/hyprland-share-picker/main.cpp b/hyprland-share-picker/main.cpp
+index df6a619..9fd7cc7 100644
+--- a/hyprland-share-picker/main.cpp
++++ b/hyprland-share-picker/main.cpp
+@@ -208,8 +208,16 @@ int main(int argc, char* argv[]) {
+ 
+     MainPicker w;
+ 
+-    WaylandCapture* waylandCapture = new WaylandCapture(&w);
++    // Build screen index mapping for wl_output fallback matching
++    const auto SCREENS = QGuiApplication::screens();
++    std::vector<std::pair<QString, int>> screenIndices;
++    for (int i = 0; i < SCREENS.size(); ++i) {
++        screenIndices.push_back({SCREENS[i]->name(), i});
++    }
++
++    WaylandCapture* waylandCapture = new WaylandCapture(screenIndices, &w);
+     QObject::connect(waylandCapture, &WaylandCapture::frameCaptured, &w, &MainPicker::updateWindowPreview);
++    QObject::connect(waylandCapture, &WaylandCapture::outputFrameCaptured, &w, &MainPicker::updateScreenPreview);
+     w.setWaylandCapture(waylandCapture);
+ 
+     w.init(WINDOWLIST, allowTokenByDefault, allowTokenSelection);
+@@ -220,6 +228,11 @@ int main(int argc, char* argv[]) {
+             waylandCapture->capture(window.handle);
+     }
+ 
++    // Start capturing all screens
++    for (int i = 0; i < SCREENS.size(); ++i) {
++        waylandCapture->captureOutput(SCREENS[i]->name());
++    }
++
+     QSettings* settings = new QSettings("/tmp/hypr/hyprland-share-picker.conf", QSettings::IniFormat);
+     if (settings->contains("width") && settings->contains("height")) {
+         int w_val = settings->value("width").toInt();
+diff --git a/hyprland-share-picker/mainpicker.cpp b/hyprland-share-picker/mainpicker.cpp
+index 9ccf009..1cc322a 100644
+--- a/hyprland-share-picker/mainpicker.cpp
++++ b/hyprland-share-picker/mainpicker.cpp
+@@ -17,6 +17,7 @@ MainPicker::MainPicker(QWidget *parent)
+     connect(ui->shareBtn, &QPushButton::clicked, this, &MainPicker::onShare);
+     connect(ui->cancelBtn, &QPushButton::clicked, this, &MainPicker::onCancel);
+     connect(ui->windowList, &QListWidget::itemSelectionChanged, this, &MainPicker::onWindowSelectionChanged);
++    connect(ui->screenList, &QListWidget::itemSelectionChanged, this, &MainPicker::onScreenSelectionChanged);
+     connect(ui->regionButton, &QPushButton::clicked, this, &MainPicker::onRegion);
+ }
+ 
+@@ -122,14 +123,68 @@ void MainPicker::onWindowSelectionChanged() {
+     }
+ }
+ 
++void MainPicker::onScreenSelectionChanged() {
++    updateScreenPreviewLabel();
++
++    if (m_waylandCapture) {
++        auto items = ui->screenList->selectedItems();
++        if (!items.isEmpty()) {
++            QString outputName = m_screenMap[items[0]];
++            if (!outputName.isEmpty())
++                m_waylandCapture->startLiveOutputCapture(outputName);
++        } else {
++            m_waylandCapture->stopLiveOutputCapture();
++        }
++    }
++}
++
++void MainPicker::updateScreenPreview(const QString& outputName, const QImage& image) {
++    m_screenImages[outputName] = image;
++
++    auto items = ui->screenList->selectedItems();
++    if (items.isEmpty()) return;
++
++    if (m_screenMap[items[0]] == outputName) {
++        updateScreenPreviewLabel();
++    }
++}
++
++void MainPicker::updateScreenPreviewLabel() {
++    auto items = ui->screenList->selectedItems();
++    if (items.isEmpty()) {
++        ui->screenPreview->setText("Select a screen to preview");
++        return;
++    }
++
++    QString outputName = m_screenMap[items[0]];
++    if (m_screenImages.contains(outputName)) {
++        QPixmap pm = QPixmap::fromImage(m_screenImages[outputName]);
++        if (!pm.isNull()) {
++            QSize previewSize = ui->screenPreview->size();
++            qreal dpr = ui->screenPreview->devicePixelRatio();
++            QSize targetSize = previewSize * dpr;
++            if (targetSize.width() < 100 || targetSize.height() < 100) {
++                targetSize = QSize(640, 480) * dpr;
++            }
++            pm = pm.scaled(targetSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
++            pm.setDevicePixelRatio(dpr);
++            ui->screenPreview->setPixmap(pm);
++            return;
++        }
++    }
++    ui->screenPreview->setText("No preview available");
++}
++
+ void MainPicker::resizeEvent(QResizeEvent* event) {
+     QDialog::resizeEvent(event);
+     updatePreviewLabel();
++    updateScreenPreviewLabel();
+ }
+ 
+ void MainPicker::showEvent(QShowEvent* event) {
+     QDialog::showEvent(event);
+     updatePreviewLabel();
++    updateScreenPreviewLabel();
+ }
+ 
+ void MainPicker::updatePreviewLabel() {
+diff --git a/hyprland-share-picker/mainpicker.h b/hyprland-share-picker/mainpicker.h
+index f0da2fc..2009617 100644
+--- a/hyprland-share-picker/mainpicker.h
++++ b/hyprland-share-picker/mainpicker.h
+@@ -35,6 +35,7 @@ public:
+     void init(const std::vector<SWindowEntry>& windows, bool allowToken, bool showTokenCheckbox);
+     void updateWindowPreview(unsigned long long handle, const QImage& image);
+     void setWaylandCapture(WaylandCapture* capture);
++    void updateScreenPreview(const QString& outputName, const QImage& image);
+ 
+ protected:
+     void resizeEvent(QResizeEvent* event) override;
+@@ -44,6 +45,7 @@ private slots:
+     void onShare();
+     void onCancel();
+     void onWindowSelectionChanged();
++    void onScreenSelectionChanged();
+     void onRegion();
+ 
+ private:
+@@ -55,7 +57,9 @@ private:
+ 
+     void finish(const std::string& result);
+     void updatePreviewLabel();
++    void updateScreenPreviewLabel();
+ 
+     WaylandCapture* m_waylandCapture = nullptr;
++    QMap<QString, QImage> m_screenImages;
+ };
+ #endif // MAINPICKER_H
+diff --git a/hyprland-share-picker/mainpicker.ui b/hyprland-share-picker/mainpicker.ui
+index 4405cbf..53eac8f 100644
+--- a/hyprland-share-picker/mainpicker.ui
++++ b/hyprland-share-picker/mainpicker.ui
+@@ -23,15 +23,37 @@
+        <attribute name="title">
+         <string>Screen</string>
+        </attribute>
+-       <layout class="QVBoxLayout" name="verticalLayout_screens">
+-        <item>
+-         <widget class="QListWidget" name="screenList">
+-          <property name="editTriggers">
+-           <set>QAbstractItemView::NoEditTriggers</set>
+-          </property>
+-         </widget>
+-        </item>
+-       </layout>
++      <layout class="QHBoxLayout" name="horizontalLayout_screens">
++       <item>
++        <widget class="QListWidget" name="screenList">
++         <property name="maximumSize">
++          <size>
++           <width>300</width>
++           <height>16777215</height>
++          </size>
++         </property>
++         <property name="editTriggers">
++          <set>QAbstractItemView::NoEditTriggers</set>
++         </property>
++        </widget>
++       </item>
++       <item>
++        <widget class="QLabel" name="screenPreview">
++         <property name="text">
++          <string>Select a screen to preview</string>
++         </property>
++         <property name="alignment">
++          <set>Qt::AlignCenter</set>
++         </property>
++         <property name="sizePolicy">
++          <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
++           <horstretch>1</horstretch>
++           <verstretch>1</verstretch>
++          </sizepolicy>
++         </property>
++        </widget>
++       </item>
++      </layout>
+       </widget>
+       <widget class="QWidget" name="windows">
+        <attribute name="title">
+diff --git a/hyprland-share-picker/waylandcapture.cpp b/hyprland-share-picker/waylandcapture.cpp
+index fe17166..3908fd7 100644
+--- a/hyprland-share-picker/waylandcapture.cpp
++++ b/hyprland-share-picker/waylandcapture.cpp
+@@ -42,11 +42,23 @@ WaylandCapture::CaptureSession::~CaptureSession() {
+     }
+ }
+ 
++WaylandCapture::OutputCaptureSession::~OutputCaptureSession() {
++    if (data && data != MAP_FAILED) {
++        munmap(data, size);
++    }
++}
++
++WaylandCapture::WaylandCapture(const std::vector<std::pair<QString, int>>& screenIndices, QObject* parent)
++    : QObject(parent) {
++    init(screenIndices);
++}
++
+ WaylandCapture::WaylandCapture(QObject* parent) : QObject(parent) {
+-    init();
++    init({});
+ }
+ 
+ WaylandCapture::~WaylandCapture() {
++    m_liveOutputActive = false;
+     if (m_socketNotifier) {
+         m_socketNotifier->setEnabled(false);
+         delete m_socketNotifier;
+@@ -54,6 +66,10 @@ WaylandCapture::~WaylandCapture() {
+     }
+     
+     m_sessions.clear(); 
++    m_outputSessions.clear();
++    m_outputs.clear();
++    m_pendingOutputs.clear();
++    m_pendingOutputNames.clear();
+     
+     // Reset protocol wrappers before disconnecting display
+     // This ensures we don't leave dangling pointers to proxies that are about to be freed
+@@ -67,7 +83,7 @@ WaylandCapture::~WaylandCapture() {
+     }
+ }
+ 
+-void WaylandCapture::init() {
++void WaylandCapture::init(const std::vector<std::pair<QString, int>>& screenIndices) {
+     m_display = wl_display_connect(nullptr);
+     if (!m_display) {
+         std::cerr << "[picker] failed to connect to wayland display" << std::endl;
+@@ -83,8 +99,40 @@ void WaylandCapture::init() {
+             m_shm = makeShared<CCWlShm>((wl_proxy*)wl_registry_bind((wl_registry*)r->resource(), name, &wl_shm_interface, 1));
+         } else if (iface == "hyprland_toplevel_export_manager_v1") {
+             m_manager = makeShared<CCHyprlandToplevelExportManagerV1>((wl_proxy*)wl_registry_bind((wl_registry*)r->resource(), name, &hyprland_toplevel_export_manager_v1_interface, 2));
++        } else if (iface == "zwlr_screencopy_manager_v1") {
++            m_screencopyManager = makeShared<CCZwlrScreencopyManagerV1>((wl_proxy*)wl_registry_bind((wl_registry*)r->resource(), name, &zwlr_screencopy_manager_v1_interface, 3));
++        } else if (iface == "wl_output") {
++            uint32_t bindVersion = std::min(version, (uint32_t)4);
++            auto output = makeShared<CCWlOutput>((wl_proxy*)wl_registry_bind((wl_registry*)r->resource(), name, &wl_output_interface, bindVersion));
++            m_pendingOutputs[name] = output;
++
++            if (bindVersion >= 4) {
++                output->setName([this, name](CCWlOutput*, const char* outputName) {
++                    m_pendingOutputNames[name] = QString::fromUtf8(outputName);
++                });
++            }
+         }
+     });
++    
++    wl_display_roundtrip(m_display);
++
++    // Match outputs by name (wl_output v4+ name event) or fall back to screen index order
++    for (auto it = m_pendingOutputNames.begin(); it != m_pendingOutputNames.end(); ++it) {
++        if (m_pendingOutputs.contains(it.key())) {
++            m_outputs[it.value()] = m_pendingOutputs[it.key()];
++        }
++    }
++
++    // Fallback: if we didn't get names from wl_output v4, match by index order
++    if (m_outputs.isEmpty() && !screenIndices.empty()) {
++        QList<uint32_t> sortedNames = m_pendingOutputs.keys();
++        std::sort(sortedNames.begin(), sortedNames.end());
++        for (const auto& [screenName, idx] : screenIndices) {
++            if (idx >= 0 && idx < sortedNames.size()) {
++                m_outputs[screenName] = m_pendingOutputs[sortedNames[idx]];
++            }
++        }
++    }
+ 
+     wl_display_roundtrip(m_display);
+ 
+@@ -206,3 +254,115 @@ void WaylandCapture::startLiveCapture(unsigned long long handle, int intervalMs)
+ void WaylandCapture::stopLiveCapture() {
+     m_liveActive = false;
+ }
++
++void WaylandCapture::captureOutput(const QString& outputName) {
++    if (!m_screencopyManager || !m_shm) return;
++    if (!m_outputs.contains(outputName)) return;
++
++    if (m_outputSessions.contains(outputName)) {
++        m_outputSessions.remove(outputName);
++    }
++
++    auto output = m_outputs[outputName];
++    auto frame = makeShared<CCZwlrScreencopyFrameV1>(m_screencopyManager->sendCaptureOutput(0, output->resource()));
++    auto session = std::make_shared<OutputCaptureSession>();
++    session->frame = frame;
++    m_outputSessions[outputName] = session;
++
++    frame->setBuffer([this, outputName](CCZwlrScreencopyFrameV1* r, uint32_t format, uint32_t width, uint32_t height, uint32_t stride) {
++        if (!m_outputSessions.contains(outputName)) return;
++        auto& s = m_outputSessions[outputName];
++        if (s->size > 0) return;
++        s->width = width;
++        s->height = height;
++        s->stride = stride;
++        s->format = format;
++        s->size = stride * height;
++    });
++
++    frame->setBufferDone([this, outputName](CCZwlrScreencopyFrameV1* r) {
++        if (!m_outputSessions.contains(outputName)) return;
++        auto& s = m_outputSessions[outputName];
++
++        if (s->size <= 0) return;
++
++        int fd = create_shm_file(s->size);
++        if (fd < 0) return;
++
++        s->data = mmap(NULL, s->size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
++        if (s->data == MAP_FAILED) {
++            close(fd);
++            return;
++        }
++
++        auto pool = makeShared<CCWlShmPool>(m_shm->sendCreatePool(fd, s->size));
++        s->buffer = makeShared<CCWlBuffer>(pool->sendCreateBuffer(0, s->width, s->height, s->stride, s->format));
++
++        pool->sendDestroy();
++        pool.reset();
++
++        r->sendCopy(s->buffer->resource());
++        close(fd);
++        wl_display_flush(m_display);
++    });
++
++    frame->setFlags([this, outputName](CCZwlrScreencopyFrameV1* r, uint32_t flags) {
++        if (!m_outputSessions.contains(outputName)) return;
++        m_outputSessions[outputName]->yInvert = (flags & 1) != 0;
++    });
++
++    frame->setReady([this, outputName](CCZwlrScreencopyFrameV1* r, uint32_t tv_sec_hi, uint32_t tv_sec_lo, uint32_t tv_nsec) {
++        if (!m_outputSessions.contains(outputName)) return;
++        auto s = m_outputSessions[outputName];
++
++        QImage::Format fmt = QImage::Format_ARGB32;
++        if (s->format == WL_SHM_FORMAT_XRGB8888)
++            fmt = QImage::Format_RGB32;
++        else if (s->format == WL_SHM_FORMAT_ARGB8888)
++            fmt = QImage::Format_ARGB32_Premultiplied;
++
++        QImage img((uchar*)s->data, s->width, s->height, s->stride, fmt);
++        QImage copy = img.copy();
++
++        if (s->yInvert)
++            copy = copy.mirrored(false, true);
++
++        r->sendDestroy();
++
++        emit outputFrameCaptured(outputName, copy);
++
++        if (m_liveOutputActive && outputName == m_liveOutputName) {
++            QTimer::singleShot(m_liveOutputIntervalMs, this, [this]() {
++                if (m_liveOutputActive)
++                    captureOutput(m_liveOutputName);
++            });
++        }
++
++        QTimer::singleShot(0, this, [this, outputName]() {
++            m_outputSessions.remove(outputName);
++        });
++    });
++
++    frame->setFailed([this, outputName](CCZwlrScreencopyFrameV1* r) {
++        if (m_outputSessions.contains(outputName)) {
++            m_outputSessions[outputName]->frame->sendDestroy();
++            QTimer::singleShot(0, this, [this, outputName]() {
++                m_outputSessions.remove(outputName);
++            });
++        }
++    });
++
++    wl_display_flush(m_display);
++}
++
++void WaylandCapture::startLiveOutputCapture(const QString& outputName, int intervalMs) {
++    m_liveOutputActive = false;
++    m_liveOutputName = outputName;
++    m_liveOutputIntervalMs = intervalMs;
++    m_liveOutputActive = true;
++    captureOutput(outputName);
++}
++
++void WaylandCapture::stopLiveOutputCapture() {
++    m_liveOutputActive = false;
++}
+diff --git a/hyprland-share-picker/waylandcapture.h b/hyprland-share-picker/waylandcapture.h
+index d675f8c..9b12c56 100644
+--- a/hyprland-share-picker/waylandcapture.h
++++ b/hyprland-share-picker/waylandcapture.h
+@@ -11,12 +11,14 @@ using namespace Hyprutils::Memory;
+ #define SP CSharedPointer
+ #define WP CWeakPointer
+ 
++#include "protocols/wlr-screencopy-unstable-v1.hpp"
+ #include "protocols/hyprland-toplevel-export-v1.hpp"
+ #include "protocols/wayland.hpp"
+ 
+ class WaylandCapture : public QObject {
+     Q_OBJECT
+ public:
++    WaylandCapture(const std::vector<std::pair<QString, int>>& screenIndices, QObject* parent = nullptr);
+     WaylandCapture(QObject* parent = nullptr);
+     ~WaylandCapture();
+ 
+@@ -24,9 +26,13 @@ public:
+     void startLiveCapture(unsigned long long handle, int intervalMs = 500);
+     void stopLiveCapture();
+ 
++    void captureOutput(const QString& outputName);
++    void startLiveOutputCapture(const QString& outputName, int intervalMs = 500);
++    void stopLiveOutputCapture();
++
+ signals:
+     void frameCaptured(unsigned long long handle, QImage image);
+-
++    void outputFrameCaptured(const QString& outputName, QImage image);
+ private:
+     wl_display* m_display = nullptr;
+     
+@@ -34,6 +40,9 @@ private:
+     SP<CCWlShm> m_shm;
+     SP<CCHyprlandToplevelExportManagerV1> m_manager;
+ 
++    SP<CCZwlrScreencopyManagerV1> m_screencopyManager;
++    QMap<QString, SP<CCWlOutput>> m_outputs;
++
+     struct CaptureSession {
+         SP<CCHyprlandToplevelExportFrameV1> frame;
+         SP<CCWlBuffer> buffer;
+@@ -43,15 +52,33 @@ private:
+         
+         ~CaptureSession();
+     };
++    
++    struct OutputCaptureSession {
++        SP<CCZwlrScreencopyFrameV1> frame;
++        SP<CCWlBuffer> buffer;
++        void* data = nullptr;
++        int width = 0, height = 0, stride = 0, size = 0;
++        uint32_t format = 0;
++        bool yInvert = false;
++        
++        ~OutputCaptureSession();
++    };
+ 
+     QMap<unsigned long long, std::shared_ptr<CaptureSession>> m_sessions;
++    QMap<QString, std::shared_ptr<OutputCaptureSession>> m_outputSessions;
+ 
+-    void init();
++    void init(const std::vector<std::pair<QString, int>>& screenIndices);
+     void processEvents();
+     
+     QSocketNotifier* m_socketNotifier = nullptr;
++    QMap<uint32_t, QString> m_pendingOutputNames;
++    QMap<uint32_t, SP<CCWlOutput>> m_pendingOutputs;
+ 
+     unsigned long long m_liveHandle = 0;
+     bool m_liveActive = false;
+     int m_liveIntervalMs = 500;
++
++    QString m_liveOutputName;
++    bool m_liveOutputActive = false;
++    int m_liveOutputIntervalMs = 500;
+ };

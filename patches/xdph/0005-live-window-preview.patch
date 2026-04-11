@@ -1,0 +1,146 @@
+diff --git a/hyprland-share-picker/main.cpp b/hyprland-share-picker/main.cpp
+index d50472d..df6a619 100644
+--- a/hyprland-share-picker/main.cpp
++++ b/hyprland-share-picker/main.cpp
+@@ -207,11 +207,12 @@ int main(int argc, char* argv[]) {
+     QGuiApplication::setDesktopFileName("org.hyprland.xdg-desktop-portal-hyprland");
+ 
+     MainPicker w;
+-    w.init(WINDOWLIST, allowTokenByDefault, allowTokenSelection);
+ 
+     WaylandCapture* waylandCapture = new WaylandCapture(&w);
+-
+     QObject::connect(waylandCapture, &WaylandCapture::frameCaptured, &w, &MainPicker::updateWindowPreview);
++    w.setWaylandCapture(waylandCapture);
++
++    w.init(WINDOWLIST, allowTokenByDefault, allowTokenSelection);
+ 
+     // Start capturing
+     for (const auto& window : WINDOWLIST) {
+diff --git a/hyprland-share-picker/mainpicker.cpp b/hyprland-share-picker/mainpicker.cpp
+index 2f72e8c..9ccf009 100644
+--- a/hyprland-share-picker/mainpicker.cpp
++++ b/hyprland-share-picker/mainpicker.cpp
+@@ -1,5 +1,6 @@
+ #include "mainpicker.h"
+ #include "./ui_mainpicker.h"
++#include "waylandcapture.h"
+ #include <QDebug>
+ #include <QScreen>
+ #include <QSettings>
+@@ -24,6 +25,10 @@ MainPicker::~MainPicker()
+     delete ui;
+ }
+ 
++void MainPicker::setWaylandCapture(WaylandCapture* capture) {
++    m_waylandCapture = capture;
++}
++
+ void MainPicker::init(const std::vector<SWindowEntry>& windows, bool allowToken, bool showTokenCheckbox) {
+     if (showTokenCheckbox) {
+         ui->checkBox->setVisible(true);
+@@ -103,6 +108,18 @@ void MainPicker::updateWindowPreview(unsigned long long handle, const QImage& im
+ 
+ void MainPicker::onWindowSelectionChanged() {
+     updatePreviewLabel();
++
++    // Start live-capturing the selected window
++    if (m_waylandCapture) {
++        auto items = ui->windowList->selectedItems();
++        if (!items.isEmpty()) {
++            unsigned long long handle = m_windowHandleMap[items[0]];
++            if (handle > 0)
++                m_waylandCapture->startLiveCapture(handle);
++        } else {
++            m_waylandCapture->stopLiveCapture();
++        }
++    }
+ }
+ 
+ void MainPicker::resizeEvent(QResizeEvent* event) {
+diff --git a/hyprland-share-picker/mainpicker.h b/hyprland-share-picker/mainpicker.h
+index 91bee07..f0da2fc 100644
+--- a/hyprland-share-picker/mainpicker.h
++++ b/hyprland-share-picker/mainpicker.h
+@@ -13,6 +13,8 @@ QT_BEGIN_NAMESPACE
+ namespace Ui { class MainPicker; }
+ QT_END_NAMESPACE
+ 
++class WaylandCapture;
++
+ struct SWindowEntry {
+     std::string        name;
+     std::string        clazz;
+@@ -32,6 +34,7 @@ public:
+ 
+     void init(const std::vector<SWindowEntry>& windows, bool allowToken, bool showTokenCheckbox);
+     void updateWindowPreview(unsigned long long handle, const QImage& image);
++    void setWaylandCapture(WaylandCapture* capture);
+ 
+ protected:
+     void resizeEvent(QResizeEvent* event) override;
+@@ -52,5 +55,7 @@ private:
+ 
+     void finish(const std::string& result);
+     void updatePreviewLabel();
++
++    WaylandCapture* m_waylandCapture = nullptr;
+ };
+ #endif // MAINPICKER_H
+diff --git a/hyprland-share-picker/waylandcapture.cpp b/hyprland-share-picker/waylandcapture.cpp
+index 6748778..fe17166 100644
+--- a/hyprland-share-picker/waylandcapture.cpp
++++ b/hyprland-share-picker/waylandcapture.cpp
+@@ -169,6 +169,14 @@ void WaylandCapture::capture(unsigned long long handle) {
+         
+         emit frameCaptured(handle, copy);
+ 
++        // Schedule next live capture if this is the active live handle
++        if (m_liveActive && handle == m_liveHandle) {
++            QTimer::singleShot(m_liveIntervalMs, this, [this]() {
++                if (m_liveActive)
++                    capture(m_liveHandle);
++            });
++        }
++
+         // Defer removal
+         QTimer::singleShot(0, this, [this, handle]() {
+             m_sessions.remove(handle);
+@@ -186,3 +194,15 @@ void WaylandCapture::capture(unsigned long long handle) {
+     
+     wl_display_flush(m_display);
+ }
++
++void WaylandCapture::startLiveCapture(unsigned long long handle, int intervalMs) {
++    m_liveActive = false;
++    m_liveHandle = handle;
++    m_liveIntervalMs = intervalMs;
++    m_liveActive = true;
++    capture(handle);
++}
++
++void WaylandCapture::stopLiveCapture() {
++    m_liveActive = false;
++}
+diff --git a/hyprland-share-picker/waylandcapture.h b/hyprland-share-picker/waylandcapture.h
+index e9f07f5..d675f8c 100644
+--- a/hyprland-share-picker/waylandcapture.h
++++ b/hyprland-share-picker/waylandcapture.h
+@@ -21,6 +21,8 @@ public:
+     ~WaylandCapture();
+ 
+     void capture(unsigned long long handle);
++    void startLiveCapture(unsigned long long handle, int intervalMs = 500);
++    void stopLiveCapture();
+ 
+ signals:
+     void frameCaptured(unsigned long long handle, QImage image);
+@@ -48,4 +50,8 @@ private:
+     void processEvents();
+     
+     QSocketNotifier* m_socketNotifier = nullptr;
++
++    unsigned long long m_liveHandle = 0;
++    bool m_liveActive = false;
++    int m_liveIntervalMs = 500;
+ };

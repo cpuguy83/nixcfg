@@ -1,0 +1,1378 @@
+From 549907139766bed8d9e695414f846190d2f67e06 Mon Sep 17 00:00:00 2001
+From: Sam Saffron <sam.saffron@gmail.com>
+Date: Sat, 22 Nov 2025 13:35:07 +1100
+Subject: [PATCH] Feature: UI improvements to share picker
+
+1. Default to windows tab (override with XDPH_PICKER_DEFAULT_TAB=screen)
+2. Show preview of window when selecting windows
+---
+ hyprland-share-picker/CMakeLists.txt     |  54 +++-
+ hyprland-share-picker/elidedbutton.cpp   |  11 +-
+ hyprland-share-picker/elidedbutton.h     |   1 +
+ hyprland-share-picker/main.cpp           | 243 +++++----------
+ hyprland-share-picker/mainpicker.cpp     | 205 ++++++++++++-
+ hyprland-share-picker/mainpicker.h       |  36 ++-
+ hyprland-share-picker/mainpicker.ui      | 370 ++++++++---------------
+ hyprland-share-picker/waylandcapture.cpp | 188 ++++++++++++
+ hyprland-share-picker/waylandcapture.h   |  51 ++++
+ 9 files changed, 727 insertions(+), 432 deletions(-)
+ create mode 100644 hyprland-share-picker/waylandcapture.cpp
+ create mode 100644 hyprland-share-picker/waylandcapture.h
+
+diff --git a/hyprland-share-picker/CMakeLists.txt b/hyprland-share-picker/CMakeLists.txt
+index 609863c0..61f46f0f 100644
+--- a/hyprland-share-picker/CMakeLists.txt
++++ b/hyprland-share-picker/CMakeLists.txt
+@@ -22,10 +22,60 @@ pkg_check_modules(
+   deps
+   REQUIRED
+   IMPORTED_TARGET
+-  hyprutils>=0.2.6)
++  hyprutils>=0.2.6
++  wayland-client
++  wayland-protocols)
++
++find_program(HYPRWAYLAND_SCANNER hyprwayland-scanner)
++
++# protocols
++pkg_get_variable(HYPRLAND_PROTOCOLS_DIR hyprland-protocols pkgdatadir)
++if (NOT HYPRLAND_PROTOCOLS_DIR)
++    set(HYPRLAND_PROTOCOLS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../subprojects/hyprland-protocols/protocols")
++else()
++    set(HYPRLAND_PROTOCOLS_DIR "${HYPRLAND_PROTOCOLS_DIR}/protocols")
++endif()
++
++# make sure the output directory exists
++file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/protocols)
++
++add_custom_command(
++    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/protocols/hyprland-toplevel-export-v1.cpp
++           ${CMAKE_CURRENT_BINARY_DIR}/protocols/hyprland-toplevel-export-v1.hpp
++    COMMAND ${HYPRWAYLAND_SCANNER} --client ${HYPRLAND_PROTOCOLS_DIR}/hyprland-toplevel-export-v1.xml
++            ${CMAKE_CURRENT_BINARY_DIR}/protocols/
++    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
++)
++
++add_custom_command(
++    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/protocols/wlr-foreign-toplevel-management-unstable-v1.cpp
++           ${CMAKE_CURRENT_BINARY_DIR}/protocols/wlr-foreign-toplevel-management-unstable-v1.hpp
++    COMMAND ${HYPRWAYLAND_SCANNER} --client ${CMAKE_CURRENT_SOURCE_DIR}/../protocols/wlr-foreign-toplevel-management-unstable-v1.xml
++            ${CMAKE_CURRENT_BINARY_DIR}/protocols/
++    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
++)
++
++add_custom_command(
++    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/protocols/wayland.cpp
++           ${CMAKE_CURRENT_BINARY_DIR}/protocols/wayland.hpp
++    COMMAND ${HYPRWAYLAND_SCANNER} --wayland-enums --client
++            /usr/share/wayland/wayland.xml ${CMAKE_CURRENT_BINARY_DIR}/protocols/
++    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
++)
++
++set(PROTOCOL_SOURCES
++    ${CMAKE_CURRENT_BINARY_DIR}/protocols/hyprland-toplevel-export-v1.cpp
++    ${CMAKE_CURRENT_BINARY_DIR}/protocols/hyprland-toplevel-export-v1.hpp
++    ${CMAKE_CURRENT_BINARY_DIR}/protocols/wlr-foreign-toplevel-management-unstable-v1.cpp
++    ${CMAKE_CURRENT_BINARY_DIR}/protocols/wlr-foreign-toplevel-management-unstable-v1.hpp
++    ${CMAKE_CURRENT_BINARY_DIR}/protocols/wayland.cpp
++    ${CMAKE_CURRENT_BINARY_DIR}/protocols/wayland.hpp
++)
++
++include_directories(${CMAKE_CURRENT_BINARY_DIR}/protocols)
+ 
+ set(PROJECT_SOURCES main.cpp mainpicker.cpp mainpicker.h mainpicker.ui
+-                    elidedbutton.h elidedbutton.cpp)
++                    elidedbutton.h elidedbutton.cpp waylandcapture.cpp waylandcapture.h ${PROTOCOL_SOURCES})
+ 
+ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+   qt_add_executable(hyprland-share-picker MANUAL_FINALIZATION
+diff --git a/hyprland-share-picker/elidedbutton.cpp b/hyprland-share-picker/elidedbutton.cpp
+index 0ee0d62f..31a4abe9 100644
+--- a/hyprland-share-picker/elidedbutton.cpp
++++ b/hyprland-share-picker/elidedbutton.cpp
+@@ -17,6 +17,12 @@ void ElidedButton::setText(QString text)
+     updateText();
+ }
+ 
++void ElidedButton::setIcon(const QIcon &icon)
++{
++    QPushButton::setIcon(icon);
++    updateText();
++}
++
+ void ElidedButton::resizeEvent(QResizeEvent *event)
+ {
+     QPushButton::resizeEvent(event);
+@@ -26,6 +32,7 @@ void ElidedButton::resizeEvent(QResizeEvent *event)
+ void ElidedButton::updateText()
+ {
+     QFontMetrics metrics(font());
+-    QString elided = metrics.elidedText(og_text, Qt::ElideRight, width() - 15);
++    int iconW = icon().isNull() ? 0 : iconSize().width() + 10;
++    QString elided = metrics.elidedText(og_text, Qt::ElideRight, width() - 15 - iconW);
+     QPushButton::setText(elided);
+-}
+\ No newline at end of file
++}
+diff --git a/hyprland-share-picker/elidedbutton.h b/hyprland-share-picker/elidedbutton.h
+index 42e2499b..9a8accf5 100644
+--- a/hyprland-share-picker/elidedbutton.h
++++ b/hyprland-share-picker/elidedbutton.h
+@@ -9,6 +9,7 @@ class ElidedButton : public QPushButton
+     explicit ElidedButton(QWidget *parent = nullptr);
+     explicit ElidedButton(const QString &text, QWidget *parent = nullptr);
+     void setText(QString);
++    void setIcon(const QIcon &icon);
+ 
+ protected:
+     void resizeEvent(QResizeEvent *);
+diff --git a/hyprland-share-picker/main.cpp b/hyprland-share-picker/main.cpp
+index 987093ce..8effc1aa 100644
+--- a/hyprland-share-picker/main.cpp
++++ b/hyprland-share-picker/main.cpp
+@@ -8,6 +8,10 @@
+ #include <QtDebug>
+ #include <QtWidgets>
+ #include <QSettings>
++#include <QJsonDocument>
++#include <QJsonArray>
++#include <QJsonObject>
++#include <QWindow>
+ #include <array>
+ #include <cstdio>
+ #include <iostream>
+@@ -19,7 +23,7 @@
+ using namespace Hyprutils::OS;
+ 
+ #include "mainpicker.h"
+-#include "elidedbutton.h"
++#include "waylandcapture.h"
+ 
+ std::string execAndGet(const char* cmd) {
+     std::string command = cmd + std::string{" 2>&1"};
+@@ -31,15 +35,6 @@ std::string execAndGet(const char* cmd) {
+     return proc.stdOut();
+ }
+ 
+-QApplication* pickerPtr     = nullptr;
+-MainPicker*   mainPickerPtr = nullptr;
+-
+-struct SWindowEntry {
+-    std::string        name;
+-    std::string        clazz;
+-    unsigned long long id = 0;
+-};
+-
+ std::vector<SWindowEntry> getWindows(const char* env) {
+     std::vector<SWindowEntry> result;
+ 
+@@ -66,7 +61,13 @@ std::vector<SWindowEntry> getWindows(const char* env) {
+         const auto WINDOWADDR = rolling.substr(TITLESEPPOS + 5, WINDOWSEPPOS - 5 - TITLESEPPOS);
+ 
+         try {
+-            result.push_back({TITLESTR, CLASSSTR, std::stoull(IDSTR)});
++            unsigned long long id = std::stoull(IDSTR);
++            unsigned long long handle = 0;
++            try {
++                handle = std::stoull(WINDOWADDR);
++            } catch (...) {}
++            
++            result.push_back({TITLESTR, CLASSSTR, id, handle});
+         } catch (std::exception& e) {
+             // silent err
+         }
+@@ -77,184 +78,86 @@ std::vector<SWindowEntry> getWindows(const char* env) {
+     return result;
+ }
+ 
+-int main(int argc, char* argv[]) {
+-    qputenv("QT_LOGGING_RULES", "qml=false");
++std::vector<SWindowEntry> getWindowsFromHyprctl() {
++    std::vector<SWindowEntry> result;
++    std::string jsonRaw = execAndGet("hyprctl clients -j");
+ 
+-    bool allowTokenByDefault = false;
+-    for (int i = 1; i < argc; ++i) {
+-        if (argv[i] == std::string{"--allow-token"})
+-            allowTokenByDefault = true;
++    if (jsonRaw == "error" || jsonRaw.empty()) {
++        std::cerr << "[picker] failed to get clients from hyprctl" << std::endl;
++        return result;
+     }
+ 
+-    const char*  WINDOWLISTSTR = getenv("XDPH_WINDOW_SHARING_LIST");
+-    const auto   WINDOWLIST    = getWindows(WINDOWLISTSTR);
+-
+-    QApplication picker(argc, argv);
+-    pickerPtr = &picker;
+-    MainPicker w;
+-    mainPickerPtr = &w;
+-
+-    QSettings* settings = new QSettings("/tmp/hypr/hyprland-share-picker.conf", QSettings::IniFormat);
+-    w.setGeometry(0, 0, settings->value("width").toInt(), settings->value("height").toInt());
+-
+-    QCoreApplication::setApplicationName("org.hyprland.xdg-desktop-portal-hyprland");
+-
+-    // get the tabwidget
+-    const auto TABWIDGET        = w.findChild<QTabWidget*>("tabWidget");
+-    const auto ALLOWTOKENBUTTON = w.findChild<QCheckBox*>("checkBox");
+-
+-    if (allowTokenByDefault)
+-        ALLOWTOKENBUTTON->setCheckState(Qt::CheckState::Checked);
+-
+-    const auto TAB1 = (QWidget*)TABWIDGET->children()[0];
+-
+-    const auto SCREENS_SCROLL_AREA_CONTENTS =
+-        (QWidget*)TAB1->findChild<QWidget*>("screens")->findChild<QScrollArea*>("scrollArea")->findChild<QWidget*>("scrollAreaWidgetContents");
+-
+-    const auto SCREENS_SCROLL_AREA_CONTENTS_LAYOUT = SCREENS_SCROLL_AREA_CONTENTS->layout();
+-
+-    // add all screens
+-    const auto    SCREENS = picker.screens();
+-
+-    constexpr int BUTTON_HEIGHT = 41;
+-
+-    for (int i = 0; i < SCREENS.size(); ++i) {
+-        const auto    GEOMETRY = SCREENS[i]->geometry();
+-
+-        QString       text = QString::fromStdString(std::string("Screen " + std::to_string(i) + " at " + std::to_string(GEOMETRY.x()) + ", " + std::to_string(GEOMETRY.y()) + " (" +
+-                                                                std::to_string(GEOMETRY.width()) + "x" + std::to_string(GEOMETRY.height()) + ") (") +
+-                                                    SCREENS[i]->name().toStdString() + ")");
+-        QString       outputName = SCREENS[i]->name();
+-        ElidedButton* button     = new ElidedButton(text);
+-        button->setMinimumSize(0, BUTTON_HEIGHT);
+-        SCREENS_SCROLL_AREA_CONTENTS_LAYOUT->addWidget(button);
+-
+-        QObject::connect(button, &QPushButton::clicked, [=]() {
+-            std::cout << "[SELECTION]";
+-            std::cout << (ALLOWTOKENBUTTON->isChecked() ? "r" : "");
+-            std::cout << "/";
+-
+-            std::cout << "screen:" << outputName.toStdString() << "\n";
+-
+-            settings->setValue("width", mainPickerPtr->width());
+-            settings->setValue("height", mainPickerPtr->height());
+-            settings->sync();
+-
+-            pickerPtr->quit();
+-            return 0;
+-        });
++    QJsonDocument doc = QJsonDocument::fromJson(QByteArray::fromStdString(jsonRaw));
++    if (doc.isNull() || !doc.isArray()) {
++        std::cerr << "[picker] failed to parse hyprctl json" << std::endl;
++        return result;
+     }
+ 
+-    QSpacerItem* SCREENS_SPACER = new QSpacerItem(0, 10000, QSizePolicy::Expanding, QSizePolicy::Expanding);
+-    SCREENS_SCROLL_AREA_CONTENTS_LAYOUT->addItem(SCREENS_SPACER);
+-
+-    // windows
+-    const auto WINDOWS_SCROLL_AREA_CONTENTS =
+-        (QWidget*)TAB1->findChild<QWidget*>("windows")->findChild<QScrollArea*>("scrollArea_2")->findChild<QWidget*>("scrollAreaWidgetContents_2");
+-
+-    const auto WINDOWS_SCROLL_AREA_CONTENTS_LAYOUT = WINDOWS_SCROLL_AREA_CONTENTS->layout();
+-
+-    // loop over them
+-    int windowIterator = 0;
+-    for (auto& window : WINDOWLIST) {
+-        QString       text = QString::fromStdString(window.clazz + ": " + window.name);
++    QJsonArray arr = doc.array();
++    for (const auto& val : arr) {
++        if (!val.isObject()) continue;
++        QJsonObject obj = val.toObject();
+ 
+-        ElidedButton* button = new ElidedButton(text);
+-        button->setMinimumSize(0, BUTTON_HEIGHT);
+-        WINDOWS_SCROLL_AREA_CONTENTS_LAYOUT->addWidget(button);
+-
+-        mainPickerPtr->windowIDs[button] = window.id;
+-
+-        QObject::connect(button, &QPushButton::clicked, [=]() {
+-            std::cout << "[SELECTION]";
+-            std::cout << (ALLOWTOKENBUTTON->isChecked() ? "r" : "");
+-            std::cout << "/";
++        std::string clazz = obj["class"].toString().toStdString();
++        std::string title = obj["title"].toString().toStdString();
++        std::string addressStr = obj["address"].toString().toStdString();
++        unsigned long long id = 0;
++        try {
++             id = std::stoull(addressStr, nullptr, 16);
++        } catch (...) {}
+ 
+-            std::cout << "window:" << mainPickerPtr->windowIDs[button] << "\n";
++        result.push_back({title, clazz, id, id});
++    }
++    return result;
++}
+ 
+-            settings->setValue("width", mainPickerPtr->width());
+-            settings->setValue("height", mainPickerPtr->height());
+-            settings->sync();
++int main(int argc, char* argv[]) {
++    qputenv("QT_LOGGING_RULES", "qml=false");
+ 
+-            pickerPtr->quit();
+-            return 0;
+-        });
++    bool allowTokenByDefault = false;
++    bool testMode = false;
+ 
+-        windowIterator++;
++    for (int i = 1; i < argc; ++i) {
++        if (argv[i] == std::string{"--allow-token"})
++            allowTokenByDefault = true;
++        else if (argv[i] == std::string{"--test"})
++            testMode = true;
+     }
+ 
+-    QSpacerItem* WINDOWS_SPACER = new QSpacerItem(0, 10000, QSizePolicy::Expanding, QSizePolicy::Expanding);
+-    WINDOWS_SCROLL_AREA_CONTENTS_LAYOUT->addItem(WINDOWS_SPACER);
+-
+-    // lastly, region
+-    const auto    REGION_OBJECT = (QWidget*)TAB1->findChild<QWidget*>("region");
+-    const auto    REGION_LAYOUT = REGION_OBJECT->layout();
++    std::vector<SWindowEntry> WINDOWLIST;
+ 
+-    QString       text = "Select region...";
++    if (testMode) {
++        WINDOWLIST = getWindowsFromHyprctl();
++    } else {
++        const char*  WINDOWLISTSTR = getenv("XDPH_WINDOW_SHARING_LIST");
++        WINDOWLIST    = getWindows(WINDOWLISTSTR);
++    }
+ 
+-    ElidedButton* button = new ElidedButton(text);
+-    button->setMaximumSize(400, BUTTON_HEIGHT);
+-    REGION_LAYOUT->addWidget(button);
++    QApplication picker(argc, argv);
++    QCoreApplication::setApplicationName("org.hyprland.xdg-desktop-portal-hyprland");
++    QCoreApplication::setOrganizationName("hyprland");
++    QGuiApplication::setDesktopFileName("org.hyprland.xdg-desktop-portal-hyprland");
+ 
+-    QObject::connect(button, &QPushButton::clicked, [=]() {
+-        auto REGION = execAndGet("slurp -f \"%o %x %y %w %h\"");
+-        REGION      = REGION.substr(0, REGION.length());
++    MainPicker w;
++    w.init(WINDOWLIST, allowTokenByDefault);
+ 
+-        // now, get the screen
+-        QScreen* pScreen = nullptr;
+-        if (REGION.find_first_of(' ') == std::string::npos) {
+-            std::cout << "error1\n";
+-            pickerPtr->quit();
+-            return 1;
+-        }
+-        const auto SCREEN_NAME = REGION.substr(0, REGION.find_first_of(' '));
++    WaylandCapture* waylandCapture = new WaylandCapture(&w);
+ 
+-        for (auto& screen : SCREENS) {
+-            if (screen->name().toStdString() == SCREEN_NAME) {
+-                pScreen = screen;
+-                break;
+-            }
+-        }
++    QObject::connect(waylandCapture, &WaylandCapture::frameCaptured, &w, &MainPicker::updateWindowPreview);
+ 
+-        if (!pScreen) {
+-            std::cout << "error2\n";
+-            pickerPtr->quit();
+-            return 1;
+-        }
+-
+-        // get all the coords
+-        try {
+-            REGION       = REGION.substr(REGION.find_first_of(' ') + 1);
+-            const auto X = std::stoi(REGION.substr(0, REGION.find_first_of(' ')));
+-            REGION       = REGION.substr(REGION.find_first_of(' ') + 1);
+-            const auto Y = std::stoi(REGION.substr(0, REGION.find_first_of(' ')));
+-            REGION       = REGION.substr(REGION.find_first_of(' ') + 1);
+-            const auto W = std::stoi(REGION.substr(0, REGION.find_first_of(' ')));
+-            REGION       = REGION.substr(REGION.find_first_of(' ') + 1);
+-            const auto H = std::stoi(REGION);
+-
+-            std::cout << "[SELECTION]";
+-            std::cout << (ALLOWTOKENBUTTON->isChecked() ? "r" : "");
+-            std::cout << "/";
+-
+-            std::cout << "region:" << SCREEN_NAME << "@" << X - pScreen->geometry().x() << "," << Y - pScreen->geometry().y() << "," << W << "," << H << "\n";
+-
+-            settings->setValue("width", mainPickerPtr->width());
+-            settings->setValue("height", mainPickerPtr->height());
+-            settings->sync();
+-
+-            pickerPtr->quit();
+-            return 0;
+-        } catch (...) {
+-            std::cout << "error3\n";
+-            pickerPtr->quit();
+-            return 1;
+-        }
++    // Start capturing
++    for (const auto& window : WINDOWLIST) {
++        if (window.handle > 0)
++            waylandCapture->capture(window.handle);
++    }
+ 
+-        std::cout << "error4\n";
+-        pickerPtr->quit();
+-        return 1;
+-    });
++    QSettings* settings = new QSettings("/tmp/hypr/hyprland-share-picker.conf", QSettings::IniFormat);
++    if (settings->contains("width") && settings->contains("height")) {
++        int w_val = settings->value("width").toInt();
++        int h_val = settings->value("height").toInt();
++        if (w_val > 0 && h_val > 0)
++            w.resize(w_val, h_val); // Using resize instead of setGeometry
++    }
+ 
+     w.show();
+     return picker.exec();
+diff --git a/hyprland-share-picker/mainpicker.cpp b/hyprland-share-picker/mainpicker.cpp
+index a09bb9e6..b6c33bc9 100644
+--- a/hyprland-share-picker/mainpicker.cpp
++++ b/hyprland-share-picker/mainpicker.cpp
+@@ -1,12 +1,22 @@
+ #include "mainpicker.h"
+ #include "./ui_mainpicker.h"
+ #include <QDebug>
++#include <QScreen>
++#include <QSettings>
++#include <iostream>
++
++extern std::string execAndGet(const char* cmd);
+ 
+ MainPicker::MainPicker(QWidget *parent)
+-    : QMainWindow(parent)
++    : QDialog(parent)
+     , ui(new Ui::MainPicker)
+ {
+     ui->setupUi(this);
++
++    connect(ui->shareBtn, &QPushButton::clicked, this, &MainPicker::onShare);
++    connect(ui->cancelBtn, &QPushButton::clicked, this, &MainPicker::onCancel);
++    connect(ui->windowList, &QListWidget::itemSelectionChanged, this, &MainPicker::onWindowSelectionChanged);
++    connect(ui->regionButton, &QPushButton::clicked, this, &MainPicker::onRegion);
+ }
+ 
+ MainPicker::~MainPicker()
+@@ -14,6 +24,195 @@ MainPicker::~MainPicker()
+     delete ui;
+ }
+ 
+-void MainPicker::onMonitorButtonClicked(QObject* target, QEvent* event) {
+-    qDebug() << "click";
++void MainPicker::init(const std::vector<SWindowEntry>& windows, bool allowToken) {
++    if (allowToken)
++        ui->checkBox->setCheckState(Qt::Checked);
++
++    // Populate screens
++    const auto SCREENS = QGuiApplication::screens();
++    for (int i = 0; i < SCREENS.size(); ++i) {
++        const auto GEOMETRY = SCREENS[i]->geometry();
++        QString text = QString("Screen %1 at %2, %3 (%4x%5) (%6)")
++                           .arg(i)
++                           .arg(GEOMETRY.x())
++                           .arg(GEOMETRY.y())
++                           .arg(GEOMETRY.width())
++                           .arg(GEOMETRY.height())
++                           .arg(SCREENS[i]->name());
++        
++        auto item = new QListWidgetItem(text);
++        ui->screenList->addItem(item);
++        m_screenMap[item] = SCREENS[i]->name();
++    }
++    if (ui->screenList->count() > 0)
++        ui->screenList->setCurrentRow(0);
++
++    // Populate windows
++    for (const auto& win : windows) {
++        QString text = QString::fromStdString(win.clazz + ": " + win.name);
++        auto item = new QListWidgetItem(text);
++        ui->windowList->addItem(item);
++        m_windowMap[item] = win.id;
++        m_windowHandleMap[item] = win.handle;
++    }
++    if (ui->windowList->count() > 0)
++        ui->windowList->setCurrentRow(0);
++
++    // Set default tab
++    int defaultTab = 1; // Default to Window
++    const char* envTab = getenv("XDPH_PICKER_DEFAULT_TAB");
++    if (envTab) {
++        std::string tabStr = envTab;
++        if (tabStr == "screen") defaultTab = 0;
++        else if (tabStr == "window") defaultTab = 1;
++        else if (tabStr == "region") defaultTab = 2;
++    }
++    ui->tabWidget->setCurrentIndex(defaultTab);
++}
++
++void MainPicker::updateWindowPreview(unsigned long long handle, const QImage& image) {
++    m_windowImages[handle] = image;
++
++    // if selected, update preview
++    auto items = ui->windowList->selectedItems();
++    if (items.isEmpty()) return;
++
++    if (m_windowHandleMap[items[0]] == handle) {
++        updatePreviewLabel();
++    }
++}
++
++void MainPicker::onWindowSelectionChanged() {
++    updatePreviewLabel();
++}
++
++void MainPicker::resizeEvent(QResizeEvent* event) {
++    QDialog::resizeEvent(event);
++    updatePreviewLabel();
++}
++
++void MainPicker::showEvent(QShowEvent* event) {
++    QDialog::showEvent(event);
++    updatePreviewLabel();
++}
++
++void MainPicker::updatePreviewLabel() {
++    auto items = ui->windowList->selectedItems();
++    if (items.isEmpty()) {
++        ui->windowPreview->setText("Select a window to preview");
++        return;
++    }
++
++    unsigned long long handle = m_windowHandleMap[items[0]];
++    if (m_windowImages.contains(handle)) {
++        QPixmap pm = QPixmap::fromImage(m_windowImages[handle]);
++        if (!pm.isNull()) {
++             QSize previewSize = ui->windowPreview->size();
++             
++             // Account for device pixel ratio for sharp rendering on hidpi
++             qreal dpr = ui->windowPreview->devicePixelRatio();
++             QSize targetSize = previewSize * dpr;
++             
++             if (targetSize.width() < 100 || targetSize.height() < 100) {
++                 targetSize = QSize(640, 480) * dpr;
++             }
++             
++             pm = pm.scaled(targetSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
++             pm.setDevicePixelRatio(dpr);
++             
++             ui->windowPreview->setPixmap(pm);
++             return;
++        }
++    }
++    ui->windowPreview->setText("No preview available");
++}
++
++void MainPicker::onShare() {
++    int tab = ui->tabWidget->currentIndex();
++    std::string selection;
++
++    if (tab == 0) { // Screen
++        auto items = ui->screenList->selectedItems();
++        if (items.isEmpty()) return;
++        selection = "screen:" + m_screenMap[items[0]].toStdString();
++    } else if (tab == 1) { // Window
++        auto items = ui->windowList->selectedItems();
++        if (items.isEmpty()) return;
++        selection = "window:" + std::to_string(m_windowMap[items[0]]);
++    } else {
++        onRegion();
++        return;
++    }
++
++    finish(selection);
++}
++
++void MainPicker::onRegion() {
++    auto REGION = execAndGet("slurp -f \"%o %x %y %w %h\"");
++    if (REGION.find("error") != std::string::npos || REGION.empty()) return;
++    
++    REGION = REGION.substr(0, REGION.length()); 
++    while (!REGION.empty() && (REGION.back() == '\n' || REGION.back() == '\r')) REGION.pop_back();
++
++    if (REGION.find_first_of(' ') == std::string::npos) {
++        std::cout << "error1\n";
++        QApplication::quit();
++        return;
++    }
++    
++    const auto SCREEN_NAME = REGION.substr(0, REGION.find_first_of(' '));
++    
++    // Find screen
++    QScreen* pScreen = nullptr;
++    const auto SCREENS = QGuiApplication::screens();
++    for (auto& screen : SCREENS) {
++        if (screen->name().toStdString() == SCREEN_NAME) {
++            pScreen = screen;
++            break;
++        }
++    }
++
++    if (!pScreen) {
++        std::cout << "error2\n";
++        QApplication::quit();
++        return;
++    }
++
++    try {
++        std::string rest = REGION.substr(REGION.find_first_of(' ') + 1);
++        const auto X = std::stoi(rest.substr(0, rest.find_first_of(' ')));
++        rest = rest.substr(rest.find_first_of(' ') + 1);
++        const auto Y = std::stoi(rest.substr(0, rest.find_first_of(' ')));
++        rest = rest.substr(rest.find_first_of(' ') + 1);
++        const auto W = std::stoi(rest.substr(0, rest.find_first_of(' ')));
++        rest = rest.substr(rest.find_first_of(' ') + 1);
++        const auto H = std::stoi(rest);
++
++        std::string selection = "region:" + SCREEN_NAME + "@" + 
++                                std::to_string(X - pScreen->geometry().x()) + "," + 
++                                std::to_string(Y - pScreen->geometry().y()) + "," + 
++                                std::to_string(W) + "," + std::to_string(H);
++        finish(selection);
++    } catch (...) {
++        std::cout << "error3\n";
++        QApplication::quit();
++    }
++}
++
++void MainPicker::onCancel() {
++    QApplication::quit();
++}
++
++void MainPicker::finish(const std::string& result) {
++    std::cout << "[SELECTION]";
++    std::cout << (ui->checkBox->isChecked() ? "r" : "");
++    std::cout << "/";
++    std::cout << result << "\n";
++
++    QSettings settings("/tmp/hypr/hyprland-share-picker.conf", QSettings::IniFormat);
++    settings.setValue("width", width());
++    settings.setValue("height", height());
++    settings.sync();
++
++    QApplication::quit();
+ }
+diff --git a/hyprland-share-picker/mainpicker.h b/hyprland-share-picker/mainpicker.h
+index 4de1670a..d5f04c18 100644
+--- a/hyprland-share-picker/mainpicker.h
++++ b/hyprland-share-picker/mainpicker.h
+@@ -1,16 +1,26 @@
+ #ifndef MAINPICKER_H
+ #define MAINPICKER_H
+ 
+-#include <QMainWindow>
++#include <QDialog>
+ #include <QObject>
+ #include <QEvent>
+-#include <unordered_map>
++#include <QListWidgetItem>
++#include <QMap>
++#include <vector>
++#include <string>
+ 
+ QT_BEGIN_NAMESPACE
+ namespace Ui { class MainPicker; }
+ QT_END_NAMESPACE
+ 
+-class MainPicker : public QMainWindow
++struct SWindowEntry {
++    std::string        name;
++    std::string        clazz;
++    unsigned long long id = 0;
++    unsigned long long handle = 0;
++};
++
++class MainPicker : public QDialog
+ {
+     Q_OBJECT
+ 
+@@ -18,11 +28,27 @@ class MainPicker : public QMainWindow
+     MainPicker(QWidget *parent = nullptr);
+     ~MainPicker();
+ 
+-    void onMonitorButtonClicked(QObject* target, QEvent* event);
++    void init(const std::vector<SWindowEntry>& windows, bool allowToken);
++    void updateWindowPreview(unsigned long long handle, const QImage& image);
+ 
+-    std::unordered_map<void*, int> windowIDs; // button -> id
++protected:
++    void resizeEvent(QResizeEvent* event) override;
++    void showEvent(QShowEvent* event) override;
++
++private slots:
++    void onShare();
++    void onCancel();
++    void onWindowSelectionChanged();
++    void onRegion();
+ 
+ private:
+     Ui::MainPicker *ui;
++    QMap<unsigned long long, QImage> m_windowImages;
++    QMap<QListWidgetItem*, unsigned long long> m_windowMap;
++    QMap<QListWidgetItem*, unsigned long long> m_windowHandleMap;
++    QMap<QListWidgetItem*, QString> m_screenMap;
++
++    void finish(const std::string& result);
++    void updatePreviewLabel();
+ };
+ #endif // MAINPICKER_H
+diff --git a/hyprland-share-picker/mainpicker.ui b/hyprland-share-picker/mainpicker.ui
+index 165fe28a..4405cbfd 100644
+--- a/hyprland-share-picker/mainpicker.ui
++++ b/hyprland-share-picker/mainpicker.ui
+@@ -1,283 +1,153 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <ui version="4.0">
+  <class>MainPicker</class>
+- <widget class="QMainWindow" name="MainPicker">
++ <widget class="QDialog" name="MainPicker">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+-    <width>500</width>
+-    <height>300</height>
++    <width>800</width>
++    <height>500</height>
+    </rect>
+   </property>
+-  <property name="sizePolicy">
+-   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+-    <horstretch>0</horstretch>
+-    <verstretch>0</verstretch>
+-   </sizepolicy>
+-  </property>
+-  <property name="minimumSize">
+-   <size>
+-    <width>500</width>
+-    <height>290</height>
+-   </size>
+-  </property>
+-  <property name="maximumSize">
+-   <size>
+-    <width>1280</width>
+-    <height>800</height>
+-   </size>
+-  </property>
+   <property name="windowTitle">
+    <string>Select what to share</string>
+   </property>
+-  <widget class="QWidget" name="centralwidget">
+-   <property name="sizePolicy">
+-    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+-     <horstretch>0</horstretch>
+-     <verstretch>0</verstretch>
+-    </sizepolicy>
+-   </property>
+-   <property name="minimumSize">
+-    <size>
+-     <width>0</width>
+-     <height>0</height>
+-    </size>
+-   </property>
+-   <property name="maximumSize">
+-    <size>
+-     <width>1280</width>
+-     <height>800</height>
+-    </size>
+-   </property>
+-   <layout class="QVBoxLayout" name="verticalLayout_2">
++  <layout class="QVBoxLayout" name="verticalLayout_main">
++    <item>
++     <widget class="QTabWidget" name="tabWidget">
++      <property name="currentIndex">
++       <number>0</number>
++      </property>
++      <widget class="QWidget" name="screens">
++       <attribute name="title">
++        <string>Screen</string>
++       </attribute>
++       <layout class="QVBoxLayout" name="verticalLayout_screens">
++        <item>
++         <widget class="QListWidget" name="screenList">
++          <property name="editTriggers">
++           <set>QAbstractItemView::NoEditTriggers</set>
++          </property>
++         </widget>
++        </item>
++       </layout>
++      </widget>
++      <widget class="QWidget" name="windows">
++       <attribute name="title">
++        <string>Window</string>
++       </attribute>
++       <layout class="QHBoxLayout" name="horizontalLayout_windows">
++        <item>
++         <widget class="QListWidget" name="windowList">
++          <property name="maximumSize">
++           <size>
++            <width>300</width>
++            <height>16777215</height>
++           </size>
++          </property>
++          <property name="editTriggers">
++           <set>QAbstractItemView::NoEditTriggers</set>
++          </property>
++         </widget>
++        </item>
++        <item>
++         <widget class="QLabel" name="windowPreview">
++          <property name="text">
++           <string>Select a window to preview</string>
++          </property>
++          <property name="alignment">
++           <set>Qt::AlignCenter</set>
++          </property>
++          <property name="sizePolicy">
++           <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
++            <horstretch>1</horstretch>
++            <verstretch>1</verstretch>
++           </sizepolicy>
++          </property>
++         </widget>
++        </item>
++       </layout>
++      </widget>
++      <widget class="QWidget" name="region">
++       <attribute name="title">
++        <string>Region</string>
++       </attribute>
++       <layout class="QVBoxLayout" name="verticalLayout_region">
++        <item>
++         <widget class="QPushButton" name="regionButton">
++          <property name="text">
++           <string>Select Region...</string>
++          </property>
++          <property name="minimumSize">
++           <size>
++            <width>0</width>
++            <height>40</height>
++           </size>
++          </property>
++         </widget>
++        </item>
++        <item>
++         <spacer name="verticalSpacer">
++          <property name="orientation">
++           <enum>Qt::Vertical</enum>
++          </property>
++          <property name="sizeHint" stdset="0">
++           <size>
++            <width>20</width>
++            <height>40</height>
++           </size>
++          </property>
++         </spacer>
++        </item>
++       </layout>
++      </widget>
++     </widget>
++    </item>
++    <item>
++     <widget class="QCheckBox" name="checkBox">
++      <property name="text">
++       <string>Allow a restore token</string>
++      </property>
++      <property name="toolTip">
++       <string>By selecting this, the application will be given a restore token that it can use to skip prompting you next time. 
++Only select if you trust the application.</string>
++      </property>
++     </widget>
++    </item>
+     <item>
+-     <layout class="QVBoxLayout" name="verticalLayout">
++     <layout class="QHBoxLayout" name="horizontalLayout_buttons">
+       <item>
+-       <widget class="QTabWidget" name="tabWidget">
+-        <property name="sizePolicy">
+-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+-          <horstretch>0</horstretch>
+-          <verstretch>0</verstretch>
+-         </sizepolicy>
+-        </property>
+-        <property name="minimumSize">
+-         <size>
+-          <width>0</width>
+-          <height>0</height>
+-         </size>
++       <spacer name="horizontalSpacer">
++        <property name="orientation">
++         <enum>Qt::Horizontal</enum>
+         </property>
+-        <property name="maximumSize">
++        <property name="sizeHint" stdset="0">
+          <size>
+-          <width>16777215</width>
+-          <height>16777215</height>
++          <width>40</width>
++          <height>20</height>
+          </size>
+         </property>
+-        <property name="focusPolicy">
+-         <enum>Qt::StrongFocus</enum>
+-        </property>
+-        <property name="toolTip">
+-         <string/>
+-        </property>
+-        <property name="tabPosition">
+-         <enum>QTabWidget::North</enum>
+-        </property>
+-        <property name="currentIndex">
+-         <number>0</number>
++       </spacer>
++      </item>
++      <item>
++       <widget class="QPushButton" name="shareBtn">
++        <property name="text">
++         <string>Share</string>
+         </property>
+-        <widget class="QWidget" name="screens">
+-         <property name="sizePolicy">
+-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+-           <horstretch>0</horstretch>
+-           <verstretch>0</verstretch>
+-          </sizepolicy>
+-         </property>
+-         <property name="layoutDirection">
+-          <enum>Qt::LeftToRight</enum>
+-         </property>
+-         <attribute name="title">
+-          <string>Screen</string>
+-         </attribute>
+-         <layout class="QGridLayout" name="gridLayout_2">
+-          <item row="0" column="0">
+-           <widget class="QScrollArea" name="scrollArea">
+-            <property name="sizePolicy">
+-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+-              <horstretch>0</horstretch>
+-              <verstretch>0</verstretch>
+-             </sizepolicy>
+-            </property>
+-            <property name="focusPolicy">
+-             <enum>Qt::NoFocus</enum>
+-            </property>
+-            <property name="horizontalScrollBarPolicy">
+-             <enum>Qt::ScrollBarAlwaysOff</enum>
+-            </property>
+-            <property name="sizeAdjustPolicy">
+-             <enum>QAbstractScrollArea::AdjustIgnored</enum>
+-            </property>
+-            <property name="widgetResizable">
+-             <bool>true</bool>
+-            </property>
+-            <property name="alignment">
+-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+-            </property>
+-            <widget class="QWidget" name="scrollAreaWidgetContents">
+-             <property name="enabled">
+-              <bool>true</bool>
+-             </property>
+-             <property name="geometry">
+-              <rect>
+-               <x>0</x>
+-               <y>0</y>
+-               <width>410</width>
+-               <height>18</height>
+-              </rect>
+-             </property>
+-             <property name="sizePolicy">
+-              <sizepolicy hsizetype="Ignored" vsizetype="Maximum">
+-               <horstretch>0</horstretch>
+-               <verstretch>0</verstretch>
+-              </sizepolicy>
+-             </property>
+-             <property name="minimumSize">
+-              <size>
+-               <width>0</width>
+-               <height>0</height>
+-              </size>
+-             </property>
+-             <property name="maximumSize">
+-              <size>
+-               <width>16777215</width>
+-               <height>16777215</height>
+-              </size>
+-             </property>
+-             <property name="focusPolicy">
+-              <enum>Qt::NoFocus</enum>
+-             </property>
+-             <layout class="QVBoxLayout" name="screensScrollAreaLayout">
+-              <property name="spacing">
+-               <number>6</number>
+-              </property>
+-              <property name="sizeConstraint">
+-               <enum>QLayout::SetDefaultConstraint</enum>
+-              </property>
+-             </layout>
+-            </widget>
+-           </widget>
+-          </item>
+-         </layout>
+-        </widget>
+-        <widget class="QWidget" name="windows">
+-         <property name="sizePolicy">
+-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+-           <horstretch>0</horstretch>
+-           <verstretch>0</verstretch>
+-          </sizepolicy>
+-         </property>
+-         <attribute name="title">
+-          <string>Window</string>
+-         </attribute>
+-         <layout class="QGridLayout" name="gridLayout_3">
+-          <item row="0" column="0">
+-           <widget class="QScrollArea" name="scrollArea_2">
+-            <property name="focusPolicy">
+-             <enum>Qt::NoFocus</enum>
+-            </property>
+-            <property name="horizontalScrollBarPolicy">
+-             <enum>Qt::ScrollBarAlwaysOff</enum>
+-            </property>
+-            <property name="widgetResizable">
+-             <bool>true</bool>
+-            </property>
+-            <property name="alignment">
+-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+-            </property>
+-            <widget class="QWidget" name="scrollAreaWidgetContents_2">
+-             <property name="geometry">
+-              <rect>
+-               <x>0</x>
+-               <y>0</y>
+-               <width>410</width>
+-               <height>18</height>
+-              </rect>
+-             </property>
+-             <property name="sizePolicy">
+-              <sizepolicy hsizetype="Ignored" vsizetype="Maximum">
+-               <horstretch>0</horstretch>
+-               <verstretch>0</verstretch>
+-              </sizepolicy>
+-             </property>
+-             <property name="minimumSize">
+-              <size>
+-               <width>0</width>
+-               <height>0</height>
+-              </size>
+-             </property>
+-             <property name="focusPolicy">
+-              <enum>Qt::NoFocus</enum>
+-             </property>
+-             <layout class="QVBoxLayout" name="windowsScrollAreaLayout"/>
+-            </widget>
+-           </widget>
+-          </item>
+-         </layout>
+-        </widget>
+-        <widget class="QWidget" name="region">
+-         <property name="sizePolicy">
+-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+-           <horstretch>0</horstretch>
+-           <verstretch>0</verstretch>
+-          </sizepolicy>
+-         </property>
+-         <property name="maximumSize">
+-          <size>
+-           <width>16777215</width>
+-           <height>16777215</height>
+-          </size>
+-         </property>
+-         <property name="layoutDirection">
+-          <enum>Qt::LeftToRight</enum>
+-         </property>
+-         <property name="autoFillBackground">
+-          <bool>false</bool>
+-         </property>
+-         <attribute name="title">
+-          <string>Region</string>
+-         </attribute>
+-         <layout class="QGridLayout" name="gridLayout">
+-          <property name="sizeConstraint">
+-           <enum>QLayout::SetDefaultConstraint</enum>
+-          </property>
+-         </layout>
+-        </widget>
+        </widget>
+       </item>
+       <item>
+-       <widget class="QCheckBox" name="checkBox">
+-        <property name="focusPolicy">
+-         <enum>Qt::ClickFocus</enum>
+-        </property>
+-        <property name="toolTip">
+-         <string>By selecting this, the application will be given a restore token that it can use to skip prompting you next time. 
+-Only select if you trust the application.</string>
+-        </property>
+-        <property name="layoutDirection">
+-         <enum>Qt::LeftToRight</enum>
+-        </property>
++       <widget class="QPushButton" name="cancelBtn">
+         <property name="text">
+-         <string>Allow a restore token</string>
++         <string>Cancel</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+-  </widget>
+  </widget>
+- <tabstops>
+-  <tabstop>tabWidget</tabstop>
+- </tabstops>
+  <resources/>
+  <connections/>
+ </ui>
+diff --git a/hyprland-share-picker/waylandcapture.cpp b/hyprland-share-picker/waylandcapture.cpp
+new file mode 100644
+index 00000000..67487784
+--- /dev/null
++++ b/hyprland-share-picker/waylandcapture.cpp
+@@ -0,0 +1,188 @@
++#include "waylandcapture.h"
++#include <sys/mman.h>
++#include <sys/stat.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <cstring>
++#include <iostream>
++#include <random>
++#include <QTimer>
++
++static std::string getRandName() {
++    static const char charset[] = "0123456789"
++                                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
++                                  "abcdefghijklmnopqrstuvwxyz";
++    const size_t max_index = (sizeof(charset) - 1);
++    std::string str = "/xdph-picker-";
++    for (int i = 0; i < 8; ++i)
++        str += charset[rand() % max_index];
++    return str;
++}
++
++static int create_shm_file(size_t size) {
++    int retries = 100;
++    do {
++        std::string name = getRandName();
++        int fd = shm_open(name.c_str(), O_RDWR | O_CREAT | O_EXCL, 0600);
++        if (fd >= 0) {
++            shm_unlink(name.c_str());
++            if (ftruncate(fd, size) < 0) {
++                close(fd);
++                return -1;
++            }
++            return fd;
++        }
++    } while (--retries > 0 && errno == EEXIST);
++    return -1;
++}
++
++WaylandCapture::CaptureSession::~CaptureSession() {
++    if (data && data != MAP_FAILED) {
++        munmap(data, size);
++    }
++}
++
++WaylandCapture::WaylandCapture(QObject* parent) : QObject(parent) {
++    init();
++}
++
++WaylandCapture::~WaylandCapture() {
++    if (m_socketNotifier) {
++        m_socketNotifier->setEnabled(false);
++        delete m_socketNotifier;
++        m_socketNotifier = nullptr;
++    }
++    
++    m_sessions.clear(); 
++    
++    // Reset protocol wrappers before disconnecting display
++    // This ensures we don't leave dangling pointers to proxies that are about to be freed
++    m_manager.reset();
++    m_shm.reset();
++    m_registry.reset();
++
++    if (m_display) {
++        wl_display_disconnect(m_display);
++        m_display = nullptr;
++    }
++}
++
++void WaylandCapture::init() {
++    m_display = wl_display_connect(nullptr);
++    if (!m_display) {
++        std::cerr << "[picker] failed to connect to wayland display" << std::endl;
++        return;
++    }
++
++    auto registry = wl_display_get_registry(m_display);
++    m_registry = makeShared<CCWlRegistry>((wl_proxy*)registry);
++
++    m_registry->setGlobal([this](CCWlRegistry* r, uint32_t name, const char* interface, uint32_t version) {
++        std::string iface = interface;
++        if (iface == "wl_shm") {
++            m_shm = makeShared<CCWlShm>((wl_proxy*)wl_registry_bind((wl_registry*)r->resource(), name, &wl_shm_interface, 1));
++        } else if (iface == "hyprland_toplevel_export_manager_v1") {
++            m_manager = makeShared<CCHyprlandToplevelExportManagerV1>((wl_proxy*)wl_registry_bind((wl_registry*)r->resource(), name, &hyprland_toplevel_export_manager_v1_interface, 2));
++        }
++    });
++
++    wl_display_roundtrip(m_display);
++
++    // Setup socket notifier
++    m_socketNotifier = new QSocketNotifier(wl_display_get_fd(m_display), QSocketNotifier::Read, this);
++    connect(m_socketNotifier, &QSocketNotifier::activated, this, &WaylandCapture::processEvents);
++}
++
++void WaylandCapture::processEvents() {
++    if (m_display) {
++        if (wl_display_dispatch(m_display) < 0) {
++             // error or disconnected
++        }
++    }
++}
++
++void WaylandCapture::capture(unsigned long long handle) {
++    if (!m_manager || !m_shm) return;
++
++    if (m_sessions.contains(handle)) {
++        m_sessions.remove(handle);
++    }
++
++    auto frame = makeShared<CCHyprlandToplevelExportFrameV1>(m_manager->sendCaptureToplevel(0, handle));
++    auto session = std::make_shared<CaptureSession>();
++    session->frame = frame;
++    m_sessions[handle] = session;
++
++    frame->setBuffer([this, handle](CCHyprlandToplevelExportFrameV1* r, uint32_t format, uint32_t width, uint32_t height, uint32_t stride) {
++        if (!m_sessions.contains(handle)) return;
++        auto& s = m_sessions[handle];
++        s->width = width;
++        s->height = height;
++        s->stride = stride;
++        s->format = format;
++        s->size = stride * height;
++    });
++    
++    frame->setBufferDone([this, handle](CCHyprlandToplevelExportFrameV1* r) {
++        if (!m_sessions.contains(handle)) return;
++        auto& s = m_sessions[handle];
++
++        if (s->size <= 0) return;
++
++        // Create buffer
++        int fd = create_shm_file(s->size);
++        if (fd < 0) return;
++
++        s->data = mmap(NULL, s->size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
++        if (s->data == MAP_FAILED) {
++            close(fd);
++            return;
++        }
++
++        auto pool = makeShared<CCWlShmPool>(m_shm->sendCreatePool(fd, s->size));
++        s->buffer = makeShared<CCWlBuffer>(pool->sendCreateBuffer(0, s->width, s->height, s->stride, s->format));
++        
++        pool->sendDestroy(); // Destroy pool on server side
++        pool.reset();        // Destroy wrapper
++
++        r->sendCopy(s->buffer->proxy(), 0);
++        close(fd);
++        wl_display_flush(m_display);
++    });
++
++    frame->setReady([this, handle](CCHyprlandToplevelExportFrameV1* r, uint32_t tv_sec_hi, uint32_t tv_sec_lo, uint32_t tv_nsec) {
++        if (!m_sessions.contains(handle)) return;
++        auto s = m_sessions[handle]; // Keep session alive during this scope
++
++        QImage::Format fmt = QImage::Format_ARGB32; 
++        if (s->format == WL_SHM_FORMAT_XRGB8888)
++            fmt = QImage::Format_RGB32;
++        else if (s->format == WL_SHM_FORMAT_ARGB8888)
++            fmt = QImage::Format_ARGB32_Premultiplied; 
++            
++        QImage img((uchar*)s->data, s->width, s->height, s->stride, fmt);
++        
++        // we need to copy bits because we will destroy session (and unmap)
++        QImage copy = img.copy();
++
++        r->sendDestroy();
++        
++        emit frameCaptured(handle, copy);
++
++        // Defer removal
++        QTimer::singleShot(0, this, [this, handle]() {
++            m_sessions.remove(handle);
++        });
++    });
++
++    frame->setFailed([this, handle](CCHyprlandToplevelExportFrameV1* r) {
++        if (m_sessions.contains(handle)) {
++            m_sessions[handle]->frame->sendDestroy();
++            QTimer::singleShot(0, this, [this, handle]() {
++                m_sessions.remove(handle);
++            });
++        }
++    });
++    
++    wl_display_flush(m_display);
++}
+diff --git a/hyprland-share-picker/waylandcapture.h b/hyprland-share-picker/waylandcapture.h
+new file mode 100644
+index 00000000..e9f07f5f
+--- /dev/null
++++ b/hyprland-share-picker/waylandcapture.h
+@@ -0,0 +1,51 @@
++#pragma once
++
++#include <QObject>
++#include <QImage>
++#include <QMap>
++#include <QSocketNotifier>
++#include <wayland-client.h>
++#include <hyprutils/memory/WeakPtr.hpp>
++
++using namespace Hyprutils::Memory;
++#define SP CSharedPointer
++#define WP CWeakPointer
++
++#include "protocols/hyprland-toplevel-export-v1.hpp"
++#include "protocols/wayland.hpp"
++
++class WaylandCapture : public QObject {
++    Q_OBJECT
++public:
++    WaylandCapture(QObject* parent = nullptr);
++    ~WaylandCapture();
++
++    void capture(unsigned long long handle);
++
++signals:
++    void frameCaptured(unsigned long long handle, QImage image);
++
++private:
++    wl_display* m_display = nullptr;
++    
++    SP<CCWlRegistry> m_registry;
++    SP<CCWlShm> m_shm;
++    SP<CCHyprlandToplevelExportManagerV1> m_manager;
++
++    struct CaptureSession {
++        SP<CCHyprlandToplevelExportFrameV1> frame;
++        SP<CCWlBuffer> buffer;
++        void* data = nullptr;
++        int width = 0, height = 0, stride = 0, size = 0;
++        uint32_t format = 0;
++        
++        ~CaptureSession();
++    };
++
++    QMap<unsigned long long, std::shared_ptr<CaptureSession>> m_sessions;
++
++    void init();
++    void processEvents();
++    
++    QSocketNotifier* m_socketNotifier = nullptr;
++};

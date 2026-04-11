@@ -108,6 +108,7 @@ in
         "match:class (microsoft-azurevpnclient), float on"
         "match:class ^(steam)$, match:title ^(Steam)$, float on, size (monitor_w*0.4) (monitor_h*0.6)"
         "match:class ^(Intune-portal)$, float on, size (monitor_w*0.35) (monitor_h*0.35)"
+        "match:class ^(org\\.hyprland\\.xdg-desktop-portal-hyprland)$, float on, size (monitor_w*0.4) (monitor_h*0.4)"
 
         # NOTE: The zoom app sucks, and so do these rules...
         # Zoom Meeting windows
