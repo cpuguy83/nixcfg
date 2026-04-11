@@ -31,6 +31,8 @@ in
           # Automatically load client certificates from OS PKCS#11 modules
           # (discovered via p11-kit) for smart card / YubiKey PIV auth.
           "security.osclientcerts.autoload" = true;
+          "zen.theme.content-element-separation" = 0;
+          "widget.non-native-theme.scrollbar.size.override" = 25;
         };
 
         search.force = true;
