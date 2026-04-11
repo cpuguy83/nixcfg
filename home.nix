@@ -128,6 +128,7 @@ in
   programs.ghostty = {
     enable = true;
     enableBashIntegration = true;
+    systemd.enable = false;
   };
 
   programs.fzf = {
