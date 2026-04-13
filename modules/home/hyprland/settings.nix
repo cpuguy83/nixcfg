@@ -84,6 +84,11 @@ in
         "$mod SHIFT, SPACE, exec, pkill -USR2 -n handy"
       ];
 
+      bindm = [
+        "SUPER, mouse:272, movewindow" # SUPER+left click to drag windows
+        "SUPER, mouse:273, resizewindow" # SUPER+right click to resize
+      ];
+
       env = [
         "HYPRCURSOR_THEME,$cursor"
         "HYPRCURSOR_SIZE,$cursor_size"
@@ -118,9 +123,48 @@ in
         "no_vrr match:class ^(steam|zoom|Zoom|teams|discord)"
       ];
 
+      layerrule = [
+        "animation popin 90%, match:namespace launcher"
+        "animation slide right, match:namespace swaync-notification-window"
+        "animation slide right, match:namespace swaync-control-center"
+      ];
+
+      # Bezier curves
+      bezier = [
+        "smoothOut, 0.36, 0, 0.66, -0.56"
+        "smoothIn, 0.25, 1, 0.5, 1"
+        "overshot, 0.05, 0.9, 0.1, 1.05"
+        "softSnap, 0.4, 0, 0.2, 1"
+        "fluent, 0.0, 0.0, 0.2, 1.0"
+        "easeInOutExpo, 0.87, 0, 0.13, 1"
+      ];
+
+      animation = [
+        # Windows
+        "windows, 1, 3, overshot, popin 80%"
+        "windowsIn, 1, 3, overshot, popin 80%"
+        "windowsOut, 1, 2, softSnap, popin 95%"
+        "windowsMove, 1, 2, softSnap"
+        # Layers - defaults; swaync overridden to slide right via layerrule
+        "layersIn, 1, 3, smoothIn"
+        "layersOut, 1, 4, softSnap"
+        # Fade
+        "fade, 1, 2, smoothIn"
+        "fadeIn, 1, 2, smoothIn"
+        "fadeOut, 1, 2, softSnap"
+        "fadeSwitch, 1, 2, smoothIn"
+        "fadeShadow, 1, 2, smoothIn"
+        "fadeDim, 1, 2, smoothIn"
+        "fadeDpms, 1, 2, smoothIn"
+        "fadeLayers, 1, 2, softSnap"
+        # Workspaces
+        "workspaces, 1, 5, softSnap, slidefade 30%"
+        "specialWorkspace, 1, 5, softSnap, slidefadevert 30%"
+      ];
+
       decoration = {
-        rounding = 10;
-        rounding_power = 2;
+        rounding = 16;
+        rounding_power = 4;
         active_opacity = 1.0;
         inactive_opacity = 1.0;
 
