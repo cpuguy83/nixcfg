@@ -32,9 +32,9 @@
       opencode =
         (inputs.opencode.packages.${final.stdenv.hostPlatform.system}.opencode).overrideAttrs
           (oldAttrs: {
-            node_modules = oldAttrs.node_modules.overrideAttrs {
-              outputHash = "sha256-C7y5FMI1pGEgMw/vcPoBhK9tw5uGg1bk0gPXPUUVhgU=";
-            };
+            # node_modules = oldAttrs.node_modules.overrideAttrs {
+            #   outputHash = "sha256-C7y5FMI1pGEgMw/vcPoBhK9tw5uGg1bk0gPXPUUVhgU=";
+            # };
           });
       opencode-desktop = inputs.opencode.packages.${final.stdenv.hostPlatform.system}.desktop;
       # (inputs.opencode.packages.${final.stdenv.hostPlatform.system}.opencode-desktop).overrideAttrs
