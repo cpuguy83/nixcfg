@@ -27,3 +27,39 @@ window#waybar.empty {
   color: inherit;
 }
 
+#tray menu {
+  background-color: #222226;
+  color: #fefefe;
+  font-family: "Inter";
+  font-weight: normal;
+  font-size: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 8px;
+}
+
+#tray menu menuitem {
+  padding: 8px 12px;
+  min-height: 24px;
+  color: #fefefe;
+  font-weight: normal;
+  border-radius: 10px;
+  margin: 2px 0;
+  transition: background-color 100ms;
+}
+
+#tray menu menuitem:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+#tray menu menuitem:disabled {
+  color: rgba(254, 254, 254, 0.35);
+}
+
+#tray menu separator {
+  background-color: rgba(255, 255, 255, 0.08);
+  min-height: 1px;
+  margin: 4px 12px;
+}
+

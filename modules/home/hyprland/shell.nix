@@ -143,6 +143,10 @@ in
           format = " {:%H:%M} ";
         };
 
+        tray = {
+          spacing = 2;
+        };
+
         mpris = {
           interval = 1;
           format = " {title} | {artist} ";
