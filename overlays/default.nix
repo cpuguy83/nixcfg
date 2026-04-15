@@ -27,6 +27,7 @@
     (import ./vscode.nix)
     (import ./linux-entra-sso-host.nix)
     (import ./linux-entra-sso-host-mine.nix)
+    (import ./vekil.nix { inherit inputs; })
     (import ./hyprtasking.nix { inherit inputs pkgs-unstable; })
     (final: _prev: {
       opencode =

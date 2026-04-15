@@ -1050,6 +1050,7 @@
         "nixvim": "nixvim",
         "opencode": "opencode",
         "rust-overlay": "rust-overlay",
+        "vekil": "vekil",
         "waybar": "waybar",
         "zen-browser": "zen-browser"
       }
@@ -1190,6 +1191,23 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "vekil": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1776212909,
+        "narHash": "sha256-8+2pWvYj9OcuvLw1oePBiQmwRalII92lzYjWCISqxmA=",
+        "owner": "cpuguy83",
+        "repo": "vekil",
+        "rev": "58608cf73daea07503ae3d25e37c0ee1ea61990b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cpuguy83",
+        "ref": "fix/content-block-text-omitempty",
+        "repo": "vekil",
         "type": "github"
       }
     },

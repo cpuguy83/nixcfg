@@ -40,7 +40,7 @@ in
     gcr
 
     pkgs-unstable.codex
-    # pkgs-unstable.claude-code
+    pkgs-unstable.claude-code
     (pkgs.symlinkJoin {
       name = "opencode-wrapped";
       paths = [ pkgs.opencode ];
@@ -97,7 +97,6 @@ in
 
     easyeffects
     helvum
-
   ];
 
   gtk = {
@@ -178,6 +177,7 @@ in
   };
 
   services.handy.enable = true;
+  services.vekil.enable = true;
 
   services.calbar = {
     enable = true;

@@ -89,6 +89,11 @@
       url = "github:ghostty-org/ghostty";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
+
+    vekil = {
+      url = "github:cpuguy83/vekil/fix/content-block-text-omitempty";
+      flake = false;
+    };
   };
 
   outputs =
