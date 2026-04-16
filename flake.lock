@@ -1197,16 +1197,15 @@
     "vekil": {
       "flake": false,
       "locked": {
-        "lastModified": 1776212909,
+        "lastModified": 1776295320,
         "narHash": "sha256-8+2pWvYj9OcuvLw1oePBiQmwRalII92lzYjWCISqxmA=",
-        "owner": "cpuguy83",
+        "owner": "sozercan",
         "repo": "vekil",
-        "rev": "58608cf73daea07503ae3d25e37c0ee1ea61990b",
+        "rev": "f8034921a9e6dcbca9e76cda7d14058b2f1b04b1",
         "type": "github"
       },
       "original": {
-        "owner": "cpuguy83",
-        "ref": "fix/content-block-text-omitempty",
+        "owner": "sozercan",
         "repo": "vekil",
         "type": "github"
       }

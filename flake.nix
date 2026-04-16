@@ -91,7 +91,7 @@
     };
 
     vekil = {
-      url = "github:cpuguy83/vekil/fix/content-block-text-omitempty";
+      url = "github:sozercan/vekil";
       flake = false;
     };
   };
