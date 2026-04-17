@@ -127,6 +127,10 @@ in
         "animation popin 90%, match:namespace launcher"
         "animation slide right, match:namespace swaync-notification-window"
         "animation slide right, match:namespace swaync-control-center"
+        "blur on, match:namespace swaync-control-center"
+        "ignore_alpha 0.3, match:namespace swaync-control-center"
+        "blur on, match:namespace swaync-notification-window"
+        "ignore_alpha 0.3, match:namespace swaync-notification-window"
       ];
 
       # Bezier curves
@@ -178,7 +182,7 @@ in
         blur = {
           enabled = true;
 
-          size = 3;
+          size = 4;
           passes = 2;
           vibrancy = "0.1696";
         };

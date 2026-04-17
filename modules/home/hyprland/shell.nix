@@ -15,19 +15,35 @@ in
   services.swaync = {
     enable = true;
     settings = {
+      cssPriority = "user";
       notification-2fa-action = true;
       notification-inline-replies = true;
       keyboard-shortcuts = false;
+      notification-window-width = 420;
+      notification-icon-size = 48;
+      notification-body-image-height = 120;
+      notification-body-image-width = 200;
+      max-visible = 5;
+      timeout = 8;
+      timeout-low = 5;
+      timeout-critical = 0;
+      fit-to-screen = true;
       widgets = [
-        "inhibitors"
         "title"
         "dnd"
-        "notification"
+        "notifications"
         "mpris"
         "volume"
+        "inhibitors"
       ];
 
       widget-config = {
+        title = {
+          text = "Notifications";
+          clear-all-button = true;
+          button-text = "Clear";
+        };
+
         mpris = {
           autohide = true;
         };
@@ -35,12 +51,16 @@ in
         volume = {
           show-per-app = true;
           show-per-app-icon = true;
+          label = " ";
         };
       };
     };
   };
 
-  home.file.".config/swaync/style.css".source = ./swaync-style.css;
+  home.file.".config/swaync/style.css" = {
+    source = ./swaync-style.css;
+    onChange = "${pkgs.systemd}/bin/systemctl --user restart swaync.service || true";
+  };
 
   programs.yazi = {
     enable = true;
