@@ -511,11 +511,14 @@
 /* ── Volume widget ────────────────────────────────────────────────── */
 
 .widget-volume {
-  background-color: @bg_card;
-  border: 1px solid @border_dim;
-  border-radius: 12px;
+  background: rgba(16, 16, 18, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 18px;
   padding: 12px;
   margin: 4px 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08),
+              0 4px 16px rgba(0, 0, 0, 0.4),
+              0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .widget-volume label {
@@ -551,11 +554,14 @@
 /* ── MPRIS widget ─────────────────────────────────────────────────── */
 
 .widget-mpris {
-  background-color: @bg_card;
-  border: 1px solid @border_dim;
-  border-radius: 12px;
+  background: rgba(16, 16, 18, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 18px;
   padding: 12px;
   margin: 4px 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08),
+              0 4px 16px rgba(0, 0, 0, 0.4),
+              0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .widget-mpris-player {
