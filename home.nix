@@ -97,6 +97,8 @@ in
 
     easyeffects
     helvum
+
+    nix-unwrap
   ];
 
   gtk = {

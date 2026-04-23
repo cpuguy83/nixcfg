@@ -25,6 +25,7 @@
     inputs.handy-mine.overlays.default
     inputs.calbar.overlays.default
     (import ./vscode.nix)
+    (import ./nix-unwrap.nix)
     (import ./linux-entra-sso-host.nix)
     (import ./linux-entra-sso-host-mine.nix)
     (import ./vekil.nix { inherit inputs; })
