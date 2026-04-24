@@ -187,11 +187,11 @@
     "flake-compat_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1747046372,
-        "narHash": "sha256-CIVLLkVgvHYbgI2UpXvIIBJ12HWgX+fjA8Xf8PUmqCY=",
+        "lastModified": 1767039857,
+        "narHash": "sha256-vNpUSpF5Nuw8xvDLj2KCwwksIbjua2LZCqhV1LNRDns=",
         "owner": "edolstra",
         "repo": "flake-compat",
-        "rev": "9100a0f413b0c601e0533d1d94ffd501ce2e7885",
+        "rev": "5edf11c44bc78a0d334f6334cdaf7d60d732daab",
         "type": "github"
       },
       "original": {
@@ -1218,17 +1218,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1766027855,
-        "narHash": "sha256-75Midv3RuTPuEJzx4xZRChQka7AEITXV4NSWaNYxc7Q=",
+        "lastModified": 1776883848,
+        "narHash": "sha256-85yQuBRwF4lOHwDJzFFj8gSqwiOcbWZXLUex0ONZpTw=",
         "owner": "Alexays",
         "repo": "Waybar",
-        "rev": "a9ef11a2b387593a50dde6ff1ce22f434a840bd8",
+        "rev": "cca8dc38b6ed25ef78920669c5653748f31e4ba6",
         "type": "github"
       },
       "original": {
         "owner": "Alexays",
         "repo": "Waybar",
-        "rev": "a9ef11a2b387593a50dde6ff1ce22f434a840bd8",
         "type": "github"
       }
     },
