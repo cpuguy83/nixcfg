@@ -131,6 +131,9 @@ in
         "ignore_alpha 0.3, match:namespace swaync-control-center"
         "blur on, match:namespace swaync-notification-window"
         "ignore_alpha 0.3, match:namespace swaync-notification-window"
+        "blur on, match:namespace waybar"
+        "blur_popups on, match:namespace waybar"
+        "ignore_alpha 0.3, match:namespace waybar"
       ];
 
       # Bezier curves
@@ -185,6 +188,8 @@ in
           size = 4;
           passes = 2;
           vibrancy = "0.1696";
+          popups = true;
+          popups_ignorealpha = 0.3;
         };
       };
 

@@ -121,6 +121,7 @@ in
   dconf.settings = {
     "org/gnome/desktop/interface" = {
       color-scheme = colorScheme;
+      font-antialiasing = "grayscale";
     };
   };
 
