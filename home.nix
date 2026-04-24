@@ -159,7 +159,9 @@ in
       init.defaultBranch = "main";
       grep.linenumber = true;
       branch.sort = "-committerdate";
-      url."ssh://git@github.com/".insteadOf = "https://github.com/";
+
+      # hack used for fetching private go mods
+      # url."ssh://git@github.com/".insteadOf = "https://github.com/";
     };
   };
 
