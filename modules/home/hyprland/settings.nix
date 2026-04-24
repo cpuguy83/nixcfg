@@ -134,6 +134,8 @@ in
         "blur on, match:namespace waybar"
         "blur_popups on, match:namespace waybar"
         "ignore_alpha 0.3, match:namespace waybar"
+        "blur on, match:namespace calbar-popup"
+        "ignore_alpha 0.3, match:namespace calbar-popup"
       ];
 
       # Bezier curves

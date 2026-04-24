@@ -186,6 +186,7 @@ in
 
   services.calbar = {
     enable = true;
+    css = builtins.readFile ./calbar-style.css;
     settings = {
       sync = {
         interval = "10m";
