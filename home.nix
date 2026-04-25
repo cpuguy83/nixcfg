@@ -14,6 +14,7 @@ let
 in
 {
   home.stateVersion = "24.11";
+  news.display = "silent";
 
   imports = [
     inputs.nixvim.homeModules.nixvim

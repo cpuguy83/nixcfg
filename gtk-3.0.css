@@ -1,0 +1,72 @@
+window.background,
+dialog.background,
+.background {
+  background-image: none;
+  background-color: rgba(20, 20, 24, 0.92);
+}
+
+window.background.csd,
+dialog.background.csd,
+.background.csd {
+  border-radius: 16px;
+}
+
+window.background.csd > decoration,
+dialog.background.csd > decoration {
+  background-image: none;
+  background-color: rgba(20, 20, 24, 0.88);
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+window.background.csd headerbar,
+window.background.csd headerbar.titlebar,
+window.background.csd .titlebar:not(headerbar),
+dialog.background.csd headerbar,
+dialog.background.csd headerbar.titlebar,
+dialog.background.csd .titlebar:not(headerbar) {
+  background-image: none;
+  background-color: rgba(24, 24, 30, 0.84);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+window.background.csd headerbar .title,
+window.background.csd headerbar .subtitle,
+dialog.background.csd headerbar .title,
+dialog.background.csd headerbar .subtitle {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+window.background.csd headerbar button.titlebutton,
+window.background.csd headerbar button,
+dialog.background.csd headerbar button.titlebutton,
+dialog.background.csd headerbar button {
+  background-image: none;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+window.background.csd headerbar button:hover,
+dialog.background.csd headerbar button:hover {
+  background-color: rgba(255, 255, 255, 0.10);
+}
+
+popover.background,
+menu,
+.menu {
+  background-image: none;
+  background-color: rgba(20, 20, 24, 0.90);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dialog-action-box,
+dialog actionbar,
+.bottom-toolbar {
+  background-image: none;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}

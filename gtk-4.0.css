@@ -1,0 +1,61 @@
+window,
+dialog,
+.background {
+  background-image: none;
+  background-color: rgba(20, 20, 24, 0.92);
+}
+
+window.background,
+dialog.background,
+window.background.csd,
+dialog.background.csd {
+  border-radius: 16px;
+}
+
+headerbar,
+headerbar.titlebar,
+.titlebar {
+  background-image: none;
+  background-color: rgba(24, 24, 30, 0.84);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+headerbar .title,
+headerbar .subtitle {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+headerbar windowcontrols > button,
+headerbar button.titlebutton,
+headerbar button.back,
+headerbar button {
+  background-image: none;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+headerbar windowcontrols > button:hover,
+headerbar button:hover {
+  background-color: rgba(255, 255, 255, 0.10);
+}
+
+popover,
+menu,
+.menu {
+  background-image: none;
+  background-color: rgba(20, 20, 24, 0.90);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+dialog actionbar,
+actionbar,
+.bottom-bar,
+.toolbar {
+  background-image: none;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
