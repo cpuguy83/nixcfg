@@ -105,9 +105,43 @@ in
 
       programs.fuzzel = {
         enable = true;
-        settings.main = {
-          terminal = "ghostty";
-          launch-prefix = "uwsm app --";
+        settings = {
+          main = {
+            terminal = "ghostty";
+            "launch-prefix" = "uwsm app --";
+            font = "Inter:size=11";
+            "dpi-aware" = "auto";
+            "icons-enabled" = "yes";
+            width = 42;
+            lines = 9;
+            "line-height" = 22;
+            "horizontal-pad" = 20;
+            "vertical-pad" = 16;
+            "inner-pad" = 10;
+            anchor = "center";
+            layer = "overlay";
+            namespace = "launcher";
+          };
+
+          colors = {
+            background = "111318d9";
+            text = "edf1f7ff";
+            prompt = "c6cfddff";
+            placeholder = "7f8796ff";
+            input = "edf1f7ff";
+            match = "a9d3ffff";
+            selection = "ffffff12";
+            "selection-text" = "f7f9fdff";
+            "selection-match" = "bfe0ffff";
+            counter = "7f8796ff";
+            border = "ffffff1f";
+          };
+
+          border = {
+            width = 1;
+            radius = 18;
+            "selection-radius" = 12;
+          };
         };
       };
 

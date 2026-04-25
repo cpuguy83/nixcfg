@@ -125,6 +125,8 @@ in
 
       layerrule = [
         "animation popin 90%, match:namespace launcher"
+        "blur on, match:namespace launcher"
+        "ignore_alpha 0.3, match:namespace launcher"
         "animation slide right, match:namespace swaync-notification-window"
         "animation slide right, match:namespace swaync-control-center"
         "blur on, match:namespace swaync-control-center"
