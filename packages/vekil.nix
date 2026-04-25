@@ -11,7 +11,7 @@ buildGoModule {
 
   inherit src;
 
-  vendorHash = "sha256-2bqsORIDLKKUizbuMb5u4tOXhTGwuMDSIz+Zuvblro0=";
+  vendorHash = "sha256-4/i8OptKfbjx2jm7SSVw9jXwjHt0idmxIZ6SKLBZvCw=";
 
   # Only build the main binary, skip the macOS menubar app
   subPackages = [ "." ];
