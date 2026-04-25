@@ -114,6 +114,8 @@ in
         "match:class ^(steam)$, match:title ^(Steam)$, float on, size (monitor_w*0.4) (monitor_h*0.6)"
         "match:class ^(Intune-portal)$, float on, size (monitor_w*0.35) (monitor_h*0.35)"
         "match:class ^(org\\.hyprland\\.xdg-desktop-portal-hyprland)$, float on, size (monitor_w*0.4) (monitor_h*0.4)"
+        "opacity 0.85 0.85, match:class ^(polkit-gnome-authentication-agent-1)$"
+        "opacity 0.85 0.85, match:class ^(1password)$, match:float true"
 
         # NOTE: The zoom app sucks, and so do these rules...
         # Zoom Meeting windows
