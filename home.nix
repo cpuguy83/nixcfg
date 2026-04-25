@@ -34,7 +34,7 @@ in
   };
 
   home.packages = with pkgs; [
-    whitesur-gtk-theme
+    mactahoe-gtk-theme
     whitesur-icon-theme
     whitesur-cursors
 
@@ -105,8 +105,8 @@ in
   gtk = {
     enable = true;
     theme = {
-      package = pkgs.whitesur-gtk-theme;
-      name = "WhiteSur-${themeSuffix}";
+      package = pkgs.mactahoe-gtk-theme;
+      name = "MacTahoe-${themeSuffix}";
     };
 
     iconTheme = {
@@ -117,6 +117,10 @@ in
       package = pkgs.whitesur-cursors;
       name = "WhiteSur-cursors";
     };
+
+    gtk3.extraCss = builtins.readFile ./gtk-3.0.css;
+    gtk4.extraCss = builtins.readFile ./gtk-4.0.css;
+
   };
 
   dconf.settings = {
@@ -273,8 +277,8 @@ in
       notifications = {
         enabled = true;
         before = [
-          "15m"
           "5m"
+          "0s"
         ];
       };
       ui = {

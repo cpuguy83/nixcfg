@@ -1,9 +1,54 @@
+/* Calbar uses a fullscreen layer-shell window as a transparent overlay. */
+window,
+window.background,
+.popup-overlay {
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+
 /* Main glass surface */
 .popup-container {
   background: rgba(20, 20, 24, 0.74);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.popup-header {
+  padding: 16px 16px 12px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.header-icon {
+  color: rgb(88, 160, 255);
+}
+
+.header-title {
+  color: rgba(245, 247, 250, 0.96);
+}
+
+.sync-button,
+.details-back-btn,
+.unhide-icon-btn {
+  background: rgba(255, 255, 255, 0.06);
+  background-image: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.sync-button:hover,
+.details-back-btn:hover,
+.unhide-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.sync-indicator {
+  background: rgba(88, 160, 255, 0.90);
+  box-shadow: 0 0 12px rgba(88, 160, 255, 0.18);
 }
 
 /* Flat agenda rows */
@@ -17,23 +62,47 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
-.event-card.now,
-.event-card.ongoing {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.event-card.imminent {
-  background: rgba(255, 180, 60, 0.06);
-}
-
 /* Section bands */
 .status-bar {
   background: rgba(255, 255, 255, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0 0 16px 16px;
 }
 
 .day-separator,
 .all-day-section {
   background: rgba(255, 255, 255, 0.025);
+}
+
+.day-separator,
+.all-day-header {
+  color: rgba(255, 255, 255, 0.46);
+}
+
+.time-primary,
+.event-title,
+.all-day-title,
+.details-title,
+.details-text {
+  color: rgba(245, 247, 250, 0.94);
+}
+
+.time-secondary,
+.event-meta,
+.event-source,
+.all-day-meta,
+.details-description,
+.hidden-event-meta,
+.status-bar,
+.hidden-count {
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.event-card,
+.all-day-row,
+.hidden-event-row,
+.no-events-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* Join button — subtle blue glass */
@@ -78,4 +147,23 @@
 .hide-btn:hover,
 .unhide-btn:hover {
   background: rgba(255, 255, 255, 0.08);
+}
+
+.details-content,
+.hidden-events-list,
+.event-list,
+.event-scroll {
+  background: transparent;
+}
+
+.event-list > row,
+.event-list > row:hover,
+.event-list > row:selected,
+.event-list > row:focus,
+.event-list > row:focus-within {
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  border: none;
 }

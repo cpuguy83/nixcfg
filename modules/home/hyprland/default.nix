@@ -124,17 +124,17 @@ in
           };
 
           colors = {
-            background = "111318d9";
+            background = "141416dc";
             text = "edf1f7ff";
-            prompt = "c6cfddff";
-            placeholder = "7f8796ff";
+            prompt = "d4d7deff";
+            placeholder = "7f838cff";
             input = "edf1f7ff";
-            match = "a9d3ffff";
-            selection = "ffffff12";
+            match = "d7dbe3ff";
+            selection = "ffffff10";
             "selection-text" = "f7f9fdff";
-            "selection-match" = "bfe0ffff";
-            counter = "7f8796ff";
-            border = "ffffff1f";
+            "selection-match" = "eef2f8ff";
+            counter = "7f838cff";
+            border = "ffffff22";
           };
 
           border = {

@@ -24,6 +24,7 @@
     inputs.rust-overlay.overlays.default
     inputs.handy-mine.overlays.default
     inputs.calbar.overlays.default
+    (import ./mactahoe-gtk-theme.nix)
     (import ./vscode.nix)
     (import ./nix-unwrap.nix)
     (import ./linux-entra-sso-host.nix)
