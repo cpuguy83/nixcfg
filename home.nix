@@ -1,16 +1,21 @@
-{
-  config,
-  pkgs,
-  pkgs-unstable,
-  inputs,
-  lib,
-  ...
+{ config
+, pkgs
+, pkgs-unstable
+, inputs
+, lib
+, ...
 }:
 
 let
   darkMode = true;
   themeSuffix = if darkMode then "Dark" else "Light";
   colorScheme = if darkMode then "prefer-dark" else "prefer-light";
+  opRead = ref: "op read ${lib.escapeShellArg ref}";
+  calbarExec = pkgs.writeShellScript "calbar-start" ''
+    op signin >/dev/null
+    # Keep this in ExecStart, not ExecStartPre, to avoid a second 1Password auth prompt.
+    exec ${pkgs.calbar}/bin/calbar
+  '';
 in
 {
   home.stateVersion = "24.11";
@@ -189,6 +194,23 @@ in
   services.handy.enable = true;
   services.vekil.enable = true;
 
+  systemd.user.services."1password" = {
+    Unit = {
+      Description = "1Password desktop app";
+      PartOf = [ "graphical-session.target" ];
+      After = [
+        "graphical-session.target"
+        "xdg-desktop-autostart.target"
+      ];
+    };
+    Service = {
+      ExecStart = "${pkgs._1password-gui}/bin/1password --silent";
+      Restart = "on-failure";
+      RestartSec = 5;
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
+  };
+
   services.calbar = {
     enable = true;
     css = builtins.readFile ./calbar-style.css;
@@ -201,13 +223,13 @@ in
         {
           name = "iCloud";
           type = "icloud";
-          username_cmd = "op read op://calbar/icloud/username";
-          password_cmd = "op read op://calbar/icloud/password";
+          username_cmd = opRead "op://calbar/icloud/username";
+          password_cmd = opRead "op://calbar/icloud/password";
         }
         {
           name = "Gmail Personal";
           type = "ics";
-          url_cmd = "op read op://calbar/gmail-personal/url";
+          url_cmd = opRead "op://calbar/gmail-personal/url";
         }
         {
           name = "CNCF";
@@ -286,6 +308,23 @@ in
         max_events = 20;
         theme = "system";
       };
+    };
+  };
+
+  systemd.user.services.calbar = {
+    Unit = {
+      Wants = [ "1password.service" ];
+      After = lib.mkAfter [
+        "1password.service"
+        "xdg-desktop-autostart.target"
+        "waybar.service"
+      ];
+      StartLimitIntervalSec = 0;
+    };
+    Service = {
+      ExecStart = lib.mkForce calbarExec;
+      Restart = lib.mkForce "always";
+      RestartSec = lib.mkForce 30;
     };
   };
 }
