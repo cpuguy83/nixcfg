@@ -1,9 +1,10 @@
-{ config
-, pkgs
-, pkgs-unstable
-, inputs
-, lib
-, ...
+{
+  config,
+  pkgs,
+  pkgs-unstable,
+  inputs,
+  lib,
+  ...
 }:
 
 let
@@ -205,6 +206,23 @@ in
     };
     Service = {
       ExecStart = "${pkgs._1password-gui}/bin/1password --silent";
+      Restart = "on-failure";
+      RestartSec = 5;
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
+  };
+
+  systemd.user.services.easyeffects = {
+    Unit = {
+      Description = "EasyEffects audio effects";
+      PartOf = [ "graphical-session.target" ];
+      After = [
+        "graphical-session.target"
+        "xdg-desktop-autostart.target"
+      ];
+    };
+    Service = {
+      ExecStart = "${pkgs.easyeffects}/bin/easyeffects --hide-window";
       Restart = "on-failure";
       RestartSec = 5;
     };
