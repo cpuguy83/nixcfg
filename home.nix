@@ -91,7 +91,8 @@ in
     protonup-qt
     gamescope
 
-    go
+    pkgs-unstable.go
+    pkgs-unstable.golangci-lint
     gcc
     gnumake
 
