@@ -89,6 +89,10 @@ in
         "SUPER, mouse:273, resizewindow" # SUPER+right click to resize
       ];
 
+      binds = {
+        drag_threshold = 8;
+      };
+
       env = [
         "HYPRCURSOR_THEME,$cursor"
         "HYPRCURSOR_SIZE,$cursor_size"
