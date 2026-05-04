@@ -55,7 +55,7 @@ in
         resize_on_border = true;
         hover_icon_on_border = true;
         gaps_out = 6;
-        gaps_in = 4;
+        gaps_in = 9;
       };
       monitor = lib.mkDefault cfg.monitors;
 
