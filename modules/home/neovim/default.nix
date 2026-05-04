@@ -6,6 +6,7 @@
 }:
 
 {
+
   home.packages = with pkgs-unstable; [
     ripgrep
     nixd
@@ -22,7 +23,7 @@
     clipboard.providers.wl-copy.enable = true;
 
     plugins.notify.enable = true;
-    plugins.git-conflict.enable = true;
+    # plugins.git-conflict.enable = true;
     plugins.gitblame.enable = true;
     plugins.lightline.enable = true;
     plugins.treesitter.enable = true;
