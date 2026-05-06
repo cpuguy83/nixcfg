@@ -52,10 +52,10 @@ in
         # "uwsm app -- wl-paste --type image --watch cliphist store"
       ];
       general = {
-        resize_on_border = true;
-        hover_icon_on_border = true;
+        resize_on_border = false;
+        hover_icon_on_border = false;
         gaps_out = 6;
-        gaps_in = 9;
+        gaps_in = 6;
       };
       monitor = lib.mkDefault cfg.monitors;
 
