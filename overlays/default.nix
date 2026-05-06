@@ -50,6 +50,8 @@
       hyprlandPlugins = pkgs-unstable.hyprlandPlugins;
       ghostty = inputs.ghostty.packages.${final.stdenv.hostPlatform.system}.default;
       azure-cli = pkgs-unstable.azure-cli;
+      obs-studio = pkgs-unstable.obs-studio;
+      obs-studio-plugins = pkgs-unstable.obs-studio-plugins;
     })
   ];
 }
