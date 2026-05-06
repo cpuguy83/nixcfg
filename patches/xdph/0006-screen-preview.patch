@@ -507,3 +507,81 @@ index d675f8c..9b12c56 100644
 +    bool m_liveOutputActive = false;
 +    int m_liveOutputIntervalMs = 500;
  };
+diff --git a/hyprland-share-picker/waylandcapture.cpp b/hyprland-share-picker/waylandcapture.cpp
+index 3908fd7..fd3fcfd 100644
+--- a/hyprland-share-picker/waylandcapture.cpp
++++ b/hyprland-share-picker/waylandcapture.cpp
+@@ -75,6 +75,7 @@ WaylandCapture::~WaylandCapture() {
+     
+     // Reset protocol wrappers before disconnecting display
+     // This ensures we don't leave dangling pointers to proxies that are about to be freed
++    m_screencopyManager.reset();
+     m_manager.reset();
+     m_shm.reset();
+     m_registry.reset();
+diff --git a/hyprland-share-picker/main.cpp b/hyprland-share-picker/main.cpp
+index 9fd7cc7..b631d37 100644
+--- a/hyprland-share-picker/main.cpp
++++ b/hyprland-share-picker/main.cpp
+@@ -62,7 +62,7 @@ std::vector<SWindowEntry> getWindows(const char* env) {
+             unsigned long long id = std::stoull(IDSTR);
+             unsigned long long handle = 0;
+             try {
+-                handle = std::stoull(WINDOWADDR);
++                handle = std::stoull(WINDOWADDR, nullptr, 0);
+             } catch (...) {}
+             
+             result.push_back({TITLESTR, CLASSSTR, id, handle});
+@@ -120,7 +120,7 @@ void enrichAndSortWindows(std::vector<SWindowEntry>& windows) {
+ int main(int argc, char* argv[]) {
+     qputenv("QT_LOGGING_RULES", "qml=false");
+ 
+-    bool allowTokenByDefault = true;
++    bool allowTokenByDefault = false;
+     bool allowTokenSelection = getenv("XDPH_PICKER_ALLOW_TOKEN_SELECTION") != nullptr;
+     bool testMode = false;
+ 
+@@ -220,17 +220,6 @@ int main(int argc, char* argv[]) {
+ 
+     w.init(WINDOWLIST, allowTokenByDefault, allowTokenSelection);
+ 
+-    // Start capturing
+-    for (const auto& window : WINDOWLIST) {
+-        if (window.handle > 0)
+-            waylandCapture->capture(window.handle);
+-    }
+-
+-    // Start capturing all screens
+-    for (int i = 0; i < SCREENS.size(); ++i) {
+-        waylandCapture->captureOutput(SCREENS[i]->name());
+-    }
+-
+     QSettings* settings = new QSettings("/tmp/hypr/hyprland-share-picker.conf", QSettings::IniFormat);
+     if (settings->contains("width") && settings->contains("height")) {
+         int w_val = settings->value("width").toInt();
+diff --git a/hyprland-share-picker/mainpicker.cpp b/hyprland-share-picker/mainpicker.cpp
+index 1cc322a..3abdf1f 100644
+--- a/hyprland-share-picker/mainpicker.cpp
++++ b/hyprland-share-picker/mainpicker.cpp
+@@ -293,11 +293,18 @@ void MainPicker::onRegion() {
+ }
+ 
+ void MainPicker::onCancel() {
++    if (m_waylandCapture) {
++        m_waylandCapture->stopLiveCapture();
++        m_waylandCapture->stopLiveOutputCapture();
++    }
+     QApplication::quit();
+ }
+ 
+ void MainPicker::finish(const std::string& result) {
++    if (m_waylandCapture) {
++        m_waylandCapture->stopLiveCapture();
++        m_waylandCapture->stopLiveOutputCapture();
++    }
+     std::cout << "[SELECTION]";
+-    // If checkbox is not visible, always allow restore token
+-    std::cout << (ui->checkBox->isVisible() ? (ui->checkBox->isChecked() ? "r" : "") : "r");
++    std::cout << (ui->checkBox->isChecked() ? "r" : "");
+     std::cout << "/";
+     std::cout << result << "\n";
