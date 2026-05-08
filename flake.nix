@@ -5,6 +5,11 @@
     nixpkgs.url = "nixpkgs/nixos-25.11";
     nixpkgs-unstable.url = "nixpkgs/nixos-unstable";
 
+    buildx = {
+      url = "github:docker/buildx";
+      flake = false;
+    };
+
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -97,11 +102,10 @@
   };
 
   outputs =
-    {
-      self,
-      nixpkgs,
-      nixpkgs-unstable,
-      ...
+    { self
+    , nixpkgs
+    , nixpkgs-unstable
+    , ...
     }@inputs:
     let
       system = "x86_64-linux";
@@ -109,6 +113,7 @@
         inherit system;
         config.allowUnfree = true;
         overlays = [
+          (import ./overlays/docker-buildx.nix { inherit inputs; })
           (import ./overlays/xdph.nix)
         ];
       };
