@@ -52,6 +52,7 @@
       azure-cli = pkgs-unstable.azure-cli;
       obs-studio = pkgs-unstable.obs-studio;
       obs-studio-plugins = pkgs-unstable.obs-studio-plugins;
+      himmelblau = inputs.himmelblau.packages.${final.stdenv.hostPlatform.system};
     })
   ];
 }

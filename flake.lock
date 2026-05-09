@@ -386,6 +386,27 @@
         "type": "github"
       }
     },
+    "himmelblau": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1778102149,
+        "narHash": "sha256-rVBBXFcrkkjp9NLq8eaUz27P+E2gEInsyjW369zEd0M=",
+        "owner": "himmelblau-idm",
+        "repo": "himmelblau",
+        "rev": "9f9adbe964983f7615d274dc96e928171be04170",
+        "type": "github"
+      },
+      "original": {
+        "owner": "himmelblau-idm",
+        "ref": "main",
+        "repo": "himmelblau",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -1057,6 +1078,7 @@
         "ghostty": "ghostty",
         "handy": "handy",
         "handy-mine": "handy-mine",
+        "himmelblau": "himmelblau",
         "home-manager": "home-manager_2",
         "hyprland": "hyprland",
         "hyprtasking": "hyprtasking",

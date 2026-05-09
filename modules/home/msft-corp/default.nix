@@ -2,15 +2,22 @@
 , pkgs
 , pkgs-unstable
 , lib
+, inputs
 , ...
 }:
 let
   cfg = config.mine.msft-corp;
+  #himmelblauPkgs = inputs.himmelblau.packages.${pkgs.stdenv.hostPlatform.system};
+  ssoHostPackage =
+    if cfg.authStack == "himmelblau" then
+      pkgs.himmelblau.sso
+    else
+      pkgs.linux-entra-sso-host-mine;
 in
 {
   config = lib.mkIf cfg.enable {
     home.file.".mozilla/native-messaging-hosts/linux_entra_sso.json" = {
-      source = "${pkgs.linux-entra-sso-host-mine}/lib/mozilla/native-messaging-hosts/linux_entra_sso.json";
+      source = "${ssoHostPackage}/lib/mozilla/native-messaging-hosts/linux_entra_sso.json";
     };
 
     programs.git.settings = {

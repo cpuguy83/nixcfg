@@ -26,5 +26,27 @@ in
       description = "Microsoft services integration";
       default = false;
     };
+
+    authStack = lib.mkOption {
+      type = types.enum [
+        "intune"
+        "himmelblau"
+      ];
+      default = "intune";
+      description = "Corporate identity/compliance backend to use.";
+    };
+
+    himmelblau = {
+      localUser = lib.mkOption {
+        type = types.str;
+        default = "cpuguy83";
+        description = "Local user to map to an Entra ID user for Himmelblau.";
+      };
+
+      upn = lib.mkOption {
+        type = types.str;
+        description = "Entra ID UPN to map to the local user for Himmelblau.";
+      };
+    };
   };
 }

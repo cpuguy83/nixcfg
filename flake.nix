@@ -50,6 +50,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    himmelblau = {
+      url = "github:himmelblau-idm/himmelblau/main";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+
     hyprtasking = {
       url = "github:raybbian/hyprtasking";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
