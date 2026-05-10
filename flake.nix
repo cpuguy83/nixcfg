@@ -77,6 +77,7 @@
 
     opencode = {
       url = "github:anomalyco/opencode";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
     handy = {
@@ -107,10 +108,11 @@
   };
 
   outputs =
-    { self
-    , nixpkgs
-    , nixpkgs-unstable
-    , ...
+    {
+      self,
+      nixpkgs,
+      nixpkgs-unstable,
+      ...
     }@inputs:
     let
       system = "x86_64-linux";
