@@ -53,6 +53,7 @@
       obs-studio = pkgs-unstable.obs-studio;
       obs-studio-plugins = pkgs-unstable.obs-studio-plugins;
       himmelblau = inputs.himmelblau.packages.${final.stdenv.hostPlatform.system};
+      cider-2 = pkgs-unstable.cider-2;
     })
   ];
 }

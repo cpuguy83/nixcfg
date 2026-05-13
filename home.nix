@@ -107,6 +107,8 @@ in
     helvum
 
     nix-unwrap
+
+    cider-2 # Apple music player
   ];
 
   gtk = {
