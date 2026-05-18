@@ -1,8 +1,8 @@
 # vekil: proxy to use Claude, Gemini, or OpenAI-compatible clients with GitHub Copilot
-{ lib
-, buildGoModule
-, src
-,
+{
+  lib,
+  buildGoModule,
+  src,
 }:
 
 buildGoModule {
@@ -11,7 +11,7 @@ buildGoModule {
 
   inherit src;
 
-  vendorHash = "sha256-4/i8OptKfbjx2jm7SSVw9jXwjHt0idmxIZ6SKLBZvCw=";
+  vendorHash = "sha256-4lrcgzbvRDOEujsu/tRwCe1PTjsPEsce2QGDpGdfQnU=";
 
   subPackages = [ "cmd/menubar" ];
 

@@ -35,7 +35,7 @@
     };
 
     hyprland = {
-      url = "github:hyprwm/hyprland/v0.54.3";
+      url = "github:hyprwm/hyprland/v0.55.1";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     # hyprland-plugins = {
@@ -59,7 +59,8 @@
     };
 
     hyprtasking = {
-      url = "github:raybbian/hyprtasking";
+      # TODO: return to raybbian/hyprtasking once Hyprland 0.55 support lands.
+      url = "github:yerlotic/hyprtasking/3390ce22bdbf2c2f59dad495c218ca3f9e82572e";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
       inputs.hyprland.follows = "hyprland";
     };
@@ -101,7 +102,7 @@
     };
 
     ghostty = {
-      url = "github:ghostty-org/ghostty";
+      url = "github:ghostty-org/ghostty/v1.3.1";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 

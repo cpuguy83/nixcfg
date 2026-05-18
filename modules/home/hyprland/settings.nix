@@ -70,7 +70,7 @@ in
         "$mod, M, exit,"
         "$mod, SPACE, exec, $menu"
         "$mod, P, pseudo,"
-        "$mod, J, togglesplit,"
+        "$mod, J, layoutmsg, togglesplit,"
         "$mod, E, exec, $file_manager"
         "$mod, L, exec, hyprlock"
         # "$mod, TAB, hyprexpo:expo, toggle"
