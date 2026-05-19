@@ -3,6 +3,9 @@
   pkgs-unstable,
   ...
 }:
+let
+  opencodePackageJson = builtins.fromJSON (builtins.readFile "${inputs.opencode}/package.json");
+in
 {
   nixpkgs.overlays = [
     inputs.waybar.overlays.default
@@ -32,27 +35,15 @@
     (import ./vekil.nix { inherit inputs; })
     (import ./hyprtasking.nix { inherit inputs pkgs-unstable; })
     (final: _prev: {
-      opencode = pkgs-unstable.opencode;
-      opencode-desktop = pkgs-unstable.opencode;
-      # opencode =
-      #   (inputs.opencode.packages.${final.stdenv.hostPlatform.system}.opencode).overrideAttrs
-      #     (oldAttrs: {
-      #       postConfigure = (oldAttrs.postConfigure or "") + ''
-      #         substituteInPlace package.json \
-      #           --replace-regexp '"packageManager": "bun@[0-9.]+"' \
-      #           '"packageManager": "bun@${pkgs-unstable.bun.version}"'
-      #       '';
-      #       # node_modules = oldAttrs.node_modules.overrideAttrs {
-      #       #   outputHash = "sha256-C7y5FMI1pGEgMw/vcPoBhK9tw5uGg1bk0gPXPUUVhgU=";
-      #       # };
-      #     });
-      # opencode-desktop = inputs.opencode.packages.${final.stdenv.hostPlatform.system}.desktop;
-      # (inputs.opencode.packages.${final.stdenv.hostPlatform.system}.opencode-desktop).overrideAttrs
-      #   (oldAttrs: {
-      #     node_modules = oldAttrs.node_modules.overrideAttrs {
-      #       outputHash = "sha256-C7y5FMI1pGEgMw/vcPoBhK9tw5uGg1bk0gPXPUUVhgU=";
-      #     };
-      #   });
+      opencode =
+        (inputs.opencode.packages.${final.stdenv.hostPlatform.system}.opencode).overrideAttrs
+          (oldAttrs: {
+            postConfigure = (oldAttrs.postConfigure or "") + ''
+              substituteInPlace package.json \
+                --replace-fail '"packageManager": "${opencodePackageJson.packageManager}"' \
+                '"packageManager": "bun@${pkgs-unstable.bun.version}"'
+            '';
+          });
       hyprland = pkgs-unstable.hyprland;
       hyprlandPlugins = pkgs-unstable.hyprlandPlugins;
       ghostty = inputs.ghostty.packages.${final.stdenv.hostPlatform.system}.default;
