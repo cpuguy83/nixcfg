@@ -114,6 +114,8 @@ in
       ];
       mgr = {
         show_hidden = true;
+        sort_by = "mtime";
+        sort_reverse = true;
       };
     };
   };
