@@ -11,6 +11,11 @@ let
   cfg = config.mine.msft-corp;
   useIntune = cfg.authStack == "intune";
   useHimmelblau = cfg.authStack == "himmelblau";
+  azureVpnUser = cfg.himmelblau.localUser;
+  azureVpnUserConfig = config.users.users.${azureVpnUser} or { };
+  azureVpnUserHome = azureVpnUserConfig.home or "/home/${azureVpnUser}";
+  azureVpnUserGroup = azureVpnUserConfig.group or "users";
+  azureVpnUserLogDir = "${azureVpnUserHome}/.config/microsoft-azurevpnclient/logs";
   azureVpnRootCert = pkgs.runCommand "azurevpn-digicert-global-root-g2.pem" { } ''
     sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' \
       ${pkgs.cacert.unbundled}/etc/ssl/certs/DigiCert_Global_Root_G2:33af1e6a711a9a0bb2864b11d09fae5.crt > "$out"
@@ -57,6 +62,7 @@ let
       networkmanager # nmcli
       systemd # resolvectl
       dnsutils # dig
+      gawk
       coreutils # basename, cut
       gnugrep # grep
       gnused # sed
@@ -169,6 +175,15 @@ in
 
       programs.azurevpnclient.enable = true;
       services.pcscd.enable = true;
+
+      # Azure VPN Client writes diagnostics to this hard-coded path and opens it
+      # from Settings -> Show Logs Directory, but the Linux client writes its UI
+      # log under the user's config directory.
+      systemd.tmpfiles.rules = [
+        "d /var/log/azurevpnclient 0770 root ${config.programs.azurevpnclient.polkitGroup} -"
+        "d ${azureVpnUserLogDir} 0755 ${azureVpnUser} ${azureVpnUserGroup} -"
+        "L /var/log/azurevpnclient/AzureVPNClientUI.log - - - - ${azureVpnUserLogDir}/AzureVPNClientUI.log"
+      ];
 
       # Register OpenSC PKCS#11 module with p11-kit so all PKCS#11-aware
       # applications (browsers, curl, etc.) can discover YubiKey PIV certs.
