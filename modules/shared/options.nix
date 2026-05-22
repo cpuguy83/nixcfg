@@ -27,6 +27,32 @@ in
       default = false;
     };
 
+    corpnet = {
+      gateway = lib.mkOption {
+        type = types.str;
+        default = "msftvpn-alt.ras.microsoft.com";
+        description = "GlobalProtect gateway for the Microsoft corporate VPN profile.";
+      };
+
+      protocol = lib.mkOption {
+        type = types.str;
+        default = "gp";
+        description = "OpenConnect protocol for the Microsoft corporate VPN profile.";
+      };
+
+      reportedOs = lib.mkOption {
+        type = types.str;
+        default = "win";
+        description = "Operating system reported by OpenConnect during Microsoft VPN authentication.";
+      };
+
+      browserDesktopFile = lib.mkOption {
+        type = types.str;
+        default = "zen-beta.desktop";
+        description = "Expected XDG desktop file for the browser used by Microsoft VPN SAML authentication.";
+      };
+    };
+
     authStack = lib.mkOption {
       type = types.enum [
         "intune"

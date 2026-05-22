@@ -60,6 +60,29 @@ let
     text = builtins.readFile ./99-validate-dns;
   };
 
+  vpnDiagnostics = pkgs.writeShellApplication {
+    name = "msft-vpn-diagnostics";
+    runtimeInputs = with pkgs; [
+      coreutils
+      gpclient
+      gnugrep
+      networkmanager
+      openconnect
+      systemd
+      xdg-utils
+    ];
+    text = ''
+      export VPN_GATEWAY=${lib.escapeShellArg cfg.corpnet.gateway}
+      export VPN_PROTOCOL=${lib.escapeShellArg cfg.corpnet.protocol}
+      export VPN_REPORTED_OS=${lib.escapeShellArg cfg.corpnet.reportedOs}
+      export AUTH_STACK=${lib.escapeShellArg cfg.authStack}
+      export NM_DAEMON=${lib.escapeShellArg "${pkgs.networkmanager}/bin/NetworkManager"}
+      export EXPECTED_BROWSER=${lib.escapeShellArg cfg.corpnet.browserDesktopFile}
+
+      exec ${pkgs.bash}/bin/bash ${./msft-vpn-diagnostics.sh} "$@"
+    '';
+  };
+
   commonHimmelblauServiceConfig = {
     Type = "notify";
     UMask = "0027";
@@ -81,6 +104,9 @@ in
 
   config = mkIf cfg.enable (mkMerge [
     {
+      networking.networkmanager.dns = lib.mkDefault "systemd-resolved";
+      services.resolved.enable = lib.mkDefault true;
+
       services.gnome.glib-networking.enable = true;
       security.polkit.enable = true;
       security.rtkit.enable = true;
@@ -133,6 +159,8 @@ in
       };
 
       environment.systemPackages = with pkgs; [
+        vpnDiagnostics
+
         libsecret
 
         openconnect
