@@ -2,8 +2,8 @@
   description = "Flake for my main system";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-25.11";
-    nixpkgs-unstable.url = "nixpkgs/nixos-unstable";
+    nixpkgs.url = "nixpkgs/nixos-26.05";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/f830e6112b4dbdb98cb7668cd291ea07ffc288e8";
 
     buildx = {
       url = "github:docker/buildx";
@@ -30,13 +30,13 @@
     };
 
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     hyprland = {
-      url = "github:hyprwm/hyprland/v0.55.1";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      url = "github:hyprwm/hyprland/v0.55.2";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     # hyprland-plugins = {
     #   url = "github:hyprwm/hyprland-plugins/v0.53.0";
@@ -55,7 +55,7 @@
 
     himmelblau = {
       url = "github:himmelblau-idm/himmelblau/main";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     hyprtasking = {
@@ -67,17 +67,16 @@
 
     waybar = {
       url = "github:Alexays/Waybar";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     nixvim = {
-      url = "github:nix-community/nixvim";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      url = "github:nix-community/nixvim/nixos-26.05";
     };
 
     nixd = {
       url = "github:nix-community/nixd";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     opencode = {
@@ -98,12 +97,12 @@
 
     calbar = {
       url = "github:cpuguy83/calbar";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     ghostty = {
       url = "github:ghostty-org/ghostty/v1.3.1";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     vekil = {

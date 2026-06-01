@@ -1,10 +1,9 @@
-{
-  pkgs,
-  pkgs-unstable,
-  lib,
-  config,
-  inputs,
-  ...
+{ pkgs
+, pkgs-unstable
+, lib
+, config
+, inputs
+, ...
 }:
 with lib;
 let

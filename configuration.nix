@@ -156,7 +156,7 @@
     glib # libgio, libgobject, libglib, libgmodule
     libsecret # libsecret-1.so.0
     p11-kit # libp11-kit.so.0
-    xorg.libX11 # libX11.so.6
+    libX11 # libX11.so.6
     webkitgtk_4_1 # libwebkit2gtk-4.1, libjavascriptcoregtk-4.1
     gtk3 # libgtk-3, libgdk-3
     pango # libpangocairo, libpango

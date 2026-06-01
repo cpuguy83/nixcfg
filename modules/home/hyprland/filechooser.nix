@@ -1,8 +1,7 @@
-{
-  pkgs,
-  cfg,
-  lib,
-  ...
+{ pkgs
+, cfg
+, lib
+, ...
 }:
 {
   # xdg.portal.extraPortals = lib.mkAfter [ pkgs.xdg-desktop-portal-termfilechooser ];

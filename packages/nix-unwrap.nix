@@ -1,11 +1,11 @@
-{
-  lib,
-  writeShellApplication,
-  file,
-  coreutils,
-  gnugrep,
-  gawk,
-  binutils-unwrapped,
+{ lib
+, writeShellApplication
+, file
+, coreutils
+, gnugrep
+, gawk
+, binutils-unwrapped
+,
 }:
 
 writeShellApplication {

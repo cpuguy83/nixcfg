@@ -1,10 +1,9 @@
-{
-  pkgs,
-  pkgs-unstable,
-  inputs,
-  lib,
-  config,
-  ...
+{ pkgs
+, pkgs-unstable
+, inputs
+, lib
+, config
+, ...
 }:
 let
   cfg = config.mine.desktop.hyprland;

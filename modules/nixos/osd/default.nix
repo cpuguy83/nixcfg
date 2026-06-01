@@ -1,7 +1,6 @@
-{
-  pkgs,
-  pkgs-unstable,
-  ...
+{ pkgs
+, pkgs-unstable
+, ...
 }:
 let
   defaultAudioWatcher = pkgs.writeShellApplication {

@@ -1,10 +1,9 @@
-{
-  config,
-  pkgs,
-  pkgs-unstable,
-  inputs,
-  lib,
-  ...
+{ config
+, pkgs
+, pkgs-unstable
+, inputs
+, lib
+, ...
 }:
 
 let
@@ -104,7 +103,7 @@ in
     libnotify # for notify-send (send system notifications)
 
     easyeffects
-    helvum
+    crosspipe
 
     nix-unwrap
 
@@ -128,7 +127,10 @@ in
     };
 
     gtk3.extraCss = builtins.readFile ./gtk-3.0.css;
-    gtk4.extraCss = builtins.readFile ./gtk-4.0.css;
+    gtk4 = {
+      theme = config.gtk.theme;
+      extraCss = builtins.readFile ./gtk-4.0.css;
+    };
 
   };
 

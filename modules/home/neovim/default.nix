@@ -1,8 +1,7 @@
-{
-  lib,
-  pkgs,
-  pkgs-unstable,
-  ...
+{ lib
+, pkgs
+, pkgs-unstable
+, ...
 }:
 
 {

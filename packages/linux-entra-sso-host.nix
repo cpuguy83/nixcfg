@@ -1,12 +1,12 @@
-{
-  lib,
-  stdenv,
-  fetchFromGitHub,
-  python3,
-  makeWrapper,
-  wrapGAppsNoGuiHook,
-  glib,
-  gobject-introspection,
+{ lib
+, stdenv
+, fetchFromGitHub
+, python3
+, makeWrapper
+, wrapGAppsNoGuiHook
+, glib
+, gobject-introspection
+,
 }:
 
 let

@@ -4,15 +4,34 @@ self: super: {
     src = (
       builtins.fetchTarball {
         url = "https://code.visualstudio.com/sha/download?build=insider&os=linux-x64";
-        sha256 = "01mf8jlnws19s23axrmadswcn7ada3fy2p1q89nf0v4zn9agvzz4";
+        sha256 = "1zzhzqs5qvr78h906s5vvbimv7j4findav5fad7fiinxix4xp5rg";
       }
     );
     version = "latest";
+    postPatch = builtins.replaceStrings
+      [
+        ''
+          rm resources/app/node_modules/@vscode/ripgrep/bin/rg
+          ln -s ${self.ripgrep}/bin/rg resources/app/node_modules/@vscode/ripgrep/bin/rg
+        ''
+      ]
+      [
+        ''
+          rgPath="resources/app/node_modules/@vscode/ripgrep/bin/rg"
+          if [ ! -e "$rgPath" ]; then
+            rgPath="resources/app/node_modules/@vscode/ripgrep-universal/bin/linux-x64/rg"
+          fi
+          rm "$rgPath"
+          ln -s ${self.ripgrep}/bin/rg "$rgPath"
+        ''
+      ]
+      (old.postPatch or "");
     buildInputs =
-      (old.buildInputs or [])
+      (old.buildInputs or [ ])
       ++ [
         self.webkitgtk_4_1
         self.libsoup_3
+        self.musl
       ];
   });
 }

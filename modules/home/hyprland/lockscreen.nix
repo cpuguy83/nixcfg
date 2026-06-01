@@ -1,8 +1,7 @@
-{
-  pkgs-unstable,
-  lib,
-  config,
-  ...
+{ pkgs-unstable
+, lib
+, config
+, ...
 }:
 let
   cfg = config.mine.desktop.hyprland;

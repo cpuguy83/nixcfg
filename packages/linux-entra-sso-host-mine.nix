@@ -1,8 +1,8 @@
 # Go implementation of linux-entra-sso native messaging host
 # Works with microsoft-identity-broker 2.0.4+ (which removed D-Bus introspection)
-{
-  lib,
-  buildGoModule,
+{ lib
+, buildGoModule
+,
 }:
 
 buildGoModule {

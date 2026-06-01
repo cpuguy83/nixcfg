@@ -1,11 +1,10 @@
-{
-  pkgs,
-  pkgs-unstable,
-  lib,
-  config,
-  brightnessPath,
-  getMonitorPath,
-  ...
+{ pkgs
+, pkgs-unstable
+, lib
+, config
+, brightnessPath
+, getMonitorPath
+, ...
 }:
 let
   # plugins = inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system};
@@ -25,6 +24,7 @@ in
     enable = true;
     package = null;
     portalPackage = null;
+    configType = "hyprlang";
 
     plugins = with pkgs-unstable.hyprlandPlugins; [
       # hyprbars
