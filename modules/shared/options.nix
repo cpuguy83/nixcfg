@@ -5,12 +5,28 @@ in
 {
   options.mine.desktop.hyprland.enable = mkEnableOption "Enable Hyprland profile";
   options.mine.desktop.hyprland.monitors = lib.mkOption {
-    type = with types; listOf str;
+    type = with types; nullOr (listOf str);
     default = [ ];
     description = "Hyprland monitor directives for this machine.";
     example = [
       "DP-1,preferred,auto-right,auto"
       "HDMI-A-1,disable"
+    ];
+  };
+
+  options.mine.desktop.hyprland.layout = lib.mkOption {
+    type = with types; nullOr str;
+    default = null;
+    description = "Default layout";
+    example = "scrolling";
+  };
+
+  options.mine.desktop.hyprland.workspaces = lib.mkOption {
+    type = with types; nullOr (listOf str);
+    default = [ ];
+    description = "Hyprland workspace definitions";
+    example = [
+      "1, rounding:false"
     ];
   };
 

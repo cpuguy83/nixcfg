@@ -13,5 +13,12 @@
     "HDMI-A-1,disable"
     "HDMI-A-3,disable"
   ];
+
   mine.desktop.hyprland.lockScreenMonitor = "DP-1";
+
+  mine.desktop.hyprland.workspaces = [
+    "m[DP-2], layoutopt:direction:down"
+  ];
+
+  mine.desktop.hyprland.layout = "scrolling";
 }

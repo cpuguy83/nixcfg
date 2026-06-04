@@ -48,16 +48,24 @@ in
       exec-once = [
         "$terminal"
         "hyprctl setcursor $cursor $cursor_size"
-        # "uwsm app -- wl-paste --type text --watch cliphist store"
-        # "uwsm app -- wl-paste --type image --watch cliphist store"
       ];
+
       general = {
         resize_on_border = false;
         hover_icon_on_border = false;
         gaps_out = 6;
         gaps_in = 6;
+
+        layout = lib.mkDefault cfg.layout;
       };
+
       monitor = lib.mkDefault cfg.monitors;
+
+      workspace = lib.mkDefault cfg.workspaces;
+
+      scrolling = {
+        fullscreen_on_one_column = false;
+      };
 
       render = {
         cm_auto_hdr = 2;

@@ -125,6 +125,7 @@ in
         margin-bottom = 0;
         margin-left = 0;
         margin-right = 0;
+        layer = "top";
 
         modules-left = [
           "wlr/taskbar"
