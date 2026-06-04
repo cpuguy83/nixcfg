@@ -1,14 +1,36 @@
-{ pkgs
-, pkgs-unstable
-, lib
-, config
-, brightnessPath
-, getMonitorPath
-, ...
+{
+  pkgs,
+  lib,
+  config,
+  brightnessPath,
+  getMonitorPath,
+  ...
 }:
 let
   # plugins = inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system};
   cfg = config.mine.desktop.hyprland;
+
+  # swayosd-client --input-volume mute-toggle is broken in swayosd 0.3.1:
+  # it reads the source mute state correctly but writes the toggle to the
+  # output (sink) device due to a bug in the pulsectl-rs SourceController, so
+  # the mic mute never actually flips. Toggle directly via wpctl instead and
+  # reuse swayosd's custom-message OSD for the on-screen indicator.
+  micMuteToggle = pkgs.writeShellApplication {
+    name = "swayosd-mic-mute-toggle";
+    runtimeInputs = [
+      pkgs.wireplumber
+      pkgs.swayosd
+      pkgs.gnugrep
+    ];
+    text = ''
+      wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+      if wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | grep -q MUTED; then
+        swayosd-client --custom-icon microphone-sensitivity-muted-symbolic --custom-message "Microphone muted"
+      else
+        swayosd-client --custom-icon microphone-sensitivity-high-symbolic --custom-message "Microphone on"
+      fi
+    '';
+  };
 in
 {
   home.file.".local/bin/exec_yazi" = {
@@ -26,9 +48,8 @@ in
     portalPackage = null;
     configType = "hyprlang";
 
-    plugins = with pkgs-unstable.hyprlandPlugins; [
-      # hyprbars
-      pkgs.hyprtasking
+    plugins = with pkgs; [
+      hyprtasking
     ];
 
     settings = {
@@ -113,7 +134,7 @@ in
         ", XF86AudioRaiseVolume, exec, swayosd-client --output-volume raise"
         ", XF86AudioLowervolume, exec, swayosd-client --output-volume lower"
         ", XF86AudioMute, exec, swayosd-client --output-volume mute-toggle"
-        ", XF86AudioMicMute, exec, swayosd-client --input-volume mute-toggle"
+        ", XF86AudioMicMute, exec, ${lib.getExe micMuteToggle}"
         ", XF86AudioPlay, exec, playerctl play-pause"
         ", XF86MonBrightnessUp, exec, ${brightnessPath} up $(${getMonitorPath}) 4"
         ", XF86MonBrightnessDown, exec, ${brightnessPath} down $(${getMonitorPath}) 4"
