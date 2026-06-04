@@ -668,22 +668,22 @@
           "hyprland"
         ],
         "nixpkgs": [
-          "nixpkgs-unstable"
+          "nixpkgs"
         ],
         "systems": "systems_4"
       },
       "locked": {
-        "lastModified": 1779035440,
-        "narHash": "sha256-2+DK+rJ/t1BAAGvQOKTNlwHj3kgfBXgimjlHHpzRuAw=",
+        "lastModified": 1780506611,
+        "narHash": "sha256-6L6dISlxt/hwr5mzKZwAQN7kaQQPmUkriIWwQibzOjw=",
         "owner": "yerlotic",
         "repo": "hyprtasking",
-        "rev": "3390ce22bdbf2c2f59dad495c218ca3f9e82572e",
+        "rev": "a8dde7a4b6a3013e2a4161377b653b6904e8f787",
         "type": "github"
       },
       "original": {
         "owner": "yerlotic",
         "repo": "hyprtasking",
-        "rev": "3390ce22bdbf2c2f59dad495c218ca3f9e82572e",
+        "rev": "a8dde7a4b6a3013e2a4161377b653b6904e8f787",
         "type": "github"
       }
     },

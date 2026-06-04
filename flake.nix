@@ -60,8 +60,8 @@
 
     hyprtasking = {
       # TODO: return to raybbian/hyprtasking once Hyprland 0.55 support lands.
-      url = "github:yerlotic/hyprtasking/3390ce22bdbf2c2f59dad495c218ca3f9e82572e";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      url = "github:yerlotic/hyprtasking/a8dde7a4b6a3013e2a4161377b653b6904e8f787";
+      inputs.nixpkgs.follows = "nixpkgs";
       inputs.hyprland.follows = "hyprland";
     };
 
