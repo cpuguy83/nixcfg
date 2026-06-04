@@ -2,11 +2,12 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config
-, pkgs
-, pkgs-unstable
-, inputs
-, ...
+{
+  config,
+  pkgs,
+  pkgs-unstable,
+  inputs,
+  ...
 }:
 {
   imports = [
@@ -19,6 +20,11 @@
   nix.extraOptions = ''
     experimental-features = nix-command flakes
   '';
+
+  programs.appimage = {
+    enable = true;
+    binfmt = true;
+  };
 
   nix.optimise.automatic = true;
   nix.optimise.dates = [ "03:45" ];
