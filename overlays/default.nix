@@ -1,5 +1,6 @@
 { inputs
 , pkgs-unstable
+, copilotVersion
 , ...
 }:
 let
@@ -38,6 +39,7 @@ in
     (import ./linux-entra-sso-host-mine.nix)
     (import ./vekil.nix { inherit inputs; })
     (import ./hyprtasking.nix { inherit inputs pkgs-unstable; })
+    (import ./github-copilot.nix { inherit inputs copilotVersion; })
     (final: _prev: {
       opencode =
         (inputs.opencode.packages.${final.stdenv.hostPlatform.system}.opencode).overrideAttrs

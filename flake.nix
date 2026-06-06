@@ -109,17 +109,30 @@
       url = "github:sozercan/vekil";
       flake = false;
     };
+
+    github-copilot-deb = {
+      url = "file+https://github.com/github/app/releases/download/v0.2.27/GitHub-Copilot-linux-x64.deb";
+      flake = false;
+    };
   };
 
   outputs =
-    {
-      self,
-      nixpkgs,
-      nixpkgs-unstable,
-      ...
+    { self
+    , nixpkgs
+    , nixpkgs-unstable
+    , ...
     }@inputs:
     let
       system = "x86_64-linux";
+
+      # Recover the GitHub Copilot version from the locked deb URL so the only
+      # thing update.sh has to bump is the tag in the github-copilot-deb input.
+      # ./flake.lock is a guaranteed sibling of flake.nix, so this read is stable
+      # regardless of where the package/overlay files live.
+      copilotVersion = builtins.head (builtins.match ".*/v([0-9.]+)/.*"
+        (builtins.fromJSON
+          (builtins.readFile ./flake.lock)).nodes.github-copilot-deb.locked.url);
+
       pkgs-unstable = import nixpkgs-unstable {
         inherit system;
         config.allowUnfree = true;
@@ -134,7 +147,7 @@
         "cpuguy83@yavin4" = inputs.home-manager.lib.homeManagerConfiguration {
           pkgs = nixpkgs.legacyPackages.${system};
           extraSpecialArgs = {
-            inherit inputs pkgs-unstable;
+            inherit inputs pkgs-unstable copilotVersion;
           };
           modules = [
             {
@@ -156,7 +169,7 @@
       nixosConfigurations = {
         yavin4 = nixpkgs.lib.nixosSystem {
           specialArgs = {
-            inherit pkgs-unstable inputs;
+            inherit pkgs-unstable inputs copilotVersion;
           };
 
           modules = [
@@ -166,6 +179,7 @@
               home-manager.extraSpecialArgs = {
                 inherit inputs;
                 inherit pkgs-unstable;
+                inherit copilotVersion;
               };
 
               home-manager.users.cpuguy83 = {

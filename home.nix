@@ -45,6 +45,8 @@ in
 
     gcr
 
+    github-copilot
+
     pkgs-unstable.codex
     pkgs-unstable.claude-code
     (pkgs.symlinkJoin {

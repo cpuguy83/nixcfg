@@ -299,6 +299,18 @@
         "type": "github"
       }
     },
+    "github-copilot-deb": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-HCZGyyExzKZ1Qfjkba6nlMiULBsCFnwM+Bfd/L6FSMs=",
+        "type": "file",
+        "url": "https://github.com/github/app/releases/download/v0.2.27/GitHub-Copilot-linux-x64.deb"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://github.com/github/app/releases/download/v0.2.27/GitHub-Copilot-linux-x64.deb"
+      }
+    },
     "gitignore": {
       "inputs": {
         "nixpkgs": [
@@ -1052,6 +1064,7 @@
         "calbar": "calbar",
         "firefox-addons": "firefox-addons",
         "ghostty": "ghostty",
+        "github-copilot-deb": "github-copilot-deb",
         "handy": "handy",
         "handy-mine": "handy-mine",
         "himmelblau": "himmelblau",
