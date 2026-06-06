@@ -7,6 +7,7 @@
   boot.lanzaboote = {
     enable = true;
     pkiBundle = "/var/lib/sbctl";
+    autoEnrollKeys.enable = true;
   };
 
   boot.binfmt = {
