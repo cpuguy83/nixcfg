@@ -49,6 +49,20 @@
 
   environment.variables.AMD_VULKAN_ICD = "RADV";
 
+  # Pin webkit2gtk's GPU render device to the discrete RX 7900 (renderD128).
+  # This webkit build (2.52.x) has no WEBKIT_DRM_* selection vars; it honors
+  # WEBKIT_WEB_RENDER_DEVICE_FILE. Without this, WebKitWebProcess defaults to
+  # the weaker integrated GPU (renderD129). by-path keeps it stable across boots.
+  environment.sessionVariables.WEBKIT_WEB_RENDER_DEVICE_FILE =
+    "/dev/dri/by-path/pci-0000:03:00.0-render";
+
+  # Force all Mesa GL/EGL/GBM clients (WebKitGTK, Electron/Chromium, etc.) to
+  # render on the discrete RX 7900 XTX (0000:03:00.0 / renderD128). The
+  # compositor already runs on it; clients otherwise default to the iGPU
+  # (renderD129). Mesa PCI-tag form (underscores) takes precedence over the GBM
+  # default and the compositor's dmabuf feedback. PCI tag is stable across boots.
+  environment.sessionVariables.DRI_PRIME = "pci-0000_03_00_0";
+
   # AMD GPU controller
   services.lact.enable = true;
 
