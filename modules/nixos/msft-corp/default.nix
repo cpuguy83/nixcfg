@@ -331,6 +331,17 @@ in
         settings.try_unseal = true;
       };
 
+      # hyprlock unlock mirrors greetd/login: pam_unix authenticates with the local
+      # password (which equals the Hello PIN per the user_map_file setup) while
+      # himmelblau silently unseals the Hello secret. The hyprlock service itself is
+      # declared in modules/nixos/hyprland/lockscreen.nix.
+      security.pam.services.hyprlock.rules.auth.himmelblau-unseal = {
+        order = config.security.pam.services.hyprlock.rules.auth.unix.order - 10;
+        control = "optional";
+        modulePath = "${pkgs.himmelblau.pam.lib}/lib/libpam_himmelblau.so";
+        settings.try_unseal = true;
+      };
+
       systemd.user.services.himmelblau-broker = {
         description = "Himmelblau Authentication Broker";
         serviceConfig = {

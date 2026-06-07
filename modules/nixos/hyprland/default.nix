@@ -11,6 +11,7 @@ in
 {
   imports = [
     ./greetd.nix
+    ./lockscreen.nix
   ];
   config = lib.mkIf cfg.enable {
     nix.settings = {

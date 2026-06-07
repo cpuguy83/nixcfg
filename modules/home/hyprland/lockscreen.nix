@@ -25,6 +25,15 @@ in
           halign = "center";
           valign = "center";
         } // lockMonitorAttrs)
+        ({
+          color = "rgba(242, 243, 244, 0.55)";
+          text = "Touch your YubiKey  •  or enter your password";
+          position = "0, -130";
+          font_size = 16;
+          font_family = "JetBrains Mono Nerd Font";
+          halign = "center";
+          valign = "center";
+        } // lockMonitorAttrs)
       ];
       background = [
         {
@@ -40,7 +49,7 @@ in
       input-field =
         {
           hide_input = false;
-          placeholder_text = "Enter password";
+          placeholder_text = "$PAMPROMPT";
           fade_on_empty = false;
         }
         // lockMonitorAttrs;
