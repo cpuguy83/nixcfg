@@ -16,6 +16,20 @@ let
     # Keep this in ExecStart, not ExecStartPre, to avoid a second 1Password auth prompt.
     exec ${pkgs.calbar}/bin/calbar
   '';
+
+  # The GitHub Copilot desktop app's "Open in app" feature invokes a custom
+  # app as `<binary> <path>`. ghostty is not in the app's built-in launcher
+  # catalog and its CLI only accepts the working directory as
+  # `--working-directory=<path>`, so this wrapper adapts the positional path
+  # into the flag ghostty expects.
+  ghostty-open = pkgs.writeShellApplication {
+    name = "ghostty-open";
+    runtimeInputs = [ pkgs.ghostty ];
+    text = ''
+      dir="''${1:-$PWD}"
+      exec ghostty --working-directory="$dir"
+    '';
+  };
 in
 {
   home.stateVersion = "24.11";
@@ -46,6 +60,7 @@ in
     gcr
 
     github-copilot
+    ghostty-open
 
     pkgs-unstable.codex
     pkgs-unstable.claude-code
