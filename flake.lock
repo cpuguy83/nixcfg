@@ -58,14 +58,14 @@
       "locked": {
         "lastModified": 1779207083,
         "narHash": "sha256-MpQ5omsov0Hxkup2bn0qplz39gebd+4zDR+in7y+mvY=",
-        "ref": "refs/tags/v0.34.1",
+        "owner": "docker",
+        "repo": "buildx",
         "rev": "e0b0e77d18d3379bc1e0d55f3b37de288d36fe47",
-        "revCount": 4165,
-        "type": "git",
-        "url": "https://github.com/docker/buildx"
+        "type": "github"
       },
       "original": {
         "owner": "docker",
+        "ref": "refs/tags/v0.34.1",
         "repo": "buildx",
         "type": "github"
       }
@@ -302,13 +302,13 @@
     "github-copilot-deb": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-HCZGyyExzKZ1Qfjkba6nlMiULBsCFnwM+Bfd/L6FSMs=",
+        "narHash": "sha256-A+wPCQu8bSnacxq21pnOEHnisr1cQu0ij1yb+uPKPXY=",
         "type": "file",
-        "url": "https://github.com/github/app/releases/download/v0.2.27/GitHub-Copilot-linux-x64.deb"
+        "url": "https://github.com/github/app/releases/download/v0.2.29/GitHub-Copilot-linux-x64.deb"
       },
       "original": {
         "type": "file",
-        "url": "https://github.com/github/app/releases/download/v0.2.27/GitHub-Copilot-linux-x64.deb"
+        "url": "https://github.com/github/app/releases/download/v0.2.29/GitHub-Copilot-linux-x64.deb"
       }
     },
     "gitignore": {
