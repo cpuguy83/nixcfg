@@ -62,6 +62,12 @@ in
         getMonitorPath
         ;
     })
+    (import ./filemanager1.nix {
+      inherit
+        pkgs
+        lib
+        ;
+    })
     ({
       systemd.user.services.gnome.gnome-keyring.enable = true;
       systemd.user.services.gnome.glib-networking.enable = true;
