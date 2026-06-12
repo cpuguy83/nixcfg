@@ -4,7 +4,7 @@ self: super: {
     src = (
       builtins.fetchTarball {
         url = "https://code.visualstudio.com/sha/download?build=insider&os=linux-x64";
-        sha256 = "0va9cy1l9mymg84fxb371lkzzvlh68pfrf0qmgkcrc326i0s9vsl";
+        sha256 = "0ngh4nm7v89waikans19n0lpga7ssq71kxr3z9cmi2p2cc1idn7n";
       }
     );
     version = "latest";
@@ -32,6 +32,13 @@ self: super: {
         self.webkitgtk_4_1
         self.libsoup_3
         self.musl
+        # Native deps for the bundled @github/copilot "computer use" module
+        # (computer.node): X11 input injection, screenshot JPEG encoding, and
+        # Wayland screen capture / input emulation.
+        self.libxtst
+        self.pipewire
+        self.libei
+        (self.libjpeg_turbo.override { enableJpeg8 = true; })
       ];
   });
 }

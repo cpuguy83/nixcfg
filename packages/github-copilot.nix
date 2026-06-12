@@ -27,6 +27,7 @@
 , atk
 , openssl
 , alsa-lib
+, libpulseaudio
 , libayatana-appindicator
 , gsettings-desktop-schemas
 , src
@@ -57,6 +58,7 @@ stdenv.mkDerivation {
     atk
     openssl
     alsa-lib
+    libpulseaudio
     libayatana-appindicator
     gsettings-desktop-schemas
     stdenv.cc.cc.lib
@@ -98,6 +100,7 @@ stdenv.mkDerivation {
       atk
       openssl
       alsa-lib
+      libpulseaudio
       libayatana-appindicator
       stdenv.cc.cc.lib
     ]}"
