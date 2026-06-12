@@ -353,6 +353,7 @@
 
     path = [
       pkgs.erofs-utils
+      pkgs.criu
     ];
   };
 }
