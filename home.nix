@@ -1,9 +1,10 @@
-{ config
-, pkgs
-, pkgs-unstable
-, inputs
-, lib
-, ...
+{
+  config,
+  pkgs,
+  pkgs-unstable,
+  inputs,
+  lib,
+  ...
 }:
 
 let
@@ -272,19 +273,9 @@ in
           url_cmd = opRead "op://calbar/gmail-personal/url";
         }
         {
-          name = "CNCF";
+          name = "containerd";
           type = "ics";
-          url = "https://calendar.google.com/calendar/ical/linuxfoundation.org_o5avjlvt2cae9bq7a95emc4740%40group.calendar.google.com/public/basic.ics";
-          filters = {
-            mode = "or";
-            rules = [
-              {
-                field = "title";
-                contains = "containerd";
-                case_insensitive = true;
-              }
-            ];
-          };
+          url = "https://webcal.prod.itx.linuxfoundation.org/lfx/a092M00001IV436QAD";
         }
         {
           name = "OCI";
