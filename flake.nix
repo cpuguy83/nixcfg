@@ -6,7 +6,7 @@
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/f830e6112b4dbdb98cb7668cd291ea07ffc288e8";
 
     buildx = {
-      url = "github:docker/buildx?ref=refs/tags/v0.34.1";
+      url = "github:docker/buildx?ref=refs/tags/v0.35.0";
       flake = false;
     };
 
