@@ -111,7 +111,7 @@
     };
 
     github-copilot-deb = {
-      url = "file+https://github.com/github/app/releases/download/v0.2.32/GitHub-Copilot-linux-x64.deb";
+      url = "file+https://github.com/github/app/releases/download/v1.0.3/GitHub-Copilot-linux-x64.deb";
       flake = false;
     };
   };

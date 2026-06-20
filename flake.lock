@@ -302,13 +302,13 @@
     "github-copilot-deb": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-DLC3H7RYh6c27gAXkYIYKXQ1gMQ5AzBA/GvR+5kM2IE=",
+        "narHash": "sha256-7PL06Bh7LjKeb4cGNogQwU/Tn8/P75oreRKvLm7TOe0=",
         "type": "file",
-        "url": "https://github.com/github/app/releases/download/v0.2.32/GitHub-Copilot-linux-x64.deb"
+        "url": "https://github.com/github/app/releases/download/v1.0.3/GitHub-Copilot-linux-x64.deb"
       },
       "original": {
         "type": "file",
-        "url": "https://github.com/github/app/releases/download/v0.2.32/GitHub-Copilot-linux-x64.deb"
+        "url": "https://github.com/github/app/releases/download/v1.0.3/GitHub-Copilot-linux-x64.deb"
       }
     },
     "gitignore": {
@@ -363,11 +363,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781139494,
-        "narHash": "sha256-I8ZbMEBOKxqckedt/v+8OMNs0bx2SwmkT7RM4fUBl20=",
+        "lastModified": 1781747653,
+        "narHash": "sha256-a0OYcctacP/JUMKiJpH0rT9SNRuu+9jdl40ejgwd64U=",
         "owner": "cjpais",
         "repo": "handy",
-        "rev": "cfab1dda9db103e95e9fe2f4d76d2168caf0a59d",
+        "rev": "bc6a41e418dda66a1f8d0b123e6a83880a66b6a1",
         "type": "github"
       },
       "original": {

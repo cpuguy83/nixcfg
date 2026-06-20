@@ -152,7 +152,7 @@
   # Sets proper link paths for packages using binaries not compiled against nix
   # (i.e. vscode's nodejs).
   programs.nix-ld.enable = true;
-  programs.nix-ld.libraries = with pkgs; [
+  programs.nix-ld.libraries = (with pkgs; [
     icu
     stdenv.cc.cc.lib # libstdc++.so.6
     dbus # libdbus-1.so.3
@@ -171,7 +171,7 @@
     cairo # libcairo.so.2, libcairo-gobject.so.2
     gdk-pixbuf # libgdk_pixbuf-2.0.so.0
     libsoup_3 # libsoup-3.0.so.0
-  ];
+  ]) ++ pkgs.github-copilot.bundledGitLibraries;
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 

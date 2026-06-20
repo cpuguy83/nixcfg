@@ -13,6 +13,9 @@
 , stdenv
 , dpkg
 , patchelfUnstable
+, curlMinimal
+, zlib
+, runCommandLocal
 , wrapGAppsHook3
 , webkitgtk_4_1
 , gtk3
@@ -110,6 +113,35 @@ stdenv.mkDerivation {
 
     runHook postInstall
   '';
+
+  # Libraries the app's runtime-downloaded git needs via nix-ld.
+  #
+  # The desktop app downloads a Debian-built git at runtime (into
+  # ~/.cache/github-copilot-git-*). Its git-remote-https runs through nix-ld and
+  # links two libraries that aren't otherwise in the system nix-ld set:
+  #   - libz.so.1 (zlib)
+  #   - libcurl-gnutls.so.4 with the Debian-style CURL_GNUTLS_3 versioned-symbol
+  #     node. nixpkgs' GnuTLS curl emits CURL_GNUTLS_4 (curl hardcodes the SONAME
+  #     number to 4 in configure.ac), so we patch the version script back to _3.
+  # The shim exposes ONLY the libcurl-gnutls.so.4 SONAME so the default OpenSSL
+  # libcurl.so.4 is left untouched for other nix-ld consumers.
+  passthru.bundledGitLibraries =
+    let
+      curlGnutls = (curlMinimal.override {
+        gnutlsSupport = true;
+        opensslSupport = false;
+      }).overrideAttrs (old: {
+        postPatch = (old.postPatch or "") + ''
+          substituteInPlace lib/libcurl.vers.in \
+            --replace-fail '@CURL_LIBCURL_VERSIONED_SYMBOLS_SONAME@' '3'
+        '';
+      });
+      libcurlGnutlsShim = runCommandLocal "libcurl-gnutls-shim" { } ''
+        mkdir -p "$out/lib"
+        ln -s ${lib.getLib curlGnutls}/lib/libcurl-gnutls.so.4 "$out/lib/libcurl-gnutls.so.4"
+      '';
+    in
+    [ libcurlGnutlsShim zlib ];
 
   meta = {
     description = "GitHub Copilot desktop app";
