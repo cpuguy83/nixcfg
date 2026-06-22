@@ -131,6 +131,8 @@ in
     nix-unwrap
 
     cider-2 # Apple music player
+
+    lmstudio
   ];
 
   gtk = {
@@ -202,6 +204,12 @@ in
 
       # hack used for fetching private go mods
       # url."ssh://git@github.com/".insteadOf = "https://github.com/";
+
+      matchBlocks."github.com" = {
+        controlMaster = "auto";
+        controlPath = "~/.ssh/cm-%r@%h:%p";
+        controlPersist = "10m";
+      };
     };
   };
 
