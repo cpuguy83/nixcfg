@@ -120,6 +120,11 @@ in
 
     libnotify # for notify-send (send system notifications)
 
+    # Handy looks up its text-input tool via PATH at runtime. Its "launch at
+    # login" feature writes an autostart entry pointing at the unwrapped binary,
+    # bypassing the wtype-in-PATH wrapper, so keep wtype on the ambient PATH too.
+    wtype
+
     easyeffects
     crosspipe
 
