@@ -169,10 +169,6 @@ let
   };
 in
 {
-  imports = [
-    ./azurevpn.nix
-  ];
-
   config = mkIf cfg.enable (mkMerge [
     {
       networking.networkmanager.dns = lib.mkDefault "systemd-resolved";
