@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VPN_GATEWAY=${VPN_GATEWAY:-msftvpn-alt.ras.microsoft.com}
+VPN_GATEWAY=${VPN_GATEWAY:-redmond.msftvpn-alt.ras.microsoft.com}
 VPN_PROTOCOL=${VPN_PROTOCOL:-gp}
 VPN_REPORTED_OS=${VPN_REPORTED_OS:-win}
 AUTH_STACK=${AUTH_STACK:-intune}
@@ -234,7 +234,21 @@ connect_external_browser() {
 
   printf 'Opening your default browser for GlobalProtect SAML auth. Use Zen for broker/YubiKey support.\n'
 
-  if gpclient connect --default-browser --os "$(gpclient_os)" "$VPN_GATEWAY"; then
+  # Use the corp routes vpnc-script wrapper when the Nix build injected its path,
+  # so the corp split-tunnel routes are added once the tunnel is up.
+  script_args=()
+  if [ -n "${VPN_VPNC_SCRIPT:-}" ]; then
+    script_args=(--script "$VPN_VPNC_SCRIPT")
+  fi
+
+  # gpauth writes gpcallback.port (the port the SAML callback is delivered to)
+  # into $TMPDIR, falling back to /tmp. The browser-launched callback handler
+  # runs in the graphical session, where TMPDIR is unset, so it reads /tmp. Pin
+  # TMPDIR=/tmp here so both sides agree even when this tool is invoked from a
+  # nix-shell that set a private TMPDIR.
+  # VPN_GATEWAY points at the gateway host directly (not the portal), so connect
+  # with --as-gateway to skip portal prelogin and authenticate against it.
+  if TMPDIR=/tmp gpclient connect --as-gateway --default-browser --os "$(gpclient_os)" "${script_args[@]}" "$VPN_GATEWAY"; then
     pass "gpclient connected to $VPN_GATEWAY"
   else
     fail "External-browser gpclient connection failed"

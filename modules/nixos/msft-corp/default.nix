@@ -70,6 +70,68 @@ let
     text = builtins.readFile ./99-validate-dns;
   };
 
+  # Adds the corp split-tunnel routes to the corpnet GlobalProtect tunnel after it
+  # connects. corpnet is brought up by standalone gpclient/openconnect (not
+  # NetworkManager), so we hook openconnect's vpnc-script rather than an NM
+  # dispatcher. This wrapper defers to the standard vpnc-script, then adds the
+  # corp routes on connect. The route list itself is an unmanaged file (corp-
+  # internal IP ranges, kept out of this repo) at /etc/msft-vpn/corpnet-routes.txt;
+  # see ./corpnet-vpnc-script.sh for the command to (re)generate it. The script
+  # runs as root under openconnect and reads the routes from that absolute path.
+  corpnetVpncScript = pkgs.writeShellApplication {
+    name = "corpnet-vpnc-script";
+    runtimeInputs = with pkgs; [
+      iproute2 # ip
+      gnugrep
+      gnused
+      gawk
+      coreutils # basename
+      util-linux # logger (journal diagnostics)
+    ];
+    text = ''
+      export CORPNET_BASE_VPNC_SCRIPT=${lib.escapeShellArg "${pkgs.vpnc-scripts}/bin/vpnc-script"}
+      export CORPNET_ROUTES_FILE=${lib.escapeShellArg "/etc/msft-vpn/corpnet-routes.txt"}
+
+      exec ${pkgs.bash}/bin/bash ${./corpnet-vpnc-script.sh} "$@"
+    '';
+  };
+
+  # gpclient's --os value (it expects "Windows"/"Mac"/"Linux"); map the short
+  # corpnet.reportedOs the same way msft-vpn-diagnostics' gpclient_os() does.
+  gpclientReportedOs =
+    let o = cfg.corpnet.reportedOs; in
+    if o == "win" || o == "Windows" then "Windows"
+    else if o == "mac" || o == "Mac" then "Mac"
+    else if o == "linux" || o == "Linux" then "Linux"
+    else o;
+
+  # Browser gpauth opens for SAML. Under the systemd service, gpauth inherits the
+  # unit's minimal PATH (desktop_session_env reconstructs XDG/DBUS/Wayland from
+  # the user's session but deliberately does NOT carry PATH), so gpclient's
+  # --default-browser auto-detection finds neither xdg-open nor a browser and
+  # fails silently. Pass an explicit browser binary instead: gpauth then spawns it
+  # directly via `open` (Browser::Other), independent of PATH or xdg tooling. The
+  # binary is the home-manager-installed browser in the user's per-user profile,
+  # named after corpnet.browserDesktopFile.
+  corpnetBrowserBin =
+    "/etc/profiles/per-user/${azureVpnUser}/bin/${lib.removeSuffix ".desktop" cfg.corpnet.browserDesktopFile}";
+
+  # The external-browser GlobalProtect auth flow (gpclient connect
+  # --default-browser) ends by redirecting the browser to a
+  # globalprotectcallback://<data> URL that must be handed back to the waiting
+  # gpauth process. Upstream registers this scheme via gpgui's desktop entry, but
+  # nixpkgs ships neither that entry nor a gpgui binary, so the browser has
+  # nowhere to deliver the SAML cookie and gpauth hangs forever. gpclient itself
+  # performs the hand-off: "gpclient launch-gui <url>" reads gpcallback.port and
+  # writes the cookie to gpauth's local socket. Register it as the handler.
+  gpCallbackHandler = pkgs.makeDesktopItem {
+    name = "globalprotect-callback";
+    desktopName = "GlobalProtect Callback Handler";
+    exec = "${pkgs.gpclient}/bin/gpclient launch-gui %u";
+    mimeTypes = [ "x-scheme-handler/globalprotectcallback" ];
+    noDisplay = true;
+  };
+
   vpnDiagnostics = pkgs.writeShellApplication {
     name = "msft-vpn-diagnostics";
     runtimeInputs = with pkgs; [
@@ -88,6 +150,7 @@ let
       export AUTH_STACK=${lib.escapeShellArg cfg.authStack}
       export NM_DAEMON=${lib.escapeShellArg "${pkgs.networkmanager}/bin/NetworkManager"}
       export EXPECTED_BROWSER=${lib.escapeShellArg cfg.corpnet.browserDesktopFile}
+      export VPN_VPNC_SCRIPT=${lib.escapeShellArg "${corpnetVpncScript}/bin/corpnet-vpnc-script"}
 
       exec ${pkgs.bash}/bin/bash ${./msft-vpn-diagnostics.sh} "$@"
     '';
@@ -128,6 +191,40 @@ in
         mode = "0755";
       };
 
+      # Route the GlobalProtect SAML callback scheme to gpclient (see
+      # gpCallbackHandler above) so external-browser auth can complete.
+      xdg.mime.defaultApplications."x-scheme-handler/globalprotectcallback" =
+        "globalprotect-callback.desktop";
+
+      # nixpkgs ships gpclient/gpauth 2.5.1, which the Microsoft GlobalProtect
+      # portal rejects at getconfig (HTTP 512 auth-failed) because it omits the
+      # Client Security Compliance fields the official client sends. 2.6.3 adds
+      # them, so build the CLI from the pinned globalprotect-openconnect source.
+      # gpauth and gpclient share one workspace Cargo.lock, so a single vendored
+      # dep set covers both. buildRustPackage derives cargoDeps from the call-site
+      # cargoHash (not reachable via overrideAttrs), so override cargoDeps directly.
+      nixpkgs.overlays = lib.mkAfter [
+        (final: prev:
+          let
+            gpSrc = inputs.globalprotect-openconnect;
+            gpVersion = "2.6.3";
+            gpCargoDeps = final.rustPlatform.fetchCargoVendor {
+              src = gpSrc;
+              name = "globalprotect-openconnect-${gpVersion}-vendor";
+              hash = "sha256-pqZ/q31H2KXJR6Tt/591Xz8h0FH+/GFV5hcOK/q9fao=";
+            };
+            bumpTo263 = drv: drv.overrideAttrs (_old: {
+              version = gpVersion;
+              src = gpSrc;
+              cargoDeps = gpCargoDeps;
+            });
+          in
+          {
+            gpauth = bumpTo263 prev.gpauth;
+            gpclient = bumpTo263 prev.gpclient;
+          })
+      ];
+
       # Min password requirements for corporate compliance.
       security.pam.services.passwd.rules.password.pwquality = {
         control = lib.mkForce "requisite";
@@ -147,6 +244,8 @@ in
 
       environment.systemPackages = with pkgs; [
         vpnDiagnostics
+        gpCallbackHandler
+        desktop-file-utils # update-desktop-database for the callback handler
 
         libsecret
 
@@ -183,7 +282,50 @@ in
         "d /var/log/azurevpnclient 0770 root ${config.programs.azurevpnclient.polkitGroup} -"
         "d ${azureVpnUserLogDir} 0755 ${azureVpnUser} ${azureVpnUserGroup} -"
         "L /var/log/azurevpnclient/AzureVPNClientUI.log - - - - ${azureVpnUserLogDir}/AzureVPNClientUI.log"
+        # Holds the unmanaged corpnet-routes.txt the vpnc-script reads as root.
+        "d /etc/msft-vpn 0755 root root -"
       ];
+
+      # Toggleable corpnet VPN: `systemctl start corpnet-vpn` connects (opening
+      # your broker-enabled browser for SAML auth), `systemctl stop corpnet-vpn`
+      # disconnects. gpclient must run as root to create the tun device, then
+      # drops to the desktop user to launch the browser. Under systemd there is no
+      # SUDO_UID/PKEXEC_UID for it to discover that user, so we set DOAS_USER
+      # (which gpclient also honors); it reconstructs the graphical session env
+      # (DBUS/Wayland) by scanning that user's /proc entries. The browser is passed
+      # explicitly (see corpnetBrowserBin) because that session env does not carry
+      # PATH, so --default-browser auto-detection would fail under the unit.
+      # Stopping the unit tears down the tunnel, so the corp routes added by the
+      # vpnc-script vanish with it. This mirrors the msft-vpn-diagnostics connect
+      # invocation.
+      systemd.services.corpnet-vpn = {
+        description = "Microsoft corpnet GlobalProtect VPN (gpclient)";
+        after = [ "network-online.target" ];
+        wants = [ "network-online.target" ];
+        # If the server invalidates the session cookie (e.g. after a TLS drop the
+        # gateway rejects the reconnect with "Cookie is no longer valid"),
+        # openconnect cannot silently recover and gpclient exits non-zero. Restart
+        # so it re-authenticates (fast/silent via the broker PRT). systemd does not
+        # honor Restart= for an explicit `systemctl stop`, so the manual toggle
+        # still tears the tunnel down cleanly. The start-limit caps how often a
+        # persistent auth failure can relaunch the browser before the unit gives up.
+        # (No --cookie-cache: with --as-gateway gpclient always does a fresh gateway
+        # prelogin and never reads or writes the portal cookie cache, so caching it
+        # would be dead config. A restart re-auths via browser SAML, which the
+        # broker PRT makes fast.)
+        startLimitIntervalSec = 600;
+        startLimitBurst = 5;
+        serviceConfig = {
+          Type = "simple";
+          Restart = "on-failure";
+          RestartSec = 10;
+          Environment = [
+            "TMPDIR=/tmp"
+            "DOAS_USER=${azureVpnUser}"
+          ];
+          ExecStart = "${pkgs.gpclient}/bin/gpclient connect --as-gateway --browser ${corpnetBrowserBin} --os ${gpclientReportedOs} --script ${corpnetVpncScript}/bin/corpnet-vpnc-script ${cfg.corpnet.gateway}";
+        };
+      };
 
       # Register OpenSC PKCS#11 module with p11-kit so all PKCS#11-aware
       # applications (browsers, curl, etc.) can discover YubiKey PIV certs.

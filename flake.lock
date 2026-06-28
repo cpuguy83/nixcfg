@@ -355,6 +355,25 @@
         "type": "github"
       }
     },
+    "globalprotect-openconnect": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782216364,
+        "narHash": "sha256-frt47Hb1NWofEsPEzIZtbkxiZchLvX3vFgh8xRJUh7Y=",
+        "ref": "refs/tags/v2.6.3",
+        "rev": "0b037e158ca415faa1b257b7d5ee6084caf7d02b",
+        "revCount": 549,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/yuezk/GlobalProtect-openconnect"
+      },
+      "original": {
+        "ref": "refs/tags/v2.6.3",
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/yuezk/GlobalProtect-openconnect"
+      }
+    },
     "handy": {
       "inputs": {
         "bun2nix": "bun2nix",

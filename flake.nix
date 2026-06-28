@@ -58,6 +58,17 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Pin gpclient/gpauth to 2.6.3; nixpkgs is stuck at 2.5.1, which the Microsoft
+    # GlobalProtect portal rejects at getconfig (HTTP 512 auth-failed) because it
+    # omits the Client Security Compliance fields the official client sends. 2.6.3
+    # adds them. Consumed as a plain source tree (built via an overlay in
+    # modules/nixos/msft-corp); submodules carry the vendored openconnect/libxml2
+    # that gpclient compiles.
+    globalprotect-openconnect = {
+      url = "git+https://github.com/yuezk/GlobalProtect-openconnect?ref=refs/tags/v2.6.3&submodules=1";
+      flake = false;
+    };
+
     hyprtasking = {
       # TODO: return to raybbian/hyprtasking once Hyprland 0.55 support lands.
       url = "github:yerlotic/hyprtasking/a8dde7a4b6a3013e2a4161377b653b6904e8f787";

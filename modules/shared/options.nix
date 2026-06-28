@@ -46,7 +46,7 @@ in
     corpnet = {
       gateway = lib.mkOption {
         type = types.str;
-        default = "msftvpn-alt.ras.microsoft.com";
+        default = "redmond.msftvpn-alt.ras.microsoft.com";
         description = "GlobalProtect gateway for the Microsoft corporate VPN profile.";
       };
 
