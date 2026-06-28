@@ -34,7 +34,7 @@ in
     inputs.handy-mine.overlays.default
     inputs.calbar.overlays.default
     (import ./mactahoe-gtk-theme.nix)
-    (import ./vscode.nix)
+    (import ./vscode.nix { inherit inputs; })
     (import ./nix-unwrap.nix)
     (import ./linux-entra-sso-host.nix)
     (import ./linux-entra-sso-host-mine.nix)

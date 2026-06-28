@@ -1238,6 +1238,19 @@
         "type": "github"
       }
     },
+    "vscode-insiders": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782509302,
+        "narHash": "sha256-2mgs4F2OWsxYqqLsARvm/eP6ABVhcCJ4ESnGc0q+37k=",
+        "type": "tarball",
+        "url": "https://code.visualstudio.com/sha/download?build=insider&os=linux-x64"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://code.visualstudio.com/sha/download?build=insider&os=linux-x64"
+      }
+    },
     "waybar": {
       "inputs": {
         "flake-compat": "flake-compat_4",

@@ -111,7 +111,9 @@
     };
 
     github-copilot-deb = {
-      url = "file+https://github.com/github/app/releases/download/v1.0.3/GitHub-Copilot-linux-x64.deb";
+
+    vscode-insiders = {
+      url = "tarball+https://code.visualstudio.com/sha/download?build=insider&os=linux-x64";
       flake = false;
     };
   };

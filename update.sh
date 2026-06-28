@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
 
-COMPONENTS=(inputs vscode buildx github)
+COMPONENTS=(inputs buildx github)
 
 # Update every flake input to its latest locked revision. Components that pin a
 # tag in flake.nix (buildx, github) stay on their pinned tag here; bumping the
@@ -40,7 +40,6 @@ Update flake inputs / pinned versions for individual components.
 
 Components:
   inputs    Update every flake input to its latest locked revision
-  vscode    Update the VS Code overlay sha256
   buildx    Bump the Docker Buildx input to the latest release tag
   github    Bump the GitHub Copilot deb to the latest release
   all       Update every component (default when none are given)
@@ -69,7 +68,7 @@ main() {
 				to_run=("${COMPONENTS[@]}")
 				break
 				;;
-			vscode | buildx | github)
+			buildx | github)
 				to_run+=("$arg")
 				;;
 			*)
