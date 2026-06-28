@@ -1,9 +1,10 @@
-{ pkgs
-, pkgs-unstable
-, config
-, lib
-, inputs
-, ...
+{
+  pkgs,
+  pkgs-unstable,
+  config,
+  lib,
+  inputs,
+  ...
 }:
 
 with lib;
@@ -11,15 +12,7 @@ let
   cfg = config.mine.msft-corp;
   useIntune = cfg.authStack == "intune";
   useHimmelblau = cfg.authStack == "himmelblau";
-  azureVpnUser = cfg.himmelblau.localUser;
-  azureVpnUserConfig = config.users.users.${azureVpnUser} or { };
-  azureVpnUserHome = azureVpnUserConfig.home or "/home/${azureVpnUser}";
-  azureVpnUserGroup = azureVpnUserConfig.group or "users";
-  azureVpnUserLogDir = "${azureVpnUserHome}/.config/microsoft-azurevpnclient/logs";
-  azureVpnRootCert = pkgs.runCommand "azurevpn-digicert-global-root-g2.pem" { } ''
-    sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' \
-      ${pkgs.cacert.unbundled}/etc/ssl/certs/DigiCert_Global_Root_G2:33af1e6a711a9a0bb2864b11d09fae5.crt > "$out"
-  '';
+  vpnUser = cfg.himmelblau.localUser;
 
   # NixOS is not a supported OS for Intune's Linux compliance policy. Bind this
   # into the relevant service so the compliance check sees Ubuntu instead.
@@ -99,11 +92,17 @@ let
   # gpclient's --os value (it expects "Windows"/"Mac"/"Linux"); map the short
   # corpnet.reportedOs the same way msft-vpn-diagnostics' gpclient_os() does.
   gpclientReportedOs =
-    let o = cfg.corpnet.reportedOs; in
-    if o == "win" || o == "Windows" then "Windows"
-    else if o == "mac" || o == "Mac" then "Mac"
-    else if o == "linux" || o == "Linux" then "Linux"
-    else o;
+    let
+      o = cfg.corpnet.reportedOs;
+    in
+    if o == "win" || o == "Windows" then
+      "Windows"
+    else if o == "mac" || o == "Mac" then
+      "Mac"
+    else if o == "linux" || o == "Linux" then
+      "Linux"
+    else
+      o;
 
   # Browser gpauth opens for SAML. Under the systemd service, gpauth inherits the
   # unit's minimal PATH (desktop_session_env reconstructs XDG/DBUS/Wayland from
@@ -113,8 +112,7 @@ let
   # directly via `open` (Browser::Other), independent of PATH or xdg tooling. The
   # binary is the home-manager-installed browser in the user's per-user profile,
   # named after corpnet.browserDesktopFile.
-  corpnetBrowserBin =
-    "/etc/profiles/per-user/${azureVpnUser}/bin/${lib.removeSuffix ".desktop" cfg.corpnet.browserDesktopFile}";
+  corpnetBrowserBin = "/etc/profiles/per-user/${vpnUser}/bin/${lib.removeSuffix ".desktop" cfg.corpnet.browserDesktopFile}";
 
   # The external-browser GlobalProtect auth flow (gpclient connect
   # --default-browser) ends by redirecting the browser to a
@@ -172,7 +170,7 @@ let
 in
 {
   imports = [
-    inputs.azurevpnclient.nixosModules.azurevpnclient
+    ./azurevpn.nix
   ];
 
   config = mkIf cfg.enable (mkMerge [
@@ -183,8 +181,6 @@ in
       services.gnome.glib-networking.enable = true;
       security.polkit.enable = true;
       security.rtkit.enable = true;
-
-      environment.etc."ssl/certs/DigiCert_Global_Root_G2.pem".source = azureVpnRootCert;
 
       environment.etc."NetworkManager/dispatcher.d/99-validate-dns" = {
         source = "${vpnDNSDispatcher}/bin/99-validate-dns";
@@ -204,7 +200,8 @@ in
       # dep set covers both. buildRustPackage derives cargoDeps from the call-site
       # cargoHash (not reachable via overrideAttrs), so override cargoDeps directly.
       nixpkgs.overlays = lib.mkAfter [
-        (final: prev:
+        (
+          final: prev:
           let
             gpSrc = inputs.globalprotect-openconnect;
             gpVersion = "2.6.3";
@@ -213,16 +210,19 @@ in
               name = "globalprotect-openconnect-${gpVersion}-vendor";
               hash = "sha256-pqZ/q31H2KXJR6Tt/591Xz8h0FH+/GFV5hcOK/q9fao=";
             };
-            bumpTo263 = drv: drv.overrideAttrs (_old: {
-              version = gpVersion;
-              src = gpSrc;
-              cargoDeps = gpCargoDeps;
-            });
+            bumpTo263 =
+              drv:
+              drv.overrideAttrs (_old: {
+                version = gpVersion;
+                src = gpSrc;
+                cargoDeps = gpCargoDeps;
+              });
           in
           {
             gpauth = bumpTo263 prev.gpauth;
             gpclient = bumpTo263 prev.gpclient;
-          })
+          }
+        )
       ];
 
       # Min password requirements for corporate compliance.
@@ -272,19 +272,7 @@ in
         realm
       ];
 
-      programs.azurevpnclient.enable = true;
       services.pcscd.enable = true;
-
-      # Azure VPN Client writes diagnostics to this hard-coded path and opens it
-      # from Settings -> Show Logs Directory, but the Linux client writes its UI
-      # log under the user's config directory.
-      systemd.tmpfiles.rules = [
-        "d /var/log/azurevpnclient 0770 root ${config.programs.azurevpnclient.polkitGroup} -"
-        "d ${azureVpnUserLogDir} 0755 ${azureVpnUser} ${azureVpnUserGroup} -"
-        "L /var/log/azurevpnclient/AzureVPNClientUI.log - - - - ${azureVpnUserLogDir}/AzureVPNClientUI.log"
-        # Holds the unmanaged corpnet-routes.txt the vpnc-script reads as root.
-        "d /etc/msft-vpn 0755 root root -"
-      ];
 
       # Toggleable corpnet VPN: `systemctl start corpnet-vpn` connects (opening
       # your broker-enabled browser for SAML auth), `systemctl stop corpnet-vpn`
@@ -321,7 +309,7 @@ in
           RestartSec = 10;
           Environment = [
             "TMPDIR=/tmp"
-            "DOAS_USER=${azureVpnUser}"
+            "DOAS_USER=${vpnUser}"
           ];
           ExecStart = "${pkgs.gpclient}/bin/gpclient connect --as-gateway --browser ${corpnetBrowserBin} --os ${gpclientReportedOs} --script ${corpnetVpncScript}/bin/corpnet-vpnc-script ${cfg.corpnet.gateway}";
         };
