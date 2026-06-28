@@ -21,4 +21,10 @@
   ];
 
   mine.desktop.hyprland.layout = "scrolling";
+
+  home.sessionVariables = {
+    PROTON_ENABLE_WAYLAND = "1";
+    PROTON_ENABLE_HDR = "1";
+    ENABLE_HDR_WSI = "1";
+  };
 }
