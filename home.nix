@@ -63,6 +63,9 @@ in
     github-copilot
     ghostty-open
 
+    # discord
+    # legcord
+
     pkgs-unstable.codex
     pkgs-unstable.claude-code
     (pkgs.symlinkJoin {
@@ -229,7 +232,7 @@ in
   };
 
   services.handy.enable = true;
-  services.vekil.enable = true;
+  # services.vekil.enable = true;
 
   systemd.user.services."1password" = {
     Unit = {

@@ -55,6 +55,9 @@ in
       ghostty = inputs.ghostty.packages.${final.stdenv.hostPlatform.system}.default;
       himmelblau = inputs.himmelblau.packages.${final.stdenv.hostPlatform.system};
       cider-2 = pkgs-unstable.cider-2;
+      signal-desktop = pkgs-unstable.signal-desktop;
+      discord = pkgs-unstable.discord;
+      legcord = pkgs-unstable.legcord;
     })
   ];
 }

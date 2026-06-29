@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-26.05";
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/f830e6112b4dbdb98cb7668cd291ea07ffc288e8";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     buildx = {
       url = "github:docker/buildx?ref=refs/tags/v0.35.0";
@@ -35,7 +35,7 @@
     };
 
     hyprland = {
-      url = "github:hyprwm/hyprland/v0.55.2";
+      url = "github:hyprwm/hyprland/v0.55.4";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     # hyprland-plugins = {
@@ -71,7 +71,7 @@
 
     hyprtasking = {
       # TODO: return to raybbian/hyprtasking once Hyprland 0.55 support lands.
-      url = "github:yerlotic/hyprtasking/a8dde7a4b6a3013e2a4161377b653b6904e8f787";
+      url = "github:raybbian/hyprtasking";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.hyprland.follows = "hyprland";
     };
@@ -122,6 +122,9 @@
     };
 
     github-copilot-deb = {
+      url = "file+https://github.com/github/app/releases/download/v1.0.10/GitHub-Copilot-linux-x64.deb";
+      flake = false;
+    };
 
     vscode-insiders = {
       url = "tarball+https://code.visualstudio.com/sha/download?build=insider&os=linux-x64";
@@ -130,10 +133,11 @@
   };
 
   outputs =
-    { self
-    , nixpkgs
-    , nixpkgs-unstable
-    , ...
+    {
+      self,
+      nixpkgs,
+      nixpkgs-unstable,
+      ...
     }@inputs:
     let
       system = "x86_64-linux";
@@ -142,9 +146,10 @@
       # thing update.sh has to bump is the tag in the github-copilot-deb input.
       # ./flake.lock is a guaranteed sibling of flake.nix, so this read is stable
       # regardless of where the package/overlay files live.
-      copilotVersion = builtins.head (builtins.match ".*/v([0-9.]+)/.*"
-        (builtins.fromJSON
-          (builtins.readFile ./flake.lock)).nodes.github-copilot-deb.locked.url);
+      copilotVersion = builtins.head (
+        builtins.match ".*/v([0-9.]+)/.*" (builtins.fromJSON (builtins.readFile ./flake.lock))
+        .nodes.github-copilot-deb.locked.url
+      );
 
       pkgs-unstable = import nixpkgs-unstable {
         inherit system;
