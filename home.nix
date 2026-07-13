@@ -223,6 +223,18 @@ in
         controlPath = "~/.ssh/cm-%r@%h:%p";
         controlPersist = "10m";
       };
+
+      extracConfig = {
+        credential = {
+          helper = "manager-core";
+          azreposCredentialType = "oauth";
+          msauthFlow = "browser";
+        };
+
+        "credential \"https://dev.azure.com\"" = {
+          useHttpPath = true;
+        };
+      };
     };
   };
 
