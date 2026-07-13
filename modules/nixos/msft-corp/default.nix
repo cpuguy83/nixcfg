@@ -167,6 +167,39 @@ let
     ProtectControlGroups = true;
     MemoryDenyWriteExecute = true;
   };
+
+  # Shared definition for the corpnet VPN unit. `gateway` is the gpclient target
+  # host and may embed the systemd `%i` specifier (used by the corpnet-vpn@
+  # template so an instance name selects the region). `label` is a human-readable
+  # gateway name for the unit description.
+  mkCorpnetVpnService = { gateway, label }: {
+    description = "Microsoft corpnet GlobalProtect VPN (gpclient) — ${label}";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    # If the server invalidates the session cookie (e.g. after a TLS drop the
+    # gateway rejects the reconnect with "Cookie is no longer valid"),
+    # openconnect cannot silently recover and gpclient exits non-zero. Restart
+    # so it re-authenticates (fast/silent via the broker PRT). systemd does not
+    # honor Restart= for an explicit `systemctl stop`, so the manual toggle
+    # still tears the tunnel down cleanly. The start-limit caps how often a
+    # persistent auth failure can relaunch the browser before the unit gives up.
+    # (No --cookie-cache: with --as-gateway gpclient always does a fresh gateway
+    # prelogin and never reads or writes the portal cookie cache, so caching it
+    # would be dead config. A restart re-auths via browser SAML, which the
+    # broker PRT makes fast.)
+    startLimitIntervalSec = 600;
+    startLimitBurst = 5;
+    serviceConfig = {
+      Type = "simple";
+      Restart = "on-failure";
+      RestartSec = 10;
+      Environment = [
+        "TMPDIR=/tmp"
+        "DOAS_USER=${vpnUser}"
+      ];
+      ExecStart = "${pkgs.gpclient}/bin/gpclient connect --as-gateway --browser ${corpnetBrowserBin} --os ${gpclientReportedOs} --script ${corpnetVpncScript}/bin/corpnet-vpnc-script ${gateway}";
+    };
+  };
 in
 {
   config = mkIf cfg.enable (mkMerge [
@@ -270,45 +303,33 @@ in
 
       services.pcscd.enable = true;
 
-      # Toggleable corpnet VPN: `systemctl start corpnet-vpn` connects (opening
-      # your broker-enabled browser for SAML auth), `systemctl stop corpnet-vpn`
-      # disconnects. gpclient must run as root to create the tun device, then
-      # drops to the desktop user to launch the browser. Under systemd there is no
-      # SUDO_UID/PKEXEC_UID for it to discover that user, so we set DOAS_USER
-      # (which gpclient also honors); it reconstructs the graphical session env
-      # (DBUS/Wayland) by scanning that user's /proc entries. The browser is passed
-      # explicitly (see corpnetBrowserBin) because that session env does not carry
-      # PATH, so --default-browser auto-detection would fail under the unit.
-      # Stopping the unit tears down the tunnel, so the corp routes added by the
-      # vpnc-script vanish with it. This mirrors the msft-vpn-diagnostics connect
-      # invocation.
-      systemd.services.corpnet-vpn = {
-        description = "Microsoft corpnet GlobalProtect VPN (gpclient)";
-        after = [ "network-online.target" ];
-        wants = [ "network-online.target" ];
-        # If the server invalidates the session cookie (e.g. after a TLS drop the
-        # gateway rejects the reconnect with "Cookie is no longer valid"),
-        # openconnect cannot silently recover and gpclient exits non-zero. Restart
-        # so it re-authenticates (fast/silent via the broker PRT). systemd does not
-        # honor Restart= for an explicit `systemctl stop`, so the manual toggle
-        # still tears the tunnel down cleanly. The start-limit caps how often a
-        # persistent auth failure can relaunch the browser before the unit gives up.
-        # (No --cookie-cache: with --as-gateway gpclient always does a fresh gateway
-        # prelogin and never reads or writes the portal cookie cache, so caching it
-        # would be dead config. A restart re-auths via browser SAML, which the
-        # broker PRT makes fast.)
-        startLimitIntervalSec = 600;
-        startLimitBurst = 5;
-        serviceConfig = {
-          Type = "simple";
-          Restart = "on-failure";
-          RestartSec = 10;
-          Environment = [
-            "TMPDIR=/tmp"
-            "DOAS_USER=${vpnUser}"
-          ];
-          ExecStart = "${pkgs.gpclient}/bin/gpclient connect --as-gateway --browser ${corpnetBrowserBin} --os ${gpclientReportedOs} --script ${corpnetVpncScript}/bin/corpnet-vpnc-script ${cfg.corpnet.gateway}";
-        };
+      # Toggleable corpnet VPN. `systemctl start corpnet-vpn` connects to the
+      # default gateway (opening your broker-enabled browser for SAML auth);
+      # `systemctl stop corpnet-vpn` disconnects. gpclient must run as root to
+      # create the tun device, then drops to the desktop user to launch the
+      # browser. Under systemd there is no SUDO_UID/PKEXEC_UID for it to discover
+      # that user, so we set DOAS_USER (which gpclient also honors); it
+      # reconstructs the graphical session env (DBUS/Wayland) by scanning that
+      # user's /proc entries. The browser is passed explicitly (see
+      # corpnetBrowserBin) because that session env does not carry PATH, so
+      # --default-browser auto-detection would fail under the unit. Stopping the
+      # unit tears down the tunnel, so the corp routes added by the vpnc-script
+      # vanish with it. This mirrors the msft-vpn-diagnostics connect invocation.
+      #
+      # The corpnet-vpn@ template selects a gateway by region at start time, e.g.
+      # `systemctl start corpnet-vpn@dublin` connects to
+      # dublin.${cfg.corpnet.gatewayDomain}. Use it to fail over when the default
+      # gateway is degraded, without a rebuild. Only run one corpnet-vpn unit at a
+      # time (stop the running one before starting another); they each create a
+      # tun device and install the same routes.
+      systemd.services.corpnet-vpn = mkCorpnetVpnService {
+        gateway = cfg.corpnet.gateway;
+        label = cfg.corpnet.gateway;
+      };
+
+      systemd.services."corpnet-vpn@" = mkCorpnetVpnService {
+        gateway = "%i.${cfg.corpnet.gatewayDomain}";
+        label = "%i.${cfg.corpnet.gatewayDomain}";
       };
 
       # Register OpenSC PKCS#11 module with p11-kit so all PKCS#11-aware
@@ -470,6 +491,15 @@ in
 
       systemd.user.services.himmelblau-broker = {
         description = "Himmelblau Authentication Broker";
+        # The broker's interactive auth (acquireTokenInteractively) drives
+        # FIDO/security-key and PIN prompts through the `pinentry` crate, which
+        # execs a binary literally named `pinentry`. Without one in PATH, a
+        # security key that requires a PIN (always_uv) silently fails: the PIN
+        # prompt is skipped, the PIN channel is dropped, and the FIDO flow
+        # aborts with CancelledByUser (surfaced to MSAL/WorkIQ as
+        # unknown_broker_error). pinentry-gnome3 provides a `pinentry` symlink
+        # and renders a graphical prompt in the user's session.
+        path = [ pkgs.pinentry-gnome3 ];
         serviceConfig = {
           Type = "dbus";
           BusName = "com.microsoft.identity.broker1";

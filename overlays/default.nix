@@ -53,7 +53,30 @@ in
             '';
           });
       ghostty = inputs.ghostty.packages.${final.stdenv.hostPlatform.system}.default;
-      himmelblau = inputs.himmelblau.packages.${final.stdenv.hostPlatform.system};
+      # Patch the himmelblau broker so MSAL's account-picker interactive flow
+      # (account: null / empty username, e.g. `workiq ask`) works end-to-end:
+      #   * fall back to the caller's enrolled account instead of erroring when
+      #     MSAL sends a null account, and
+      #   * rewrite the redirect URI to the WAM broker redirect so PRT
+      #     redemption for third-party public-client apps doesn't hit
+      #     AADSTS50011.
+      # Rebuilding from the patched source only recompiles the broker crate;
+      # other crates are content-addressed and reused from cache.
+      himmelblau =
+        let
+          system = final.stdenv.hostPlatform.system;
+          patchedSrc = final.applyPatches {
+            name = "himmelblau-src-broker-interactive-auth";
+            src = inputs.himmelblau;
+            patches = [ ../patches/himmelblau-broker-interactive-auth.patch ];
+          };
+          himmelblauPkgs =
+            (import patchedSrc {
+              inherit system;
+              pkgs = final;
+            }).packages;
+        in
+        builtins.removeAttrs himmelblauPkgs [ "recurseForDerivations" ];
       cider-2 = pkgs-unstable.cider-2;
       signal-desktop = pkgs-unstable.signal-desktop;
       discord = pkgs-unstable.discord;

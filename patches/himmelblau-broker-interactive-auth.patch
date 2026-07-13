@@ -1,0 +1,162 @@
+diff --git a/src/broker/src/main.rs b/src/broker/src/main.rs
+index 580c76b..6434bf2 100644
+--- a/src/broker/src/main.rs
++++ b/src/broker/src/main.rs
+@@ -110,6 +110,52 @@ fn interactive_session_available() -> bool {
+     has_display && has_pinentry
+ }
+ 
++/// Rewrite the redirect URI in a broker request to the WAM broker redirect
++/// (`ms-appx-web://microsoft.aad.brokerplugin/<client_id>`). MSAL sends the
++/// public-client native redirect (`.../oauth2/nativeclient`), which third-party
++/// apps have not registered, so AAD rejects the PRT redemption with AADSTS50011
++/// ("Failed to authenticate user"). AAD implicitly trusts the WAM broker
++/// redirect for any broker-enabled public client, so redeeming under it
++/// succeeds. On any parse failure the original request is returned unchanged.
++fn rewrite_broker_redirect_uri(request_json: String) -> String {
++    serde_json::from_str::<serde_json::Value>(&request_json)
++        .ok()
++        .and_then(|mut v| {
++            let client_id = v
++                .get("authParameters")
++                .and_then(|ap| ap.get("clientId"))
++                .and_then(|c| c.as_str())?
++                .to_string();
++            let redirect = format!("ms-appx-web://microsoft.aad.brokerplugin/{}", client_id);
++            v.get_mut("authParameters")
++                .and_then(|ap| ap.as_object_mut())?
++                .insert("redirectUri".to_string(), serde_json::Value::String(redirect));
++            serde_json::to_string(&v).ok()
++        })
++        .unwrap_or(request_json)
++}
++
++/// Ensure the request carries the resolved account so the daemon's silent path
++/// (which matches account.username against the enrolled user) accepts it even
++/// when MSAL left the account null. No-op when a non-empty username is present.
++fn inject_account(request_json: String, account: &serde_json::Value) -> String {
++    serde_json::from_str::<serde_json::Value>(&request_json)
++        .ok()
++        .and_then(|mut v| {
++            let has_account = v
++                .get("account")
++                .and_then(|a| a.get("username"))
++                .and_then(|u| u.as_str())
++                .is_some_and(|u| !u.is_empty());
++            if !has_account {
++                v.as_object_mut()?
++                    .insert("account".to_string(), account.clone());
++            }
++            serde_json::to_string(&v).ok()
++        })
++        .unwrap_or(request_json)
++}
++
+ /// True when a broker SSO cookie response carries a usable cookie.
+ fn sso_cookie_response_is_valid(resp: &str) -> bool {
+     serde_json::from_str::<serde_json::Value>(resp)
+@@ -242,14 +288,51 @@ impl InteractiveSessionBroker {
+ 
+     /// Extract the account username from a broker request payload.
+     fn extract_account_id(request_json: &str) -> Option<String> {
++        Self::extract_account(request_json)
++            .and_then(|a| a.get("username").and_then(|u| u.as_str()).map(String::from))
++    }
++
++    /// Extract the full account object from a broker request payload, ignoring
++    /// entries with an empty username (MSAL's account-picker flow sends
++    /// `account: null` / an empty username).
++    fn extract_account(request_json: &str) -> Option<serde_json::Value> {
+         serde_json::from_str::<serde_json::Value>(request_json)
+             .ok()
+             .and_then(|v| {
+                 v.get("account")
+                     .or_else(|| v.get("authParameters").and_then(|ap| ap.get("account")))
+-                    .and_then(|a| a.get("username"))
+-                    .and_then(|u| u.as_str())
+-                    .map(String::from)
++                    .filter(|a| {
++                        a.get("username")
++                            .and_then(|u| u.as_str())
++                            .is_some_and(|u| !u.is_empty())
++                    })
++                    .cloned()
++            })
++    }
++
++    /// Resolve the account for an interactive flow. MSAL's account-picker flow
++    /// (SignInInteractively / authorizationType 6) sends `account: null` with an
++    /// empty username, so fall back to the enrolled account, which himmelblaud
++    /// resolves from the caller's uid via getAccounts.
++    fn resolve_account(
++        &mut self,
++        protocol_version: &str,
++        correlation_id: &str,
++        request_json: &str,
++    ) -> Result<serde_json::Value, dbus::MethodErr> {
++        if let Some(account) = Self::extract_account(request_json) {
++            return Ok(account);
++        }
++        let accounts_json = self.get_accounts(
++            protocol_version.to_string(),
++            correlation_id.to_string(),
++            request_json.to_string(),
++        )?;
++        serde_json::from_str::<serde_json::Value>(&accounts_json)
++            .ok()
++            .and_then(|v| v.get("accounts")?.as_array()?.first().cloned())
++            .ok_or_else(|| {
++                dbus::MethodErr::failed(&"No enrolled account found for interactive auth")
+             })
+     }
+ 
+@@ -311,14 +394,19 @@ impl SessionBroker for InteractiveSessionBroker {
+         correlation_id: String,
+         request_json: String,
+     ) -> Result<String, dbus::MethodErr> {
+-        // Extract the username from the request for authenticate()
+-        let account_id = Self::extract_account_id(&request_json)
+-            .ok_or_else(|| dbus::MethodErr::failed(&"Missing account username in request"))?;
++        let account = self.resolve_account(&protocol_version, &correlation_id, &request_json)?;
++        let account_id = account
++            .get("username")
++            .and_then(|u| u.as_str())
++            .ok_or_else(|| dbus::MethodErr::failed(&"Missing account username in request"))?
++            .to_string();
+ 
+         self.run_interactive_auth(&account_id)?;
+ 
+-        // Auth succeeded — PRT is now refreshed. Acquire the token
+-        // silently via the broker socket.
++        // Auth succeeded — PRT is now refreshed. Acquire the token silently via
++        // the broker socket, injecting the resolved account for the daemon.
++        let request_json = inject_account(request_json, &account);
++
+         self.acquire_token_silently(protocol_version, correlation_id, request_json)
+     }
+ 
+@@ -328,6 +416,7 @@ impl SessionBroker for InteractiveSessionBroker {
+         correlation_id: String,
+         request_json: String,
+     ) -> Result<String, dbus::MethodErr> {
++        let request_json = rewrite_broker_redirect_uri(request_json);
+         self.forward(
+             "acquireTokenSilently",
+             &[&protocol_version, &correlation_id, &request_json],
+@@ -386,9 +475,14 @@ impl SessionBroker for InteractiveSessionBroker {
+             return Ok(resp);
+         }
+         info!("Silent PRT SSO cookie unavailable; attempting interactive re-auth");
+-        let account_id = Self::extract_account_id(&request_json)
+-            .ok_or_else(|| dbus::MethodErr::failed(&"Missing account username in request"))?;
++        let account = self.resolve_account(&protocol_version, &correlation_id, &request_json)?;
++        let account_id = account
++            .get("username")
++            .and_then(|u| u.as_str())
++            .ok_or_else(|| dbus::MethodErr::failed(&"Missing account username in request"))?
++            .to_string();
+         self.run_interactive_auth(&account_id)?;
++        let request_json = inject_account(request_json, &account);
+         self.forward(
+             "acquirePrtSsoCookie",
+             &[&protocol_version, &correlation_id, &request_json],
