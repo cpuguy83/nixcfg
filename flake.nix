@@ -97,12 +97,12 @@
 
     handy = {
       url = "github:cjpais/handy";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     handy-mine = {
       url = "github:cpuguy83/nix-handy-stt";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      inputs.nixpkgs.follows = "nixpkgs";
       inputs.handy.follows = "handy";
     };
 
@@ -122,7 +122,7 @@
     };
 
     github-copilot-deb = {
-      url = "file+https://github.com/github/app/releases/download/v1.0.10/GitHub-Copilot-linux-x64.deb";
+      url = "file+https://github.com/github/app/releases/download/v1.0.21/GitHub-Copilot-linux-x64.deb";
       flake = false;
     };
 
