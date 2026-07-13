@@ -190,6 +190,16 @@ in
 
   programs.git = {
     enable = true;
+    ignores = [
+      ".vscode"
+      ".idea"
+      ".vim-lsp-settings"
+      ".zed"
+      ".cache"
+      ".opencode"
+      ".copilot"
+      "**/.claude/settings.local.json"
+    ];
     settings = {
       user = {
         name = "Brian Goff";
