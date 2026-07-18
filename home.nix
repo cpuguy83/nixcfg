@@ -281,7 +281,7 @@ in
   };
 
   services.handy.enable = true;
-  # services.vekil.enable = true;
+  services.vekil.enable = true;
 
   systemd.user.services."1password" = {
     Unit = {

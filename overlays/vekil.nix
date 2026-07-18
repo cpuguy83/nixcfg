@@ -1,4 +1,4 @@
 { inputs }:
 final: prev: {
-  vekil = final.callPackage ../packages/vekil.nix { src = inputs.vekil; };
+  vekil = final.callPackage ../packages/vekil { src = inputs.vekil; };
 }
