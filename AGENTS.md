@@ -10,6 +10,10 @@ rebuild).
 
 Primary user: `cpuguy83`. Currently one host: `yavin4` (AMD desktop).
 
+nix won't include untracked files for flakes.
+*BUT* you can use `git add -N` instead of actually staging the untracked file.
+This makes it simpler to diff as a human.
+
 ## Source of Truth
 
 Do **not** hardcode versions, input lists, or a file index in this document —
