@@ -15,10 +15,12 @@ buildGoModule {
   # one-line data change rather than an edit to this derivation.
   vendorHash = lib.trim (builtins.readFile ./vendor.sha256);
 
-  subPackages = [ "cmd/menubar" ];
+  # Build both the root CLI (launch/login/server -> $out/bin/vekil) and the
+  # tray app (cmd/menubar -> $out/bin/menubar, renamed below to vekil-menubar).
+  subPackages = [ "." "cmd/menubar" ];
 
   postInstall = ''
-        mv "$out/bin/menubar" "$out/bin/vekil"
+        mv "$out/bin/menubar" "$out/bin/vekil-menubar"
 
         install -Dm644 assets/macos/Vekil.png \
           "$out/share/icons/hicolor/256x256/apps/vekil.png"
@@ -28,7 +30,7 @@ buildGoModule {
     [Desktop Entry]
     Name=Vekil
     Comment=Local AI proxy tray app
-    Exec=vekil
+    Exec=vekil-menubar
     Icon=vekil
     Terminal=false
     Type=Application
