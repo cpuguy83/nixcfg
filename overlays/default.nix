@@ -35,6 +35,7 @@ in
     inputs.calbar.overlays.default
     (import ./mactahoe-gtk-theme.nix)
     (import ./vscode.nix { inherit inputs; })
+    (import ./vscode-extensions.nix)
     (import ./nix-unwrap.nix)
     (import ./linux-entra-sso-host.nix)
     (import ./linux-entra-sso-host-mine.nix)

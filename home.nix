@@ -66,6 +66,9 @@ in
     # discord
     # legcord
 
+    # Just needed for copilot
+    nodejs_24
+
     pkgs-unstable.codex
     pkgs-unstable.claude-code
     (pkgs.symlinkJoin {
@@ -137,6 +140,30 @@ in
 
     lmstudio
   ];
+
+  programs.vscodium = {
+    enable = true;
+    # Store secrets in the GNOME keyring via libsecret instead of the
+    # plaintext "basic" store, so tokens (e.g. sign-in) are encrypted.
+    #
+    # enable-crash-reporter must be set explicitly: on first run VSCodium tries
+    # to inject this key (plus a generated crash-reporter-id) into argv.json,
+    # but home-manager makes that file a read-only /nix/store symlink, so the
+    # write fails and is surfaced as "argv.json contains errors". Pinning it
+    # (false, matching VSCodium's telemetry-off default) skips that rewrite.
+    argvSettings = {
+      password-store = "gnome-libsecret";
+      enable-crash-reporter = false;
+    };
+    profiles.default.extensions = with pkgs.vscode-extensions; [
+      golang.go
+      vscodevim.vim
+      rust-lang.rust-analyzer
+      github.vscode-github-actions
+      redhat.vscode-yaml
+      ms-kubernetes-tools.dalec-vscode-tools
+    ];
+  };
 
   gtk = {
     enable = true;
