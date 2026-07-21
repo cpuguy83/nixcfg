@@ -31,6 +31,31 @@ let
       exec ghostty --working-directory="$dir"
     '';
   };
+
+  # Run claude/codex against the local vekil proxy (GitHub Copilot backend)
+  # instead of the real Anthropic/OpenAI APIs. vekil listens on localhost:1337
+  # and doesn't check the API key, so a dummy value is used.
+  claude-proxied = pkgs.writeShellApplication {
+    name = "claude-proxied";
+    runtimeInputs = [ pkgs-unstable.claude-code ];
+    text = ''
+      export ANTHROPIC_BASE_URL="http://localhost:1337"
+      export ANTHROPIC_API_KEY="dummy"
+      exec claude "$@"
+    '';
+  };
+
+  codex-proxied = pkgs.writeShellApplication {
+    name = "codex-proxied";
+    runtimeInputs = [ pkgs-unstable.codex ];
+    text = ''
+      exec codex \
+        -c 'model_provider="proxy"' \
+        -c 'model_providers.proxy.name="Local Proxy"' \
+        -c 'model_providers.proxy.base_url="http://localhost:1337/v1"' \
+        "$@"
+    '';
+  };
 in
 {
   home.stateVersion = "24.11";
@@ -71,6 +96,8 @@ in
 
     pkgs-unstable.codex
     pkgs-unstable.claude-code
+    claude-proxied
+    codex-proxied
     (pkgs.symlinkJoin {
       name = "opencode-wrapped";
       paths = [ pkgs.opencode ];
