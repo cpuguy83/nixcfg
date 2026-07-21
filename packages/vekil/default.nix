@@ -19,6 +19,13 @@ buildGoModule {
   # tray app (cmd/menubar -> $out/bin/menubar, renamed below to vekil-menubar).
   subPackages = [ "." "cmd/menubar" ];
 
+  # Some tests initialize the authenticator, which creates a token directory
+  # under $HOME. The sandbox $HOME (/homeless-shelter) is read-only, so give
+  # the check phase a writable HOME.
+  preCheck = ''
+    export HOME="$(mktemp -d)"
+  '';
+
   postInstall = ''
         mv "$out/bin/menubar" "$out/bin/vekil-menubar"
 

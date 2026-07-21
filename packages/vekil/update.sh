@@ -25,6 +25,8 @@ printf '%s\n' "${FAKE_HASH}" >"${HASH_FILE}"
 # visible to the evaluation before we build against it.
 git add --intent-to-add "${HASH_FILE}" 2>/dev/null || true
 
+nix flake update vekil
+
 new_hash="$(
 	{ nix build --no-link '.#nixosConfigurations.yavin4.pkgs.vekil.goModules' 2>&1 || true; } |
 		awk '/got:/ { print $NF }'
