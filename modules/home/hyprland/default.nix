@@ -29,6 +29,11 @@ let
     ${brightnessPath} restore ALL
   '';
   dpmsRestorePath = pkgs.lib.getExe dpmsRestoreScript;
+  yawn = pkgs.writeShellApplication {
+    name = "yawn";
+    runtimeInputs = [ pkgs-unstable.hyprland pkgs.jq pkgs.util-linux ];
+    text = builtins.readFile ./yawn.sh;
+  };
   yaziFilepickerConfig = pkgs.writeTextDir "yazi/config/yazi.toml" ''
     [manager]
     show_hidden = false
@@ -42,6 +47,7 @@ in
         pkgs
         inputs
         lib
+        config
         ;
     })
     (import ./lockscreen.nix {
@@ -99,6 +105,8 @@ in
         gnome-font-viewer
 
         dragon-drop # CLI drag-and-drop utility
+
+        yawn # list Hyprland clients inhibiting idle
 
         seahorse # gnome-keyring GUI
 
