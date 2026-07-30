@@ -167,7 +167,7 @@ index ef29621e..d8d1f525 100644
    sources,
    ui_files,
    moc,
--  dependencies: qtdep,
+-  dependencies: [qtdep, dependency('hyprutils')],
 +  include_directories: inc,
 +  dependencies: [qtdep, client_protos, hyprutils, wayland_client],
    install: true

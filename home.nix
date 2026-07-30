@@ -35,16 +35,6 @@ let
   # Run claude/codex against the local vekil proxy (GitHub Copilot backend)
   # instead of the real Anthropic/OpenAI APIs. vekil listens on localhost:1337
   # and doesn't check the API key, so a dummy value is used.
-  claude-proxied = pkgs.writeShellApplication {
-    name = "claude-proxied";
-    runtimeInputs = [ pkgs-unstable.claude-code ];
-    text = ''
-      export ANTHROPIC_BASE_URL="http://localhost:1337"
-      export ANTHROPIC_API_KEY="dummy"
-      exec claude "$@"
-    '';
-  };
-
   codex-proxied = pkgs.writeShellApplication {
     name = "codex-proxied";
     runtimeInputs = [ pkgs-unstable.codex ];
@@ -54,6 +44,30 @@ let
         -c 'model_providers.proxy.name="Local Proxy"' \
         -c 'model_providers.proxy.base_url="http://localhost:1337/v1"' \
         "$@"
+    '';
+  };
+
+  # The Codex Claude Code plugin hardcodes the binary name `codex` (it runs
+  # `codex app-server` and `codex --version`) and offers no setting to point at
+  # a different one, so under plain claude-proxied it would bypass vekil and hit
+  # the real OpenAI API. Expose the proxied wrapper under that name instead.
+  # Deliberately kept out of home.packages: this only shadows `codex` inside
+  # claude-proxied's PATH, so a normal shell still gets the unproxied CLI.
+  codex-proxied-shim = pkgs.runCommand "codex-proxied-shim" { } ''
+    mkdir -p "$out/bin"
+    ln -s ${codex-proxied}/bin/codex-proxied "$out/bin/codex"
+  '';
+
+  claude-proxied = pkgs.writeShellApplication {
+    name = "claude-proxied";
+    runtimeInputs = [
+      pkgs-unstable.claude-code
+      codex-proxied-shim
+    ];
+    text = ''
+      export ANTHROPIC_BASE_URL="http://localhost:1337"
+      export ANTHROPIC_API_KEY="dummy"
+      exec claude "$@"
     '';
   };
 in
@@ -252,7 +266,7 @@ in
       ".cache"
       ".opencode"
       ".copilot"
-      "**/.claude/settings.local.json"
+      ".claude"
     ];
     settings = {
       user = {
@@ -440,7 +454,7 @@ in
       After = lib.mkAfter [
         "1password.service"
         "xdg-desktop-autostart.target"
-        "waybar.service"
+        "quickshell-bar.service"
       ];
       StartLimitIntervalSec = 0;
     };
