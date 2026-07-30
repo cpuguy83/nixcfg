@@ -256,6 +256,20 @@ in
 
   systemd.user.sessionVariables.GITSIGN_CREDENTIAL_CACHE = "${config.xdg.cacheHome}/sigstore/gitsign/cache.sock";
 
+  programs.ssh = {
+    enable = true;
+    enableDefaultConfig = false;
+    settings."github.com" = {
+      ControlMaster = "auto";
+      ControlPath = "~/.ssh/cm-%r@%h:%p";
+      ControlPersist = "10m";
+    };
+
+    settings."*" = {
+      IdentityAgent = "~/.1password/agent.sock";
+    };
+  };
+
   programs.git = {
     enable = true;
     ignores = [
@@ -268,6 +282,7 @@ in
       ".copilot"
       ".claude"
     ];
+
     settings = {
       user = {
         name = "Brian Goff";
@@ -285,13 +300,6 @@ in
 
       # hack used for fetching private go mods
       # url."ssh://git@github.com/".insteadOf = "https://github.com/";
-
-      matchBlocks."github.com" = {
-        controlMaster = "auto";
-        controlPath = "~/.ssh/cm-%r@%h:%p";
-        controlPersist = "10m";
-      };
-
       extracConfig = {
         credential = {
           helper = "manager-core";
