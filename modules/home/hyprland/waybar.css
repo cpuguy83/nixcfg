@@ -27,6 +27,20 @@ window#waybar.empty {
   color: inherit;
 }
 
+#custom-corpnet-vpn.connected {
+  color: #44dd88;
+  font-weight: bold;
+}
+
+#custom-corpnet-vpn.connecting {
+  color: #ddcc44;
+  font-weight: bold;
+}
+
+#custom-corpnet-vpn.disconnected {
+  color: inherit;
+}
+
 #tray menu {
   background-color: rgba(22, 22, 26, 0.55);
   color: #fefefe;

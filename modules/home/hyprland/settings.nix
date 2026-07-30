@@ -48,10 +48,6 @@ in
     portalPackage = null;
     configType = "hyprlang";
 
-    plugins = with pkgs; [
-      hyprtasking
-    ];
-
     settings = {
       ecosystem = {
         no_donation_nag = true;
@@ -102,8 +98,16 @@ in
         "$mod, J, layoutmsg, togglesplit,"
         "$mod, E, exec, $file_manager"
         "$mod, L, exec, hyprlock"
-        # "$mod, TAB, hyprexpo:expo, toggle"
-        "$mod, TAB, hyprtasking:toggle, all"
+        # Alt+Tab enters a submap so that releasing Alt can be bound without
+        # capturing Alt globally: a bare `bind = , Alt_L` consumes the key for
+        # every application. The submap itself lives in extraConfig.
+        "ALT, TAB, global, quickshell:switcherNext"
+        "ALT, TAB, submap, switcher"
+        "ALT SHIFT, TAB, global, quickshell:switcherPrev"
+        "ALT SHIFT, TAB, submap, switcher"
+        # The overview is a toggle rather than a hold, so it needs none of the
+        # switcher's submap handling — nothing here has to survive a key release.
+        "$mod, TAB, global, quickshell:overviewToggle"
         "SHIFT $mod, 4, exec, hyprshot -m region --clipboard-only --silent -z"
         "CTRL SHIFT $mod, 4, exec, hyprshot -m region -o ~/Pictures/Screenshots --silent -z -- xdg-open"
         "SHIFT $mod, m, exec, swaync-client -t"
@@ -144,7 +148,7 @@ in
         "match:title ^(yazi)$, float on, size (monitor_w*0.4) (monitor_h*0.4)"
         "match:class ^com\\.mitchellh\\.ghostty\\.filepicker$, float on, size (monitor_w*0.4) (monitor_h*0.4)"
         "match:class (microsoft-azurevpnclient), float on"
-        "match:class ^(steam)$, match:title ^(Steam)$, float on, size (monitor_w*0.4) (monitor_h*0.6)"
+        "match:class ^(steam)$, match:title ^(Steam)$, size (monitor_w*0.4) (monitor_h*0.6)"
         "match:class ^(Intune-portal)$, float on, size (monitor_w*0.35) (monitor_h*0.35)"
         "match:class ^(org\\.hyprland\\.xdg-desktop-portal-hyprland)$, float on, size (monitor_w*0.4) (monitor_h*0.4)"
         "opacity 0.85 0.85, match:class ^(polkit-gnome-authentication-agent-1)$"
@@ -168,9 +172,24 @@ in
         "ignore_alpha 0.3, match:namespace swaync-control-center"
         "blur on, match:namespace swaync-notification-window"
         "ignore_alpha 0.3, match:namespace swaync-notification-window"
+        # Waybar is disabled in favour of the Quickshell bar; these are kept so
+        # re-enabling it is a one-line change.
         "blur on, match:namespace waybar"
         "blur_popups on, match:namespace waybar"
         "ignore_alpha 0.3, match:namespace waybar"
+        "blur on, match:namespace quickshell-bar"
+        "blur_popups on, match:namespace quickshell-bar"
+        "ignore_alpha 0.3, match:namespace quickshell-bar"
+        # The switcher's layer surface covers the whole screen so the carousel
+        # can float over it, so ignore_alpha is doing real work here: without it
+        # blur would apply to the entire output rather than just the card strip.
+        "blur on, match:namespace quickshell-switcher"
+        "ignore_alpha 0.3, match:namespace quickshell-switcher"
+        # Same deal for the overview: its surface covers the whole output, so
+        # without the threshold every pixel of the screen would be blurred
+        # instead of just the panel.
+        "blur on, match:namespace quickshell-overview"
+        "ignore_alpha 0.3, match:namespace quickshell-overview"
         "blur on, match:namespace calbar-popup"
         "ignore_alpha 0.3, match:namespace calbar-popup"
       ];
@@ -238,15 +257,39 @@ in
         bar_precedence_over_border = true;
       };
 
-      plugin.hyprexpo = {
-        workspace_method = "current";
-        skip_empty = true;
-      };
-
       misc = {
         focus_on_activate = true;
         vrr = 3;
       };
     };
+
+    # Submaps are order-sensitive — every bind between `submap = switcher` and
+    # `submap = reset` belongs to it — so they cannot be expressed through the
+    # unordered `settings` attrset.
+    extraConfig = ''
+      submap = switcher
+      bind    = ALT, TAB, global, quickshell:switcherNext
+      bind    = ALT SHIFT, TAB, global, quickshell:switcherPrev
+      # `u` (submapUniversal) is required, not cosmetic. handleKeybinds matches a
+      # bind's submap against `key.submapAtPress.name` — the submap recorded when
+      # the key went DOWN — and Alt goes down before Tab enters this submap, so
+      # without `u` nothing fires on release and the keyboard stays trapped here.
+      #
+      # The cost is that `u` skips the submap check entirely, so this fires on
+      # every Alt release anywhere. It therefore has to stay side-effect free: no
+      # `submap, reset` here. Switcher.close() resets the submap itself, and only
+      # when the switcher was actually open. Hyprland cannot express "only on
+      # release inside this submap" — the guard has to live in the client.
+      bindru = ALT, Alt_L, global, quickshell:switcherAccept
+      bindru = ALT, Alt_R, global, quickshell:switcherAccept
+      # `i` (ignoreMods) because Alt is still held: the modmask is still ALT when
+      # the release is dispatched, so a bare `, escape` (modmask 0) would never
+      # match. Escape is pressed inside the submap, so it needs no `u` — and it
+      # dispatches the reset directly, which keeps it working as the escape hatch
+      # even if Quickshell is not running.
+      bindi  = , escape, global, quickshell:switcherCancel
+      bindi  = , escape, submap, reset
+      submap = reset
+    '';
   };
 }

@@ -1,6 +1,31 @@
-{ pkgs, ... }:
+{ pkgs, config, lib, ... }:
 
 let
+  corpnet = config.mine.msft-corp.corpnet;
+  corpnet-vpn-switch = pkgs.writeShellApplication {
+    name = "corpnet-vpn-switch";
+    runtimeInputs = with pkgs; [ systemd gawk ];
+    text = builtins.readFile ./corpnet-vpn-switch.sh;
+  };
+  corpnet-vpn-indicator = pkgs.writeShellApplication {
+    name = "corpnet-vpn-indicator";
+    runtimeInputs = with pkgs; [
+      systemd
+      fuzzel
+      libnotify
+      gawk
+      gnugrep
+      coreutils
+    ];
+    text = ''
+      DEFAULT_UNIT="corpnet-vpn"
+      DEFAULT_GATEWAY=${lib.escapeShellArg corpnet.gateway}
+      GATEWAY_DOMAIN=${lib.escapeShellArg corpnet.gatewayDomain}
+      GATEWAYS=${lib.escapeShellArg (lib.concatStringsSep "\n" corpnet.gateways)}
+      SYSTEMCTL=/run/current-system/sw/bin/systemctl
+      SWITCH=${corpnet-vpn-switch}/bin/corpnet-vpn-switch
+    '' + builtins.readFile ./corpnet-vpn-indicator.sh;
+  };
   pw-profile-toggle = pkgs.writeShellApplication {
     name = "pw-profile-toggle";
     runtimeInputs = [
@@ -109,8 +134,10 @@ in
     };
   };
 
+  # Superseded by the Quickshell bar below. Kept configured (not removed) so it
+  # can be brought back with a one-line change if the Quickshell bar regresses.
   programs.waybar = {
-    enable = true;
+    enable = false;
     systemd.enable = true;
     style = builtins.readFile ./waybar.css;
     settings = {
@@ -136,6 +163,7 @@ in
         modules-right = [
           "custom/pw-profile"
           "custom/password"
+          "custom/corpnet-vpn"
           "group/audio"
           "bluetooth"
           "tray"
@@ -224,6 +252,16 @@ in
           tooltip = true;
         };
 
+        "custom/corpnet-vpn" = {
+          format = "{}";
+          return-type = "json";
+          exec = "${corpnet-vpn-indicator}/bin/corpnet-vpn-indicator status";
+          on-click = "${corpnet-vpn-indicator}/bin/corpnet-vpn-indicator toggle";
+          on-click-right = "${corpnet-vpn-indicator}/bin/corpnet-vpn-indicator menu";
+          interval = 3;
+          tooltip = true;
+        };
+
         "custom/azvpn" = {
           format = "AzureVPN ";
           exec = "echo '{\"class\": \"connected\"}'";
@@ -283,7 +321,7 @@ in
     };
   };
 
-  systemd.user.services.waybar = {
+  systemd.user.services.waybar = lib.mkIf config.programs.waybar.enable {
     Unit = {
       After = [
         "pipewire.service"
@@ -294,5 +332,42 @@ in
         "wireplumber.service"
       ];
     };
+  };
+
+  # The bar. Replaces Waybar, whose taskbar cannot show window previews;
+  # see .copilot/plans/quickshell-bar.md.
+  home.packages = [ pkgs.quickshell ];
+
+  xdg.configFile."quickshell/bar".source = ./quickshell;
+
+  systemd.user.services.quickshell-bar = {
+    Unit = {
+      Description = "Quickshell bar";
+      PartOf = [ "graphical-session.target" ];
+      After = [
+        "graphical-session.target"
+        "pipewire.service"
+        "wireplumber.service"
+      ];
+      # The audio modules render nothing without PipeWire.
+      Requires = [
+        "pipewire.service"
+        "wireplumber.service"
+      ];
+    };
+    Service = {
+      ExecStart = "${pkgs.quickshell}/bin/qs -c bar";
+      Environment = [
+        # Qt does not read the GTK icon theme, so window icons fall back to
+        # unthemed names without this.
+        "QS_ICON_THEME=${config.gtk.iconTheme.name}"
+        # Store paths for the status scripts, which are not on PATH.
+        "PW_PROFILE_TOGGLE=${pw-profile-toggle}/bin/pw-profile-toggle"
+        "CORPNET_VPN_INDICATOR=${corpnet-vpn-indicator}/bin/corpnet-vpn-indicator"
+      ];
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
   };
 }

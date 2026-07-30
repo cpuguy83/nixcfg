@@ -1,0 +1,23 @@
+singleton Theme Theme.qml
+singleton Icons Icons.qml
+singleton WindowList WindowList.qml
+Audio Audio.qml
+Bar Bar.qml
+BarPill BarPill.qml
+BluetoothPill BluetoothPill.qml
+Clock Clock.qml
+ExecPill ExecPill.qml
+MediaPill MediaPill.qml
+Notification Notification.qml
+Overview Overview.qml
+OverviewCard OverviewCard.qml
+OverviewWorkspaceRow OverviewWorkspaceRow.qml
+Password Password.qml
+Switcher Switcher.qml
+SwitcherCard SwitcherCard.qml
+Taskbar Taskbar.qml
+TaskbarItem TaskbarItem.qml
+Tooltip Tooltip.qml
+Tray Tray.qml
+TrayMenu TrayMenu.qml
+WindowPreview WindowPreview.qml

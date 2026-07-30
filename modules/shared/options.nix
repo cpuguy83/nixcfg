@@ -50,6 +50,29 @@ in
         description = "GlobalProtect gateway for the Microsoft corporate VPN profile.";
       };
 
+      gatewayDomain = lib.mkOption {
+        type = types.str;
+        default = "msftvpn-alt.ras.microsoft.com";
+        description = ''
+          Domain suffix shared by the corpnet GlobalProtect gateways. The
+          corpnet-vpn@ systemd template appends this to its instance name, so
+          `systemctl start corpnet-vpn@dublin` connects to
+          `dublin.''${gatewayDomain}`. Lets you switch regions at start time
+          (e.g. when one gateway is degraded) without a rebuild.
+        '';
+      };
+
+      gateways = lib.mkOption {
+        type = types.listOf types.str;
+        default = [ "redmond" "dublin" "irving" "bay" ];
+        description = ''
+          Region short-names offered by the corpnet VPN waybar indicator's
+          gateway picker. Each maps to `corpnet-vpn@<region>` (connecting to
+          `<region>.''${gatewayDomain}`). Purely a convenience list for the
+          menu; any region still works via `systemctl start corpnet-vpn@<region>`.
+        '';
+      };
+
       protocol = lib.mkOption {
         type = types.str;
         default = "gp";

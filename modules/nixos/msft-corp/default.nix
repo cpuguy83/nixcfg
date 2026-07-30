@@ -1,10 +1,9 @@
-{
-  pkgs,
-  pkgs-unstable,
-  config,
-  lib,
-  inputs,
-  ...
+{ pkgs
+, pkgs-unstable
+, config
+, lib
+, inputs
+, ...
 }:
 
 with lib;
@@ -209,6 +208,21 @@ in
 
       services.gnome.glib-networking.enable = true;
       security.polkit.enable = true;
+      # Let the local user toggle the corpnet VPN units (start/stop/restart)
+      # without a password prompt, so the waybar indicator and manual
+      # `systemctl start corpnet-vpn@<region>` work friction-free. Scoped to
+      # corpnet-vpn* units and this one user; every other unit still authenticates.
+      security.polkit.extraConfig = ''
+        polkit.addRule(function(action, subject) {
+          if (action.id == "org.freedesktop.systemd1.manage-units" &&
+              subject.user == ${builtins.toJSON vpnUser}) {
+            var unit = action.lookup("unit");
+            if (unit && /^corpnet-vpn(@[^.]*)?\.service$/.test(unit)) {
+              return polkit.Result.YES;
+            }
+          }
+        });
+      '';
       security.rtkit.enable = true;
 
       environment.etc."NetworkManager/dispatcher.d/99-validate-dns" = {
@@ -231,26 +245,26 @@ in
       nixpkgs.overlays = lib.mkAfter [
         (
           final: prev:
-          let
-            gpSrc = inputs.globalprotect-openconnect;
-            gpVersion = "2.6.3";
-            gpCargoDeps = final.rustPlatform.fetchCargoVendor {
-              src = gpSrc;
-              name = "globalprotect-openconnect-${gpVersion}-vendor";
-              hash = "sha256-pqZ/q31H2KXJR6Tt/591Xz8h0FH+/GFV5hcOK/q9fao=";
-            };
-            bumpTo263 =
-              drv:
-              drv.overrideAttrs (_old: {
-                version = gpVersion;
+            let
+              gpSrc = inputs.globalprotect-openconnect;
+              gpVersion = "2.6.3";
+              gpCargoDeps = final.rustPlatform.fetchCargoVendor {
                 src = gpSrc;
-                cargoDeps = gpCargoDeps;
-              });
-          in
-          {
-            gpauth = bumpTo263 prev.gpauth;
-            gpclient = bumpTo263 prev.gpclient;
-          }
+                name = "globalprotect-openconnect-${gpVersion}-vendor";
+                hash = "sha256-pqZ/q31H2KXJR6Tt/591Xz8h0FH+/GFV5hcOK/q9fao=";
+              };
+              bumpTo263 =
+                drv:
+                drv.overrideAttrs (_old: {
+                  version = gpVersion;
+                  src = gpSrc;
+                  cargoDeps = gpCargoDeps;
+                });
+            in
+            {
+              gpauth = bumpTo263 prev.gpauth;
+              gpclient = bumpTo263 prev.gpclient;
+            }
         )
       ];
 
