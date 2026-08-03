@@ -1,10 +1,9 @@
-{
-  pkgs,
-  lib,
-  config,
-  brightnessPath,
-  getMonitorPath,
-  ...
+{ pkgs
+, lib
+, config
+, brightnessPath
+, getMonitorPath
+, ...
 }:
 let
   # plugins = inputs.hyprland-plugins.packages.${pkgs.stdenv.hostPlatform.system};
@@ -108,6 +107,11 @@ in
         # The overview is a toggle rather than a hold, so it needs none of the
         # switcher's submap handling — nothing here has to survive a key release.
         "$mod, TAB, global, quickshell:overviewToggle"
+        # Same shape as the overview toggle above; only possible at all
+        # because the control center is a fullscreen PanelWindow rather than a
+        # grabbing popup (.copilot/plans/control-center.md §9.1) — a grabbing
+        # popup can only be opened from a click on the bar.
+        "$mod, C, global, quickshell:controlCenterToggle"
         "SHIFT $mod, 4, exec, hyprshot -m region --clipboard-only --silent -z"
         "CTRL SHIFT $mod, 4, exec, hyprshot -m region -o ~/Pictures/Screenshots --silent -z -- xdg-open"
         "SHIFT $mod, m, exec, swaync-client -t"
@@ -190,6 +194,18 @@ in
         # instead of just the panel.
         "blur on, match:namespace quickshell-overview"
         "ignore_alpha 0.3, match:namespace quickshell-overview"
+        # The control center panel's surface covers the whole output too (so
+        # its dismiss area reaches every pixel), so the same ignore_alpha
+        # threshold applies for the same reason.
+        "blur on, match:namespace quickshell-control-center"
+        "ignore_alpha 0.3, match:namespace quickshell-control-center"
+        # No compositor animation: this surface spans the whole output, so
+        # Hyprland animates the entire screen-sized layer rather than the
+        # 360px panel drawn in one corner of it — `popin` read as the panel
+        # flying up from the bottom-left instead of growing out of the bar
+        # button. The panel animates itself client-side instead, anchored to
+        # the corner it is attached to.
+        "animation none, match:namespace quickshell-control-center"
         "blur on, match:namespace calbar-popup"
         "ignore_alpha 0.3, match:namespace calbar-popup"
       ];

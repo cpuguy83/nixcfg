@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VPN_GATEWAY=${VPN_GATEWAY:-redmond.msftvpn-alt.ras.microsoft.com}
+VPN_GATEWAY=${VPN_GATEWAY:-bay.msftvpn-alt.ras.microsoft.com}
 VPN_PROTOCOL=${VPN_PROTOCOL:-gp}
 VPN_REPORTED_OS=${VPN_REPORTED_OS:-win}
 AUTH_STACK=${AUTH_STACK:-intune}

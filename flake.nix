@@ -133,11 +133,10 @@
   };
 
   outputs =
-    {
-      self,
-      nixpkgs,
-      nixpkgs-unstable,
-      ...
+    { self
+    , nixpkgs
+    , nixpkgs-unstable
+    , ...
     }@inputs:
     let
       system = "x86_64-linux";
@@ -147,8 +146,8 @@
       # ./flake.lock is a guaranteed sibling of flake.nix, so this read is stable
       # regardless of where the package/overlay files live.
       copilotVersion = builtins.head (
-        builtins.match ".*/v([0-9.]+)/.*" (builtins.fromJSON (builtins.readFile ./flake.lock))
-        .nodes.github-copilot-deb.locked.url
+        builtins.match ".*/v([0-9.]+)/.*"
+          (builtins.fromJSON (builtins.readFile ./flake.lock)).nodes.github-copilot-deb.locked.url
       );
 
       pkgs-unstable = import nixpkgs-unstable {
@@ -172,6 +171,11 @@
               home.username = "cpuguy83";
               home.homeDirectory = "/home/cpuguy83";
               nixpkgs.config.allowUnfree = true;
+              # Standalone home-manager has no `backupFileExtension` option --
+              # it reads the extension only from `switch -b EXT` -- so without
+              # this the two entry points disagree about whether a path that
+              # already exists can be adopted. An explicit `-b` still wins.
+              mine.agentTeam.standaloneBackupFileExtension = "hm-backup";
             }
             ./home.nix
             ./hosts/yavin4/home.nix
@@ -194,6 +198,11 @@
             {
               home-manager.useUserPackages = true;
               home-manager.useGlobalPkgs = true;
+              # Adopting a path that already exists (agent-team takes over the
+              # global instruction files) needs somewhere for the old content to
+              # go. Home Manager does the rename itself, inside linkGeneration,
+              # immediately before writing the replacement.
+              home-manager.backupFileExtension = "hm-backup";
               home-manager.extraSpecialArgs = {
                 inherit inputs;
                 inherit pkgs-unstable;

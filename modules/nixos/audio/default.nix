@@ -1,6 +1,6 @@
 { ... }:
 {
   imports = [
-    ./input-routing.nix
+    ./input-monitors.nix
   ];
 }

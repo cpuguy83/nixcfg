@@ -18,24 +18,35 @@ PanelWindow {
   // Only the top bar reserves space; a bottom bar is treated as an overlay so
   // it does not push the usable area inward.
   exclusiveZone: Theme.barAtBottom ? 0 : Theme.barHeight
-  implicitHeight: Theme.barHeight
+  // The surface overhangs the strip it reserves by the depth of the corner
+  // cut-ins, which are drawn past the bar's edge and out into the desktop.
+  implicitHeight: Theme.barHeight + Theme.barCornerRadius
 
   // Must be set up front: an opaque surface cannot become transparent later.
   color: "transparent"
 
+  // Confine input to the bar proper. Without this the transparent part of the
+  // overhang would swallow clicks aimed at the window underneath it.
+  mask: Region { item: content }
+
   WlrLayershell.layer: WlrLayer.Top
   WlrLayershell.namespace: "quickshell-bar"
 
-  Rectangle {
-    id: background
-
+  BarBackground {
     anchors.fill: parent
-    color: Theme.barBackground
+  }
 
-    // Nix owns these paths, so they arrive through the unit environment rather
-    // than being hardcoded here.
-    readonly property string pwProfileBin: Quickshell.env("PW_PROFILE_TOGGLE") ?? ""
-    readonly property string corpnetVpnBin: Quickshell.env("CORPNET_VPN_INDICATOR") ?? ""
+  Item {
+    id: content
+
+    height: Theme.barHeight
+
+    anchors {
+      top: Theme.barAtBottom ? undefined : parent.top
+      bottom: Theme.barAtBottom ? parent.bottom : undefined
+      left: parent.left
+      right: parent.right
+    }
 
     Taskbar {
       screen: root.screen
@@ -75,35 +86,17 @@ PanelWindow {
         verticalCenter: parent.verticalCenter
       }
 
-      ExecPill {
-        statusCommand: [background.pwProfileBin, "status"]
-        clickCommand: [background.pwProfileBin, "toggle"]
-        classColors: ({
-            "live": Theme.pwProfileLive
-          })
-        pollInterval: 5000
-      }
-
-      Password {}
-
-      ExecPill {
-        statusCommand: [background.corpnetVpnBin, "status"]
-        clickCommand: [background.corpnetVpnBin, "toggle"]
-        rightClickCommand: [background.corpnetVpnBin, "menu"]
-        classColors: ({
-            "connected": Theme.vpnConnected,
-            "connecting": Theme.vpnConnecting
-          })
-        pollInterval: 3000
-      }
-
-      Audio {}
-
-      BluetoothPill {}
-
       Tray {}
 
       Clock {}
+
+      // Last in the row, so it sits immediately left of the Notification bell
+      // that is anchored outside this row against the screen edge — the two
+      // panel-opening controls end up adjacent rather than separated by the
+      // tray and the clock.
+      ControlCenterButton {
+        screen: root.screen
+      }
     }
   }
 }

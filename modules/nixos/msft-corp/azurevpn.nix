@@ -1,8 +1,7 @@
-{
-  pkgs,
-  inputs,
-  config,
-  ...
+{ pkgs
+, inputs
+, config
+, ...
 }:
 let
   cfg = config.mine.msft-corp;

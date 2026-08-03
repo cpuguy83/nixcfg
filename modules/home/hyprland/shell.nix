@@ -16,6 +16,7 @@ let
       gawk
       gnugrep
       coreutils
+      jq
     ];
     text = ''
       DEFAULT_UNIT="corpnet-vpn"
@@ -26,14 +27,15 @@ let
       SWITCH=${corpnet-vpn-switch}/bin/corpnet-vpn-switch
     '' + builtins.readFile ./corpnet-vpn-indicator.sh;
   };
-  pw-profile-toggle = pkgs.writeShellApplication {
-    name = "pw-profile-toggle";
+  tray-activation-probe = pkgs.writeShellApplication {
+    name = "tray-activation-probe";
     runtimeInputs = [
-      pkgs.pipewire
+      pkgs.systemd
       pkgs.gnugrep
       pkgs.gnused
+      pkgs.coreutils
     ];
-    text = builtins.readFile ./pw-profile-toggle.sh;
+    text = builtins.readFile ./tray-activation-probe.sh;
   };
 in
 {
@@ -161,8 +163,7 @@ in
           "mpris"
         ];
         modules-right = [
-          "custom/pw-profile"
-          "custom/password"
+          "custom/audio-mode"
           "custom/corpnet-vpn"
           "group/audio"
           "bluetooth"
@@ -237,17 +238,17 @@ in
           ];
         };
 
-        "custom/password" = {
-          format = " 󱕵 ";
-          on-click = "1password --quick-access";
-          on-click-right = "1password";
-        };
-
-        "custom/pw-profile" = {
-          format = "{}";
+        # Superseded by AudioSection's latency tier control in the Quickshell
+        # panel; kept only so the documented one-line rollback
+        # (programs.waybar.enable = true) still shows something real instead
+        # of a dead pw-profile-toggle reference. `audio-mode status`'s `text`
+        # deliberately carries no glyph (unlike the old script's own "LIVE"
+        # payload), so `format` supplies one here.
+        "custom/audio-mode" = {
+          format = "󰝱 {}";
           return-type = "json";
-          exec = "${pw-profile-toggle}/bin/pw-profile-toggle status";
-          on-click = "${pw-profile-toggle}/bin/pw-profile-toggle toggle";
+          exec = "${config.mine.audio.package}/bin/audio-mode status";
+          on-click = "${config.mine.audio.package}/bin/audio-mode cycle";
           interval = 5;
           tooltip = true;
         };
@@ -338,7 +339,13 @@ in
   # see .copilot/plans/quickshell-bar.md.
   home.packages = [ pkgs.quickshell ];
 
-  xdg.configFile."quickshell/bar".source = ./quickshell;
+  xdg.configFile."quickshell/bar" = {
+    source = ./quickshell;
+    # home-manager only restarts a unit when its *definition* changes, so a pure
+    # QML change would otherwise leave the running bar on the old config until
+    # the next login — the same reason the swaync stylesheet above needs a hook.
+    onChange = "${pkgs.systemd}/bin/systemctl --user restart quickshell-bar.service || true";
+  };
 
   systemd.user.services.quickshell-bar = {
     Unit = {
@@ -362,9 +369,26 @@ in
         # unthemed names without this.
         "QS_ICON_THEME=${config.gtk.iconTheme.name}"
         # Store paths for the status scripts, which are not on PATH.
-        "PW_PROFILE_TOGGLE=${pw-profile-toggle}/bin/pw-profile-toggle"
+        "TRAY_ACTIVATION_PROBE=${tray-activation-probe}/bin/tray-activation-probe"
+        "AUDIO_MODE_BIN=${config.mine.audio.package}/bin/audio-mode"
+        "AUDIO_MODE_CONFIG=${config.mine.audio.configFile}"
+      ]
+      # Gated, so a host without the corporate integration gets no VPN
+      # section at all rather than one whose Connect button starts a
+      # `corpnet-vpn` unit that does not exist. `VpnState.available` keys off
+      # this variable being absent, which is the mechanism its own comment
+      # always described but which nothing previously enforced -- every
+      # `mine.msft-corp.corpnet.*` option has a default, so the indicator
+      # always built and the variable was always set.
+      ++ lib.optional config.mine.msft-corp.enable
         "CORPNET_VPN_INDICATOR=${corpnet-vpn-indicator}/bin/corpnet-vpn-indicator"
-      ];
+      # Gated on the `easyeffects` user service actually being defined --
+      # the honest signal that EasyEffects is in use on this host, rather
+      # than a redundant `mine.audio.easyeffects.enable` flag duplicating
+      # it. `EffectsState.available` keys off this variable being absent, the
+      # same pattern `VpnState`/`CORPNET_VPN_INDICATOR` use just above.
+      ++ lib.optional (config.systemd.user.services ? easyeffects)
+        "EASYEFFECTS_PRESET=${config.mine.audio.easyeffectsPresetPackage}/bin/easyeffects-preset";
       Restart = "on-failure";
       RestartSec = 2;
     };

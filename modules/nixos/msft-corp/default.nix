@@ -88,6 +88,37 @@ let
     '';
   };
 
+  # ExecStartPre/Post/ExecStopPost hook for corpnet-vpn(@).service (see
+  # mkCorpnetVpnService below): writes each state transition to a stable,
+  # world-readable path so the Quickshell Control Center panel (VpnState.qml)
+  # can watch it via inotify instead of polling
+  # (.copilot/plans/control-center.md §9.6/§10 I2).
+  #
+  # Deliberately a fixed /run path, not a RuntimeDirectory: a
+  # RuntimeDirectory is torn down when the *owning* unit stops, and
+  # corpnet-vpn.service / corpnet-vpn@.service are two different units that
+  # both write here, so one stopping must not delete a path the other still
+  # expects to exist. An inotify watch on a path that can vanish out from
+  # under it is a well-known footgun; a path that is simply overwritten in
+  # place, and always exists once anything has ever run, is not.
+  #
+  # The file is a change notifier only, never a data source — see
+  # VpnState.qml's own comment for why its contents are never parsed back
+  # into VPN state; `corpnet-vpn-indicator state` stays the one place that
+  # formats gateway/region data. `STATE_FILE` is overridable so this can be
+  # exercised against a scratch path instead of the real /run location.
+  corpnetVpnStateHook = pkgs.writeShellScript "corpnet-vpn-state-hook" ''
+    set -euo pipefail
+
+    : "''${STATE_FILE:=/run/corpnet-vpn.state}"
+
+    state="''${1:?usage: $0 <state> [region]}"
+    region="''${2:-}"
+
+    printf '%s %s\n' "$state" "$region" > "$STATE_FILE"
+    chmod 0644 "$STATE_FILE"
+  '';
+
   # gpclient's --os value (it expects "Windows"/"Mac"/"Linux"); map the short
   # corpnet.reportedOs the same way msft-vpn-diagnostics' gpclient_os() does.
   gpclientReportedOs =
@@ -171,34 +202,62 @@ let
   # host and may embed the systemd `%i` specifier (used by the corpnet-vpn@
   # template so an instance name selects the region). `label` is a human-readable
   # gateway name for the unit description.
-  mkCorpnetVpnService = { gateway, label }: {
-    description = "Microsoft corpnet GlobalProtect VPN (gpclient) — ${label}";
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    # If the server invalidates the session cookie (e.g. after a TLS drop the
-    # gateway rejects the reconnect with "Cookie is no longer valid"),
-    # openconnect cannot silently recover and gpclient exits non-zero. Restart
-    # so it re-authenticates (fast/silent via the broker PRT). systemd does not
-    # honor Restart= for an explicit `systemctl stop`, so the manual toggle
-    # still tears the tunnel down cleanly. The start-limit caps how often a
-    # persistent auth failure can relaunch the browser before the unit gives up.
-    # (No --cookie-cache: with --as-gateway gpclient always does a fresh gateway
-    # prelogin and never reads or writes the portal cookie cache, so caching it
-    # would be dead config. A restart re-auths via browser SAML, which the
-    # broker PRT makes fast.)
-    startLimitIntervalSec = 600;
-    startLimitBurst = 5;
-    serviceConfig = {
-      Type = "simple";
-      Restart = "on-failure";
-      RestartSec = 10;
-      Environment = [
-        "TMPDIR=/tmp"
-        "DOAS_USER=${vpnUser}"
-      ];
-      ExecStart = "${pkgs.gpclient}/bin/gpclient connect --as-gateway --browser ${corpnetBrowserBin} --os ${gpclientReportedOs} --script ${corpnetVpncScript}/bin/corpnet-vpnc-script ${gateway}";
+  mkCorpnetVpnService = { gateway, label }:
+    let
+      # Region for the /run/corpnet-vpn.state hooks below: the leading
+      # dot-separated segment of `gateway`. For the bare unit `gateway` is
+      # already a plain hostname (e.g.
+      # "redmond.msftvpn-alt.ras.microsoft.com"), so this yields the same
+      # short name `corpnet-vpn-indicator.sh`'s own `default_region()`
+      # derives (`${DEFAULT_GATEWAY%%.*}`). For the `@` template `gateway` is
+      # `%i.${gatewayDomain}`, so this yields the systemd specifier `%i`
+      # literally — exactly what belongs in that unit's own Exec lines,
+      # expanded per-instance by systemd itself. No region list to hardcode
+      # either way.
+      region = lib.head (lib.splitString "." gateway);
+    in
+    {
+      description = "Microsoft corpnet GlobalProtect VPN (gpclient) — ${label}";
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      # If the server invalidates the session cookie (e.g. after a TLS drop the
+      # gateway rejects the reconnect with "Cookie is no longer valid"),
+      # openconnect cannot silently recover and gpclient exits non-zero. Restart
+      # so it re-authenticates (fast/silent via the broker PRT). systemd does not
+      # honor Restart= for an explicit `systemctl stop`, so the manual toggle
+      # still tears the tunnel down cleanly. The start-limit caps how often a
+      # persistent auth failure can relaunch the browser before the unit gives up.
+      # (No --cookie-cache: with --as-gateway gpclient always does a fresh gateway
+      # prelogin and never reads or writes the portal cookie cache, so caching it
+      # would be dead config. A restart re-auths via browser SAML, which the
+      # broker PRT makes fast.)
+      startLimitIntervalSec = 600;
+      startLimitBurst = 5;
+      serviceConfig = {
+        Type = "simple";
+        Restart = "on-failure";
+        RestartSec = 10;
+        Environment = [
+          "TMPDIR=/tmp"
+          "DOAS_USER=${vpnUser}"
+        ];
+        # /run/corpnet-vpn.state hooks for the Quickshell Control Center panel
+        # (VpnState.qml, .copilot/plans/control-center.md §9.6/§10 I2) — see
+        # corpnetVpnStateHook's own comment for why a fixed /run path rather
+        # than a RuntimeDirectory.
+        #
+        # The leading "-" on every one of these is LOAD-BEARING, not
+        # decorative: this is the user's actual work VPN, and a failure in
+        # this bookkeeping script (e.g. /run transiently unwritable) must
+        # never make systemd consider corpnet-vpn(@).service itself failed
+        # and tear the tunnel down over a side effect that exists only for
+        # the panel.
+        ExecStartPre = "-${corpnetVpnStateHook} connecting ${region}";
+        ExecStartPost = "-${corpnetVpnStateHook} connected ${region}";
+        ExecStopPost = "-${corpnetVpnStateHook} disconnected";
+        ExecStart = "${pkgs.gpclient}/bin/gpclient connect --as-gateway --browser ${corpnetBrowserBin} --os ${gpclientReportedOs} --script ${corpnetVpncScript}/bin/corpnet-vpnc-script ${gateway}";
+      };
     };
-  };
 in
 {
   config = mkIf cfg.enable (mkMerge [

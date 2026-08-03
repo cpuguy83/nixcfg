@@ -18,12 +18,12 @@ window#waybar.empty {
   background-color: transparent;
 }
 
-#custom-pw-profile.live {
+#custom-audio-mode.ultra {
   color: #ff4444;
   font-weight: bold;
 }
 
-#custom-pw-profile.normal {
+#custom-audio-mode.normal {
   color: inherit;
 }
 

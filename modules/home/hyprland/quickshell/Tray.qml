@@ -15,6 +15,12 @@ Row {
 
       required property var modelData
 
+      // Bound rather than asked at click time: a QML singleton is created on
+      // first use, and creating TrayActivation is what starts its probe. Asking
+      // it from the click handler would mean the first click is the one click
+      // that cannot have an answer.
+      readonly property bool menuOnly: TrayActivation.menuOnly(item.modelData)
+
       implicitWidth: Theme.barHeight
       implicitHeight: Theme.barHeight
 
@@ -43,16 +49,20 @@ Row {
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
         onClicked: event => {
-          // Items that only carry a menu have no meaningful activate action, so
-          // a left click should open the menu rather than do nothing.
-          if (event.button === Qt.RightButton || item.modelData.onlyMenu) {
+          if (event.button === Qt.MiddleButton) {
+            item.modelData.secondaryActivate();
+            return;
+          }
+
+          // A right click always means the menu. So does a left click on an item
+          // with no activate action to call, which would otherwise do nothing.
+          if (event.button === Qt.RightButton || item.menuOnly) {
             if (item.modelData.hasMenu)
               menu.shown = !menu.shown;
-          } else if (event.button === Qt.MiddleButton) {
-            item.modelData.secondaryActivate();
-          } else {
-            item.modelData.activate();
+            return;
           }
+
+          item.modelData.activate();
         }
 
         onWheel: event => item.modelData.scroll(event.angleDelta.y, false)

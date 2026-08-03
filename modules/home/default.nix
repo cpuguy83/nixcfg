@@ -2,6 +2,7 @@
 
 {
   imports = [
+    ./audio
     ./brightnessd
     ./hyprland
     ./kdeconnect

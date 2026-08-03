@@ -1,8 +1,7 @@
-{
-  inputs,
-  pkgs-unstable,
-  copilotVersion,
-  ...
+{ inputs
+, pkgs-unstable
+, copilotVersion
+, ...
 }:
 let
   opencodePackageJson = builtins.fromJSON (builtins.readFile "${inputs.opencode}/package.json");
@@ -17,17 +16,17 @@ in
     inputs.waybar.overlays.default
     (
       final: prev:
-      let
-        libMozilla = import "${inputs.firefox-addons}/../../lib/mozilla.nix" { lib = final.lib; };
-        buildMozillaXpiAddon = libMozilla.mkBuildMozillaXpiAddon {
-          inherit (final) fetchurl stdenv;
-        };
-      in
-      {
-        firefox-addons = final.callPackage "${inputs.firefox-addons}" {
-          inherit buildMozillaXpiAddon;
-        };
-      }
+        let
+          libMozilla = import "${inputs.firefox-addons}/../../lib/mozilla.nix" { lib = final.lib; };
+          buildMozillaXpiAddon = libMozilla.mkBuildMozillaXpiAddon {
+            inherit (final) fetchurl stdenv;
+          };
+        in
+        {
+          firefox-addons = final.callPackage "${inputs.firefox-addons}" {
+            inherit buildMozillaXpiAddon;
+          };
+        }
     )
     inputs.nixd.overlays.default
     inputs.rust-overlay.overlays.default

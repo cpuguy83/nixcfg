@@ -3,7 +3,8 @@ import Quickshell
 import Quickshell.Io
 
 // swaync streams a JSON line per state change rather than being polled, so this
-// holds one long-lived process instead of using ExecPill.
+// holds one long-lived process instead of the poll-on-a-Timer shape most
+// other status pills use.
 BarPill {
   id: root
 

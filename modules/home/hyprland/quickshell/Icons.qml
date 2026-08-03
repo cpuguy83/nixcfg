@@ -21,11 +21,47 @@ Singleton {
   readonly property string micOn: "\uf130"
   readonly property string micMuted: "\uf131"
 
-  readonly property string password: "\u{f1575}"
+
+  // Control Center (nf-fa-sliders). Deliberately neutral: this button owns
+  // audio, VPN, Bluetooth and network, so showing any one subsystem's glyph
+  // as the resting state misrepresents what clicking it does. Abnormal
+  // states are reported as prefix badges instead.
+  readonly property string controlCenter: "\uf1de"
 
   readonly property string bluetoothOn: "\u{f00af}"
   readonly property string bluetoothOff: "\u{f00b2}"
   readonly property string badge: "\uf444"
+
+  // Bluetooth section (control-center.md sec. 9.7). Codepoints checked
+  // directly against AdwaitaMonoNerdFont's cmap before landing here
+  // (nf-md-magnify, nf-md-delete_outline, nf-md-cog) - the same
+  // verification the header comment above demands.
+  readonly property string scan: "\u{f0349}"
+  readonly property string forget: "\u{f09e7}"
+  readonly property string settings: "\u{f0493}"
+
+  // VPN section (control-center.md sec. 9.6). Extracted byte-exact from
+  // `corpnet-vpn-indicator.sh`'s own `status`/`state` output rather than
+  // retyped (nf-md-vpn, verified against AdwaitaMonoNerdFont's cmap).
+  readonly property string vpn: "\u{f0582}"
+
+  // Network section (control-center.md sec. 9.7). Codepoints checked against
+  // AdwaitaMonoNerdFont's cmap the same way as the Bluetooth set above
+  // (nf-md-wifi_strength_outline/_1/_2/_3/_4, nf-md-wifi_off, nf-md-ethernet,
+  // nf-md-lock, nf-md-eye, nf-md-eye_off). `wifiLevels` runs weakest to
+  // strongest, matching `volumeLevels`'s ordering above.
+  readonly property list<string> wifiLevels: ["\u{f092f}", "\u{f091f}", "\u{f0922}", "\u{f0925}", "\u{f0928}"]
+  readonly property string wifiOff: "\u{f05aa}"
+  readonly property string ethernet: "\u{f0200}"
+  readonly property string lock: "\u{f033e}"
+  readonly property string reveal: "\u{f0208}"
+  readonly property string revealOff: "\u{f0209}"
+
+  // ControlCenterButton prefix badge (control-center.md sec. 9.8, stage 7):
+  // shown only for an abnormal state, never for a healthy one.
+  // nf-md-wifi_strength_alert_outline, verified against AdwaitaMonoNerdFont's
+  // cmap.
+  readonly property string networkOffline: "\u{f092b}"
 
   readonly property string bell: "\uf0a2"
   readonly property string bellDnd: "\uf1f7"

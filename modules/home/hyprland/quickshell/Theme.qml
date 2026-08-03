@@ -9,6 +9,21 @@ Singleton {
   readonly property bool barAtBottom: false
 
   readonly property int barHeight: 34
+  // Concave cut-ins at the bar's two desktop-facing corners, drawn as the
+  // inverse of the curve Hyprland rounds a window with.
+  //
+  // The exponent must track `decoration.rounding_power` in settings.nix: it is
+  // what makes the cut-in the same *kind* of curve as a window corner, and the
+  // two only read as a matched pair while they agree.
+  //
+  // The radius deliberately does not track `decoration.rounding` (16). At a
+  // power of 4 the superellipse hugs the corner, so its inverse is a crescent
+  // covering only ~7% of a radius-by-radius box — at 16 that is 2.5px at its
+  // thickest, which against a dark wallpaper is a ~6/255 difference and simply
+  // is not visible. Scaling the radius up stretches the same curve into
+  // something the eye can actually pick up.
+  readonly property int barCornerRadius: 32
+  readonly property real barCornerPower: 4
   readonly property int spacing: 3
   readonly property int radius: 8
   readonly property int iconSize: 20
@@ -34,11 +49,6 @@ Singleton {
 
   readonly property color itemHover: "#14ffffff"
   readonly property color itemActive: "#26ffffff"
-
-  // Status colours, carried over from waybar.css.
-  readonly property color pwProfileLive: "#ff4444"
-  readonly property color vpnConnected: "#44dd88"
-  readonly property color vpnConnecting: "#ddcc44"
 
   // Tray menus, carried over from the `#tray menu` rules in waybar.css. The
   // translucent background is only frosted because Hyprland blurs popups of the
@@ -132,4 +142,79 @@ Singleton {
   readonly property color overviewCardActive: "#cc26332c"
   readonly property color overviewCardActiveBorder: "#b344dd88"
   readonly property color overviewCardHover: "#cc2c2c36"
+
+  // Control Center (§9.10). A dedicated interactive/"on" hue — distinct from
+  // the status colour below — so "this control is on" never reads as an
+  // error state (O-1).
+  readonly property color accent: "#4d8ff5"
+  readonly property color statusError: "#ff4444"
+
+  // Panel frame. Frosted via the `quickshell-control-center` layerrule, so
+  // the same translucency floor as the switcher/overview applies — the
+  // background must stay above that rule's `ignore_alpha 0.3` threshold, see
+  // docs/frosted-glass.md.
+  readonly property int controlCenterWidth: 360
+  readonly property int controlCenterMaxHeight: 720
+  readonly property int controlCenterMargin: 12
+  readonly property int controlCenterRadius: 20
+  readonly property int controlCenterPadding: 16
+  readonly property int controlCenterSpacing: 12
+  readonly property color controlCenterBackground: "#8c16161a"
+  readonly property color controlCenterBorder: "#14ffffff"
+
+  // Expandable section tiles (Audio pinned open; VPN/Bluetooth/Network as an
+  // accordion, §9.7).
+  readonly property int sectionRadius: 14
+  readonly property int sectionPadding: 12
+  readonly property int sectionSpacing: 10
+  // Air above a group heading inside a section, separating it from the
+  // previous group's controls.
+  readonly property int headingSpacing: 10
+  readonly property int sectionHeaderHeight: 44
+  readonly property color sectionBackground: "#14ffffff"
+  readonly property color sectionBackgroundExpanded: "#1effffff"
+  // Matches Switcher.qml's carousel timing, so every animated surface in the
+  // shell moves at the same rate.
+  readonly property int sectionExpandDuration: 140
+  // Panel grow-in. Client-side, since the layer surface spans the whole
+  // output and cannot be animated usefully by the compositor.
+  readonly property int controlCenterAnimDuration: 130
+
+  // Generic row inside a section body (device rows, gateway rows, ...).
+  readonly property int rowHeight: 40
+  readonly property int rowRadius: 10
+  readonly property int rowPaddingH: 10
+  readonly property int rowSpacing: 8
+
+  // Volume-style slider: track/fill/handle plus a leading mute glyph.
+  readonly property int sliderHeight: 32
+  readonly property int sliderTrackHeight: 6
+  readonly property int sliderHandleSize: 16
+  readonly property color sliderTrack: "#26ffffff"
+  readonly property color sliderFill: accent
+  // Muted keeps the level and dims the fill instead of zeroing it, so
+  // unmuting restores exactly where it was (§9.5).
+  readonly property color sliderFillMuted: "#40ffffff"
+  readonly property color sliderHandle: "#fefefe"
+
+  // Pill switch (Bluetooth power, WiFi enable, monitor on/off, ...) and the
+  // exclusive segmented control (latency tier).
+  readonly property int toggleWidth: 40
+  readonly property int toggleHeight: 22
+  readonly property int toggleKnobMargin: 2
+  readonly property color toggleOff: "#40ffffff"
+  readonly property int segmentHeight: 28
+  readonly property int segmentRadius: 8
+  readonly property color segmentSelected: accent
+
+  // WiFi passphrase field.
+  readonly property int fieldHeight: 36
+  readonly property int fieldRadius: 10
+  readonly property color fieldBackground: "#14ffffff"
+  readonly property color fieldBorder: "#33ffffff"
+
+  // Hand-rolled Flickable scroll indicator (§9.9) — Quickshell.Widgets ships
+  // no scrollbar.
+  readonly property int scrollBarWidth: 4
+  readonly property int scrollBarRadius: 2
 }

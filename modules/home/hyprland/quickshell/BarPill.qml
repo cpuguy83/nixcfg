@@ -13,6 +13,7 @@ Item {
 
   signal clicked
   signal rightClicked
+  signal middleClicked
   signal scrolled(int steps)
 
   implicitWidth: label.implicitWidth + Theme.pillPadding * 2
@@ -41,11 +42,13 @@ Item {
     id: mouse
     anchors.fill: parent
     hoverEnabled: true
-    acceptedButtons: Qt.LeftButton | Qt.RightButton
+    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
 
     onClicked: event => {
       if (event.button === Qt.RightButton)
         root.rightClicked();
+      else if (event.button === Qt.MiddleButton)
+        root.middleClicked();
       else
         root.clicked();
     }
