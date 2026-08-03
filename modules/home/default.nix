@@ -10,5 +10,6 @@
     ./zen-browser
     ./starship
     ./msft-corp
+    ./agent-team
   ];
 }
