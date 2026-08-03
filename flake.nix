@@ -6,7 +6,7 @@
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     buildx = {
-      url = "github:docker/buildx?ref=refs/tags/v0.35.0";
+      url = "github:docker/buildx?ref=refs/tags/v0.36.0";
       flake = false;
     };
 
@@ -122,7 +122,7 @@
     };
 
     github-copilot-deb = {
-      url = "file+https://github.com/github/app/releases/download/v1.1.1/GitHub-Copilot-linux-x64.deb";
+      url = "file+https://github.com/github/app/releases/download/v1.1.2/GitHub-Copilot-linux-x64.deb";
       flake = false;
     };
 
