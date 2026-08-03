@@ -1,18 +1,16 @@
-{ config
-, pkgs
-, pkgs-unstable
-, lib
-, inputs
-, ...
+{
+  config,
+  pkgs,
+  pkgs-unstable,
+  lib,
+  inputs,
+  ...
 }:
 let
   cfg = config.mine.msft-corp;
   #himmelblauPkgs = inputs.himmelblau.packages.${pkgs.stdenv.hostPlatform.system};
   ssoHostPackage =
-    if cfg.authStack == "himmelblau" then
-      pkgs.himmelblau.sso
-    else
-      pkgs.linux-entra-sso-host-mine;
+    if cfg.authStack == "himmelblau" then pkgs.himmelblau.sso else pkgs.linux-entra-sso-host-mine;
 in
 {
   config = lib.mkIf cfg.enable {
@@ -28,7 +26,7 @@ in
           "/run/current-system/sw/bin/git-credential-manager"
         ];
         azreposCredentialType = "oauth";
-        msauthFlow = "devicecode";
+        msauthFlow = "auto";
       };
       "credential \"https://dev.azure.com\"".useHttpPath = true;
       "credential \"azrepos:org/AzureContainerUpstream\"".azureAuthority =
