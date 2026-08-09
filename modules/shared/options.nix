@@ -6,12 +6,59 @@ in
 {
   options.mine.desktop.hyprland.enable = mkEnableOption "Enable Hyprland profile";
   options.mine.desktop.hyprland.monitors = lib.mkOption {
-    type = with types; nullOr (listOf str);
+    type = types.listOf (
+      types.submodule {
+        options = {
+          output = lib.mkOption {
+            type = types.str;
+            description = "Monitor identifier, e.g. a connector name (`DP-1`) or description.";
+          };
+
+          mode = lib.mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = "Resolution/refresh mode, e.g. `preferred` or `1920x1080@60`.";
+          };
+
+          position = lib.mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = "Monitor position, e.g. `0x0` or `auto`.";
+          };
+
+          scale = lib.mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = "Monitor scale factor, e.g. `1` or `auto`.";
+          };
+
+          transform = lib.mkOption {
+            type = types.nullOr types.int;
+            default = null;
+            description = "Monitor transform (rotation/flip); see Hyprland's `transform` values.";
+          };
+
+          disabled = lib.mkOption {
+            type = types.bool;
+            default = false;
+            description = "Disable this monitor entirely.";
+          };
+        };
+      }
+    );
     default = [ ];
-    description = "Hyprland monitor directives for this machine.";
+    description = "Hyprland monitor definitions for this machine.";
     example = [
-      "DP-1,preferred,auto-right,auto"
-      "HDMI-A-1,disable"
+      {
+        output = "DP-1";
+        mode = "preferred";
+        position = "auto-right";
+        scale = "auto";
+      }
+      {
+        output = "HDMI-A-1";
+        disabled = true;
+      }
     ];
   };
 
@@ -23,11 +70,31 @@ in
   };
 
   options.mine.desktop.hyprland.workspaces = lib.mkOption {
-    type = with types; nullOr (listOf str);
+    type = types.listOf (
+      types.submodule {
+        options = {
+          workspace = lib.mkOption {
+            type = types.str;
+            description = "Workspace selector this rule applies to, e.g. `1` or `m[DP-2]`.";
+          };
+
+          layout_opts = lib.mkOption {
+            type = types.nullOr (types.attrsOf types.str);
+            default = null;
+            description = "Layout-specific options for this workspace, e.g. `{ direction = \"down\"; }`.";
+          };
+        };
+      }
+    );
     default = [ ];
-    description = "Hyprland workspace definitions";
+    description = "Hyprland workspace rule definitions";
     example = [
-      "1, rounding:false"
+      {
+        workspace = "1";
+        layout_opts = {
+          rounding = "false";
+        };
+      }
     ];
   };
 

@@ -62,7 +62,12 @@ Scope {
     // what Hyprland already does for every keyboard focus change. It also
     // targets an exact window, where `layoutmsg move` only scrolls the tape
     // horizontally and lands on whichever column reaches the centre.
-    Hyprland.dispatch(`focuswindow address:0x${toplevel.address}`);
+    //
+    // The config is native Lua (configType = "lua"), so `Hyprland.dispatch()`
+    // -- which sends this string as the IPC `dispatch` request's argument --
+    // must be a Lua expression evaluating to a dispatcher, not a legacy
+    // hyprlang dispatcher string.
+    Hyprland.dispatch(`hl.dsp.focus({ window = "address:0x${toplevel.address}" })`);
   }
 
   function commit() {
@@ -86,7 +91,7 @@ Scope {
     root.close();
 
     if (restore)
-      Hyprland.dispatch(`focuswindow address:0x${restore}`);
+      Hyprland.dispatch(`hl.dsp.focus({ window = "address:0x${restore}" })`);
   }
 
   function close() {
@@ -98,7 +103,7 @@ Scope {
     // submap-universal, it would fire on every Alt release and could kick the
     // keyboard out of an unrelated submap. Resetting here instead scopes it to
     // the case where the switcher was actually open.
-    Hyprland.dispatch("submap reset");
+    Hyprland.dispatch(`hl.dsp.submap("reset")`);
   }
 
   GlobalShortcut {

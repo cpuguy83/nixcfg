@@ -42,7 +42,7 @@ Scope {
     if (!address)
       return;
 
-    Hyprland.dispatch(`focuswindow address:0x${address}`);
+    Hyprland.dispatch(`hl.dsp.focus({ window = "address:0x${address}" })`);
     root.close();
   }
 
@@ -59,7 +59,9 @@ Scope {
       return;
 
     // Silent: rearranging windows should not drag the view along behind them.
-    Hyprland.dispatch(`movetoworkspacesilent ${workspaceId},address:0x${address}`);
+    // `follow = false` is what makes `hl.dsp.window.move` silent -- omitting
+    // it defaults to following the window into its new workspace.
+    Hyprland.dispatch(`hl.dsp.window.move({ workspace = ${workspaceId}, follow = false, window = "address:0x${address}" })`);
 
     // A move re-anchors the tape on both the source and destination workspace —
     // every other window's absolute coordinates change even though their order
@@ -72,13 +74,13 @@ Scope {
     if (!address || !monitor || id < 0)
       return;
 
-    Hyprland.dispatch(`movetoworkspacesilent ${id},address:0x${address}`);
+    Hyprland.dispatch(`hl.dsp.window.move({ workspace = ${id}, follow = false, window = "address:0x${address}" })`);
 
     // A workspace conjured up by a move lands on the *focused* monitor, not the
     // moved window's. Without this the new workspace would belong to whichever
     // monitor happened to have focus and vanish from the overview it was
     // created in.
-    Hyprland.dispatch(`moveworkspacetomonitor ${id} ${monitor.name}`);
+    Hyprland.dispatch(`hl.dsp.workspace.move({ workspace = ${id}, monitor = "${monitor.name}" })`);
     Hyprland.refreshToplevels();
   }
 
@@ -87,10 +89,10 @@ Scope {
     if (!monitor || id < 0)
       return;
 
-    // `workspace` acts on the focused monitor, so aim the focus first rather
+    // `focus` acts on the focused monitor, so aim the focus first rather
     // than assuming the overview being clicked is the focused one.
-    Hyprland.dispatch(`focusmonitor ${monitor.name}`);
-    Hyprland.dispatch(`workspace ${id}`);
+    Hyprland.dispatch(`hl.dsp.focus({ monitor = "${monitor.name}" })`);
+    Hyprland.dispatch(`hl.dsp.focus({ workspace = ${id} })`);
     root.close();
   }
 

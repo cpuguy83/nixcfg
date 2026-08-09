@@ -6,18 +6,40 @@
   ];
 
   mine.desktop.hyprland.monitors = [
-    "DP-1,preferred,2160x840,1"
-    "DP-2,preferred,0x0,1,transform,3"
+    {
+      output = "DP-1";
+      mode = "preferred";
+      position = "2160x840";
+      scale = "1";
+    }
+    {
+      output = "DP-2";
+      mode = "preferred";
+      position = "0x0";
+      scale = "1";
+      transform = 3;
+    }
 
     # These are used as backchannels to DP-1 and DP-2 for DDC/CI
-    "HDMI-A-1,disable"
-    "HDMI-A-3,disable"
+    {
+      output = "HDMI-A-1";
+      disabled = true;
+    }
+    {
+      output = "HDMI-A-3";
+      disabled = true;
+    }
   ];
 
   mine.desktop.hyprland.lockScreenMonitor = "DP-1";
 
   mine.desktop.hyprland.workspaces = [
-    "m[DP-2], layoutopt:direction:down"
+    {
+      workspace = "m[DP-2]";
+      layout_opts = {
+        direction = "down";
+      };
+    }
   ];
 
   mine.desktop.hyprland.layout = "scrolling";

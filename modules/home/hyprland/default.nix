@@ -22,7 +22,7 @@ let
       if ${pkgs-unstable.hyprland}/bin/hyprctl monitors -j | ${pkgs.jq}/bin/jq -e 'all(.dpmsStatus == true)' >/dev/null; then
         break
       fi
-      ${pkgs-unstable.hyprland}/bin/hyprctl dispatch dpms on
+      ${pkgs-unstable.hyprland}/bin/hyprctl dispatch 'hl.dsp.dpms({ action = "on" })'
       ${pkgs.coreutils}/bin/sleep 5
     done
 
@@ -278,8 +278,16 @@ in
 
           # restore hyprlock
           echo "Session is locked. Restarting hyprlock..." >&2
-          hyprctl --instance 0 'keyword misc:allow_session_lock_restore 1' && \
-          hyprctl --instance 0 'dispatch exec hyprlock'
+          # `hyprctl keyword` is unconditionally rejected under lua config
+          # ("keyword can't work with non-legacy parsers. Use eval."), so the
+          # runtime enable of `misc.allow_session_lock_restore` moves to
+          # `eval`, which triggers a dynamic-parse merge via `hl.config`.
+          # Kept transient (enabled only right before this relaunch, not set
+          # statically in settings.lua) so a local client can only spoof/
+          # replace the lock screen in this narrow post-resume window, not at
+          # all times.
+          hyprctl --instance 0 eval 'hl.config({ misc = { allow_session_lock_restore = true } })'
+          hyprctl --instance 0 'dispatch hl.dsp.exec_cmd("hyprlock")'
         '';
         executable = true;
       };
@@ -304,7 +312,12 @@ in
           general = {
             lock_cmd = "pidof hyprlock || hyprlock";
             before_sleep_cmd = "loginctl lock-session";
-            after_sleep_cmd = "hyprctl dispatch dpms";
+            # Bare `dispatch dpms` (no explicit on/off) used to fall through
+            # to the legacy dpms dispatcher's default of "disable", not a
+            # toggle -- `hl.dsp.dpms({ action = "off" })` reproduces that
+            # exactly, whereas argument-less `hl.dsp.dpms()` would toggle
+            # instead and change behaviour.
+            after_sleep_cmd = "hyprctl dispatch 'hl.dsp.dpms({ action = \"off\" })'";
           };
 
           listener = [
@@ -319,8 +332,8 @@ in
             }
             {
               timeout = 1800; # 30 minutes
-              on-timeout = "hyprctl dispatch dpms off";
-              on-resume = "hyprctl dispatch dpms on";
+              on-timeout = "hyprctl dispatch 'hl.dsp.dpms({ action = \"off\" })'";
+              on-resume = "hyprctl dispatch 'hl.dsp.dpms({ action = \"on\" })'";
             }
           ];
         };
