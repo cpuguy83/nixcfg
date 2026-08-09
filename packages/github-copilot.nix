@@ -20,6 +20,7 @@
 , webkitgtk_4_1
 , gtk3
 , glib
+, dbus
 , glib-networking
 , libsoup_3
 , cairo
@@ -51,6 +52,7 @@ stdenv.mkDerivation {
     webkitgtk_4_1
     gtk3
     glib
+    dbus
     glib-networking
     libsoup_3
     cairo
@@ -95,6 +97,7 @@ stdenv.mkDerivation {
       webkitgtk_4_1
       gtk3
       glib
+      dbus
       libsoup_3
       cairo
       pango
