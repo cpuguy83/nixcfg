@@ -26,7 +26,7 @@
       url = "github:0xc000022070/zen-browser-flake";
       # IMPORTANT: we're using "libgbm" and is only available in unstable so ensure
       # to have it up-to-date or simply don't specify the nixpkgs input
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
     home-manager = {
@@ -122,7 +122,7 @@
     };
 
     github-copilot-deb = {
-      url = "file+https://github.com/github/app/releases/download/v1.1.6/GitHub-Copilot-linux-x64.deb";
+      url = "file+https://github.com/github/app/releases/download/v1.1.14/GitHub-Copilot-linux-x64.deb";
       flake = false;
     };
 
