@@ -7,6 +7,7 @@
     ./hyprland
     ./kdeconnect
     ./neovim
+    ./tether
     ./vekil
     ./zen-browser
     ./starship

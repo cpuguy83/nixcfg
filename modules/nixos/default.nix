@@ -8,5 +8,6 @@
     ./boot.nix
     ./msft-corp
     ./1password.nix
+    ./tether
   ];
 }

@@ -39,6 +39,7 @@ in
     (import ./linux-entra-sso-host.nix)
     (import ./linux-entra-sso-host-mine.nix)
     (import ./vekil.nix { inherit inputs; })
+    (import ./tether.nix { inherit inputs; })
     (import ./hyprtasking.nix { inherit inputs pkgs-unstable; })
     (import ./github-copilot.nix { inherit inputs copilotVersion; })
     (import ./lmstudio.nix { inherit pkgs-unstable; })

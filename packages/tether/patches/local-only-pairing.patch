@@ -1,0 +1,127 @@
+--- a/src/core/src/net.cpp	2026-08-29 16:17:17.502243261 -0700
++++ b/src/core/src/net.cpp	2026-08-29 16:17:17.506339583 -0700
+@@ -67,6 +67,13 @@
+     static constexpr size_t kMaxRecentReceivedFiles = 16;
+     static std::map<int, ConnectedClientSnapshot> connected_remote_clients;
+ 
++    // Gates whether a new (unknown-fingerprint) pair_request is even allowed to
++    // spawn an interactive dialog. Off by default; the GTK app turns it on only
++    // while its Devices tab is the visible view in a visible window, and only
++    // while no device is already paired. This is the file's existing pattern for
++    // shared daemon-wide state -- see g_mdns_available below for the same idiom.
++    static std::atomic<bool> g_wifi_pairing_mode{false};
++
+     void register_client_fd(int fd) {
+         std::lock_guard<std::mutex> lock(g_sessions_mutex);
+         active_sessions[fd] = {fd, nullptr};
+@@ -576,6 +583,7 @@
+         }
+ 
+         snapshot["mdns_available"] = g_mdns_available.load();
++        snapshot["wifi_pairing_mode"] = g_wifi_pairing_mode.load();
+ 
+         return snapshot;
+     }
+@@ -936,6 +944,16 @@
+                                     : (err.empty() ? _("Bluetooth is unavailable.") : err);
+                             broadcast_local_event(event.dump());
+                         }).detach();
++                    } else if (j.contains("command") && j["command"] == "pairing_mode_set") {
++                        bool enabled = j.value("enabled", false);
++                        g_wifi_pairing_mode.store(enabled);
++                        debug::log(INFO, "WiFi pairing mode {}", enabled ? "enabled" : "disabled");
++                        nlohmann::json resp;
++                        resp["command"] = "pairing_mode_status";
++                        resp["enabled"] = enabled;
++                        std::string payload = resp.dump() + "\n";
++                        write_plain_packet(client_fd, payload);
++                        continue;
+                     } else if (j.contains("command") && j["command"] == "bt_set_ancs") {
+                         auto config = bluetooth::load_config();
+                         config.ancs_enabled = j.value("enabled", true);
+@@ -1407,8 +1425,22 @@
+                             event["address"] = client_info_[client_fd].address;
+                             broadcast_local_event(event.dump());
+ 
+-                            // Launch the layer-shell dialog for interactive approval
+-                            spawn_pair_dialog(client_fd, ssl, print, dev_name);
++                            // Only accept pairing while the desktop app has explicitly opened
++                            // pairing mode (Devices tab visible in a visible window), and only
++                            // when no device is already paired -- upstream has no rate limit or
++                            // admission control here otherwise, and the dialog grabs exclusive
++                            // keyboard focus, so leaving it always-on lets anyone reaching this
++                            // port spam requests until an unrelated Enter keystroke accepts one.
++                            if (g_wifi_pairing_mode.load() && Crypto::instance().get_known_hosts_dump() == "{}") {
++                                spawn_pair_dialog(client_fd, ssl, print, dev_name);
++                            } else {
++                                debug::log(WARN,
++                                           "[Pairing Refused] {} ({}): pairing mode is closed or a device is already paired",
++                                           dev_name,
++                                           print);
++                                std::string rej = "{\"command\":\"error\",\"message\":\"pairing is not open right now\"}\n";
++                                robust_ssl_write(ssl, rej.c_str(), rej.size());
++                            }
+                         } else {
+                             std::string rej = "{\"command\":\"error\",\"message\":\"unauthorized\"}\n";
+                             robust_ssl_write(ssl, rej.c_str(), rej.size());
+--- a/src/gtk/main.cpp	2026-08-29 16:17:17.500993011 -0700
++++ b/src/gtk/main.cpp	2026-08-29 16:17:17.507895467 -0700
+@@ -25,6 +25,25 @@
+     std::string g_requested_view;
+     std::string g_requested_thread;
+ 
++    // Mirrors the "pairing is open" state to the daemon, which is what actually
++    // gates whether a pair_request may spawn a focus-grabbing dialog (see
++    // net.cpp). Pairing is only ever allowed while this window is visible and
++    // its Devices tab is the one showing, so closing the app, hiding it to the
++    // tray, or switching tabs all close the window automatically.
++    bool g_pairing_mode_last_sent = false;
++
++    void sync_pairing_mode() {
++        GtkWidget* window = main_window();
++        const bool visible = window && gtk_widget_get_visible(window);
++        const bool on_devices_tab =
++            g_stack && g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(g_stack)), "devices") == 0;
++        const bool want = visible && on_devices_tab;
++        if (want == g_pairing_mode_last_sent)
++            return;
++        g_pairing_mode_last_sent = want;
++        daemon_send(nlohmann::json{{"command", "pairing_mode_set"}, {"enabled", want}});
++    }
++
+     void apply_requested_view() {
+         if (!g_stack)
+             return;
+@@ -49,6 +68,8 @@
+ 
+         messages_view_set_visible(view == "messages");
+         notifications_view_set_visible(view == "notifications");
++
++        sync_pairing_mode();
+     }
+ 
+     // The tray controls live here
+@@ -112,6 +133,7 @@
+         if (!tray_close_to_tray())
+             return FALSE;
+         gtk_widget_hide(window);
++        sync_pairing_mode();
+         return TRUE;
+     }
+ 
+@@ -186,6 +208,15 @@
+         g_signal_connect(window, "delete-event", G_CALLBACK(on_window_delete), nullptr);
+         g_signal_connect(
+             window, "destroy", G_CALLBACK(+[](GtkWidget*, gpointer) { set_main_window(nullptr); }), nullptr);
++        // Covers every way the window becomes visible again after being hidden to
++        // the tray -- present_window()/toggle_window() in tray.cpp both end up
++        // calling gtk_widget_show() under the hood, which is what actually flips
++        // this property, so this catches them without those files needing to know
++        // about pairing mode at all.
++        g_signal_connect(window,
++                         "notify::visible",
++                         G_CALLBACK(+[](GObject*, GParamSpec*, gpointer) { sync_pairing_mode(); }),
++                         nullptr);
+         install_actions(app, window);
+         tray_init();
+ 
