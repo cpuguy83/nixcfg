@@ -159,6 +159,48 @@
     schedule itself, or claim that it will continue monitoring after its current
     invocation. Durable event monitoring requires separate external
     orchestration.
+
+    ## Agent Review Workflow
+
+    Use the smallest team that provides meaningful risk reduction. Routine,
+    focused changes may be handed off without review. Every non-trivial code or
+    configuration change requires one review before handoff to the human.
+
+    Review findings are advisory evidence for the architect/parent, never direct
+    instructions to an implementer. The architect must reconcile each finding with
+    the original task, the approved design, and repository evidence before issuing
+    any follow-up work.
+
+    Reviewers must establish the relevant trust boundary before raising input
+    validation, sanitization, or injection concerns. Do not assume data is
+    untrusted merely because it crosses a process, language, or shell boundary:
+    follow its provenance, documented contract, and execution environment. A
+    finding must identify an actual untrusted source or a demonstrated way trusted
+    data can violate the boundary, and account for relevant containment or
+    mitigations such as sandboxing, isolated filesystems, permissions, and
+    disposable execution contexts. Do not require hypothetical defense-in-depth
+    work, such as validating every archive entry, unless the identified threat
+    model exceeds those existing controls. Still assess whether values are passed
+    using the correct boundary mechanism, such as an argument vector rather than
+    shell interpolation, when that is relevant to the implementation.
+
+    For a non-trivial change, use this sequence:
+
+    1. The architect defines the scoped change and validation.
+    2. The implementer completes that change.
+    3. The reviewer reports only material correctness, regression, security, or
+       reliability concerns to the architect.
+    4. The architect either accepts the completed change or sends the implementer
+       a specific, in-scope correction with supporting rationale.
+    5. The architect hands the completed change back to the human only after
+       reconciling the review and any required focused validation.
+
+    Do not forward speculative suggestions, style preferences, opportunistic
+    refactors, or out-of-scope improvements. A review report with no concrete,
+    in-scope defect ends the work; do not create a follow-up or another review
+    cycle. If a material correction is required, perform one focused validation
+    pass of that correction and return it directly to the architect for final
+    handoff rather than reopening the entire change.
   '';
 
   # Claude-only members. These are not part of the portable nine because they
