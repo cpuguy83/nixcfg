@@ -121,6 +121,12 @@
       flake = false;
     };
 
+    # Consumed as a plain source tree by overlays/tether.nix.
+    tether = {
+      url = "github:zackb/tether?ref=refs/tags/v0.2.17";
+      flake = false;
+    };
+
     github-copilot-deb = {
       url = "file+https://github.com/github/app/releases/download/v1.1.14/GitHub-Copilot-linux-x64.deb";
       flake = false;
