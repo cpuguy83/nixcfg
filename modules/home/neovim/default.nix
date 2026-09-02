@@ -1,7 +1,8 @@
-{ lib
-, pkgs
-, pkgs-unstable
-, ...
+{
+  lib,
+  pkgs,
+  pkgs-unstable,
+  ...
 }:
 
 {
@@ -23,7 +24,31 @@
 
     plugins.notify.enable = true;
     # plugins.git-conflict.enable = true;
-    plugins.gitblame.enable = true;
+
+    plugins.gitsigns = {
+      enable = true;
+      settings = {
+        current_line_blame = true;
+        signs = {
+          add = {
+            text = "+";
+          };
+          change = {
+            text = "~";
+          };
+          delete = {
+            text = "_";
+          };
+          topdelete = {
+            text = "‾";
+          };
+          changedelete = {
+            text = "~";
+          };
+        };
+      };
+    };
+
     plugins.lightline.enable = true;
     plugins.treesitter.enable = true;
     plugins.neogit.enable = true;
