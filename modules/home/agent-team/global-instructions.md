@@ -75,17 +75,9 @@ significant design or scope implications. When not confident, ask.
 
 ## Testing
 
-When writing tests, use the given->when->then pattern.
-This does not mean you should litterally include "given ..." in a test name.
-See examples below.
-Test names should read like requirements or expectations.
-Use subtests to setup the structure and narative of the thing under test.
+Write concise test names in natural English. Names should describe the behavior
+or requirement being tested without spelling out the test's setup and execution
+steps.
+Use subtests to organize the narrative of the thing under test.
 Test cases should typically go towards the top of the file with test helpers down towards the bottom (if they aren't in a separate file already).
-
-### Example test names
-"When a request comes in" -> "x is set" -> "y is also set" -> "z happens".
-"A year divisible by 4 is a leap year"
-"A year not divisible by 4 is not a leap year"
 Reviewers shouldn't need to read the test setup to know what is being tested.
-The name of the test expresses a requirement.
-No need to provide extra "given ... then ... when.." code comments. This should be conveyed via test names, function names, var names, and structure.
