@@ -42,19 +42,20 @@
   boot.kernelModules = [
     "amdgpu"
     "kvm_amd"
-    "zenpower"
   ];
-  boot.blacklistedKernelModules = [ "k10temp" ];
-  boot.extraModulePackages = [ config.boot.kernelPackages.zenpower ];
 
   environment.variables.AMD_VULKAN_ICD = "RADV";
 
   # Pin webkit2gtk's GPU render device to the discrete RX 7900 (renderD128).
   # This webkit build (2.52.x) has no WEBKIT_DRM_* selection vars; it honors
   # WEBKIT_WEB_RENDER_DEVICE_FILE. Without this, WebKitWebProcess defaults to
-  # the weaker integrated GPU (renderD129). by-path keeps it stable across boots.
-  environment.sessionVariables.WEBKIT_WEB_RENDER_DEVICE_FILE =
-    "/dev/dri/by-path/pci-0000:03:00.0-render";
+  # the weaker integrated GPU (renderD129). WebKitGTK 2.52.5 compares this
+  # value literally against libdrm's canonical node path, so the
+  # /dev/dri/by-path/*-render symlink does not match and silently disables
+  # DMA-BUF hardware buffer transport; the renderD128 device node itself is
+  # not guaranteed to be stable across boots/hardware changes, but it is what
+  # WebKitGTK actually needs to match.
+  environment.sessionVariables.WEBKIT_WEB_RENDER_DEVICE_FILE = "/dev/dri/renderD128";
 
   # Force all Mesa GL/EGL/GBM clients (WebKitGTK, Electron/Chromium, etc.) to
   # render on the discrete RX 7900 XTX (0000:03:00.0 / renderD128). The
