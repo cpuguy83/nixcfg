@@ -36,17 +36,7 @@ let
     "bounded-watch" = "read-only";
   };
 
-  codexReasoningEffort = {
-    fast = "low";
-    balanced = "medium";
-    deep = "high";
-  };
-
-  modelFor = harness: role:
-    let
-      modelKey = if role.diverseModel or false then "adversarial" else role.modelClass;
-    in
-    team.models.${harness}.${modelKey};
+  inherit (team) modelFor effortFor;
 
   yamlScalar = value: builtins.toJSON value;
 
@@ -80,9 +70,21 @@ let
     '';
 in
 {
-  inherit codexReasoningEffort;
-
   supportedCapabilityProfiles = lib.attrNames copilotTools;
+
+  # Session-local definitions intentionally override only canonical disk agents.
+  # The two Claude-only wrapper agents retain their on-disk tool guards/hooks.
+  claudeProxiedAgents = builtins.toJSON (lib.mapAttrs
+    (_: role: {
+      inherit (role) description;
+      prompt = role.prompt;
+      model = modelFor "claudeProxied" role;
+      effort = effortFor "claudeProxied" role;
+      tools = claudeTools.${role.capabilityProfile};
+      background = false;
+      permissionMode = "default";
+    })
+    team.roles);
 
   copilotAgent = name: role:
     markdownAgent "${name}.agent.md"
@@ -90,6 +92,7 @@ in
         inherit name;
         inherit (role) description;
         model = modelFor "copilot" role;
+        reasoningEffort = effortFor "copilot" role;
         tools = copilotTools.${role.capabilityProfile};
       }
       role.prompt;
@@ -100,6 +103,7 @@ in
         inherit name;
         inherit (role) description;
         model = modelFor "claude" role;
+        effort = effortFor "claude" role;
         tools = lib.concatStringsSep ", " claudeTools.${role.capabilityProfile};
         background = false;
         permissionMode = "default";
@@ -112,7 +116,7 @@ in
       inherit (role) description;
       developer_instructions = role.prompt;
       model = modelFor "codex" role;
-      model_reasoning_effort = codexReasoningEffort.${role.modelClass};
+      model_reasoning_effort = effortFor "codex" role;
       sandbox_mode = codexSandboxModes.${role.capabilityProfile};
     };
 
@@ -121,7 +125,8 @@ in
       {
         inherit name;
         inherit (role) description;
-        model = team.models.claude.${role.modelClass};
+        model = modelFor "claude" role;
+        effort = effortFor "claude" role;
         tools = claudeWrapperTools.${role.mode};
         background = false;
         permissionMode = "default";
@@ -151,6 +156,37 @@ in
       "---"
       ""
       team.commonInstructions
+      ''
+        ## Model and effort routing
+
+        Copilot dispatch: when the task tool supports overrides, explicitly pass
+        the following model and `reasoning_effort` for each role:
+      ''
+      (lib.concatStringsSep "\n" (lib.mapAttrsToList
+        (name: role: "- `${name}`: model `${modelFor "copilot" role}`, reasoning_effort `${effortFor "copilot" role}`.")
+        team.roles))
+      ''
+        Copilot agent frontmatter uses `reasoningEffort`. Older standalone
+        clients (including 1.0.61) ignore that field; the guidance above only
+        helps clients with task effort overrides and cannot enforce effort on
+        clients without them. Main defaults use settings.json model/effortLevel.
+
+        Native Claude keeps Claude models: Sonnet/medium for main and balanced
+        roles, pinned claude-opus-5/high for deep/reviewer roles, Haiku/low for
+        fast roles. Never substitute Fable. claude-proxied supplies the Copilot
+        model/effort matrix via --agents for canonical names only, intentionally
+        taking precedence over disk definitions without shadowing the two
+        Claude-only guarded review agents.
+
+        Native and proxied Codex use the OpenAI matrix, except their primary
+        reviewer uses ${team.models.codex.reviewer}/${effortFor "codex" team.roles.team-reviewer}.
+        Direct upstream cannot serve Opus, and Opus Responses support on the
+        offline local proxy is unconfirmed. Both isolated Claude-to-Codex
+        reviews are pinned to ${team.isolatedReview.model}/${team.isolatedReview.effort}.
+        On proxied Claude these reviews need not provide model-family diversity.
+        CLI defaults remain overridable by explicit user flags; no blanket
+        Claude subagent model or effort environment override is installed.
+      ''
     ]
   );
 }

@@ -1,15 +1,15 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2086  # $VERBOSE_ARG is intentionally word-split (home-manager idiom)
 #
-# Set Claude's session-wide fallbackModel without taking the file away from
-# Claude itself.
+# Merge owned Claude or Copilot settings without taking the file away from the
+# client. This template is instantiated separately for each client.
 #
 # ~/.claude/settings.json cannot be a home-manager symlink: Claude rewrites it at
 # runtime whenever the user runs /model, /effort or /config. So this merges a
-# single key into whatever is there. The hazard is obvious -- Claude may be
+# small set of owned keys into whatever is there. The client may be
 # writing the same file while activation runs -- and the mitigations are:
 #
-#   * If fallbackModel is already what we want, do nothing at all. This is the
+#   * If the owned keys are already what we want, do nothing at all. This is the
 #     common case on every re-activation, so most runs never write.
 #   * Otherwise capture the file's content hash and inode before reading, and
 #     re-check both immediately before the replacing rename. A concurrent write
@@ -26,65 +26,87 @@ _agentTeamSettingsIdentity() {
   printf '%s %s' "$inode" "$hash"
 }
 
-_agentTeamMergeClaudeSettings() {
-  local settings="$HOME/.claude/settings.json"
-  local chain='@fallbackModel@'
+_agentTeamMergeSettings() {
+  local dir="$HOME/@settingsDir@"
+  local settings="$dir/settings.json"
+  local owned='@ownedSettings@'
   local tmp before after
 
-  if [[ -L $settings ]]; then
-    warnEcho "agent-team: $settings is a symlink; leaving fallbackModel unset"
+  if [[ -L $dir || -L $settings ]]; then
+    warnEcho "agent-team: $dir or $settings is a symlink; leaving settings unchanged"
     return 0
   fi
 
-  run mkdir -p $VERBOSE_ARG "$HOME/.claude"
+  run mkdir -p $VERBOSE_ARG "$dir"
 
   if [[ ! -e $settings ]]; then
     if [[ -v DRY_RUN ]]; then
-      echo "agent-team: would create $settings with fallbackModel $chain"
+      echo "agent-team: would create $settings with $owned"
       return 0
     fi
-    run install -m 600 /dev/null "$settings"
-    printf '{}\n' >"$settings"
+    tmp="$(mktemp "$settings.agent-team.XXXXXX")"
+    printf '%s\n' "$owned" >"$tmp"
+    # Link without replacement: a client creating settings concurrently wins.
+    if ! ln -T -- "$tmp" "$settings"; then
+      warnEcho "agent-team: $settings appeared while creating it; leaving it as-is"
+    fi
+    rm -f "$tmp"
+    return 0
   elif [[ ! -f $settings ]]; then
-    warnEcho "agent-team: $settings is not a regular file; leaving fallbackModel unset"
+    warnEcho "agent-team: $settings is not a regular file; leaving settings unchanged"
     return 0
   fi
 
   # The common case: already correct, so never write at all.
-  if @jq@ -e --argjson chain "$chain" '.fallbackModel == $chain' "$settings" >/dev/null 2>&1; then
-    verboseEcho "agent-team: $settings already has the desired fallbackModel"
+  # shellcheck disable=SC2016  # $owned is a jq variable
+  if @jq@ -e -s --argjson owned "$owned" \
+    'length == 1 and (.[0] | type == "object" and (. + $owned == .))' \
+    "$settings" >/dev/null 2>&1; then
+    verboseEcho "agent-team: $settings already has the desired settings"
     return 0
   fi
 
   # Everything below writes directly rather than through `run`, including the
   # temporary file, so a dry run has to stop before it leaves one behind.
   if [[ -v DRY_RUN ]]; then
-    echo "agent-team: would set fallbackModel $chain in $settings"
+    echo "agent-team: would merge $owned into $settings"
     return 0
   fi
 
   if ! before="$(_agentTeamSettingsIdentity "$settings")"; then
-    warnEcho "agent-team: cannot read $settings; leaving fallbackModel unset"
+    warnEcho "agent-team: cannot read $settings; leaving settings unchanged"
+    return 0
+  fi
+
+  # Reject scalars, arrays, empty streams and multiple JSON documents as well as
+  # malformed JSON. Never turn unexpected input into a partial settings file.
+  if ! @jq@ -e -s 'length == 1 and (.[0] | type == "object")' "$settings" >/dev/null 2>&1; then
+    warnEcho "agent-team: $settings is not a JSON object; leaving settings unchanged"
     return 0
   fi
 
   tmp="$(mktemp "$settings.agent-team.XXXXXX")"
-  if ! @jq@ --argjson chain "$chain" '.fallbackModel = $chain' "$settings" >"$tmp"; then
+  # shellcheck disable=SC2016  # $owned is a jq variable
+  if ! @jq@ -e -s --argjson owned "$owned" \
+    'if length == 1 and (.[0] | type == "object") then .[0] + $owned else error("expected one object") end' \
+    "$settings" >"$tmp"; then
     rm -f "$tmp"
-    warnEcho "agent-team: $settings is not valid JSON; leaving fallbackModel unset"
-    return 0
-  fi
-
-  # Last check before the swap. Anything Claude wrote since the read above is
-  # still on disk, and abandoning here preserves it.
-  if ! after="$(_agentTeamSettingsIdentity "$settings")" || [[ $after != "$before" ]]; then
-    rm -f "$tmp"
-    warnEcho "agent-team: $settings changed while merging fallbackModel; leaving it as-is"
+    warnEcho "agent-team: $settings is not a JSON object; leaving settings unchanged"
     return 0
   fi
 
   run chmod $VERBOSE_ARG --reference="$settings" "$tmp"
+
+  # Last check before the swap. Anything the client wrote since the read above is
+  # still on disk, and abandoning here preserves it.
+  if [[ -L $dir || -L $settings ]] \
+    || ! after="$(_agentTeamSettingsIdentity "$settings")" || [[ $after != "$before" ]]; then
+    rm -f "$tmp"
+    warnEcho "agent-team: $settings changed while merging; leaving it as-is"
+    return 0
+  fi
+
   run mv $VERBOSE_ARG "$tmp" "$settings"
 }
 
-_agentTeamMergeClaudeSettings
+_agentTeamMergeSettings

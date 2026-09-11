@@ -11,12 +11,17 @@ let
     inherit lib pkgs;
     codexPackage = pkgs-unstable.codex;
     cfg = cfg.codex;
+    routing = team.isolatedReview;
   };
 
   renderers = import ./renderers.nix {
     inherit lib pkgs team;
     inherit (codexReview) guard;
     wrapperPath = "${codexReview.review}/bin/codex-team-review";
+  };
+
+  cli = import ./cli.nix {
+    inherit lib pkgs pkgs-unstable team renderers;
   };
 
   roleFiles = lib.concatMapAttrs
@@ -60,12 +65,14 @@ let
     "fast"
     "balanced"
     "deep"
+    "reviewer"
   ];
   modelKeys = modelClasses ++ [ "adversarial" ];
   modelHarnesses = [
     "copilot"
     "claude"
     "codex"
+    "claudeProxied"
   ];
   allHandoffs = lib.concatMap (role: role.handoffs) (lib.attrValues roles);
 
@@ -75,12 +82,23 @@ let
   # /config all persist there), so it cannot become a read-only store symlink.
   # There is no drop-in directory for user-scope settings either: managed-settings
   # is system scope and outranks even CLI flags, which would take the override
-  # away from the user. So merge the one key we own into the file in place,
+  # away from the user. So merge only the keys we own into the file in place,
   # atomically, and leave everything else exactly as the user left it.
   mergeClaudeFallbackModel = substituteScript
     {
       "@jq@" = "${pkgs.jq}/bin/jq";
-      "@fallbackModel@" = builtins.toJSON cfg.claude.fallbackModel;
+      "@settingsDir@" = ".claude";
+      "@ownedSettings@" = builtins.toJSON { fallbackModel = cfg.claude.fallbackModel; };
+    } ./claude-settings.sh;
+
+  mergeCopilotDefaults = substituteScript
+    {
+      "@jq@" = "${pkgs.jq}/bin/jq";
+      "@settingsDir@" = ".copilot";
+      "@ownedSettings@" = builtins.toJSON {
+        model = team.defaults.copilot.model;
+        effortLevel = team.defaults.copilot.effort;
+      };
     } ./claude-settings.sh;
 in
 {
@@ -173,7 +191,32 @@ in
         assertion = lib.all
           (role: lib.elem role.modelClass modelClasses)
           (lib.attrValues roles);
-        message = "agent-team: every role must use fast, balanced, or deep";
+        message = "agent-team: every role must use fast, balanced, deep, or reviewer";
+      }
+      {
+        assertion = lib.all
+          (role: lib.elem role.reasoningEffort [ "low" "medium" "high" "xhigh" ])
+          (lib.attrValues roles ++ lib.attrValues team.claudeOnlyRoles);
+        message = "agent-team: every role must declare a supported reasoning effort (not max)";
+      }
+      {
+        assertion = lib.all
+          (model: lib.elem model [ "sonnet" "haiku" "claude-opus-5" ])
+          (lib.attrValues team.models.claude)
+          && lib.all
+          (role: lib.elem (team.effortFor "claude" role) [ "low" "medium" "high" ])
+          (lib.attrValues roles ++ lib.attrValues team.claudeOnlyRoles);
+        message = "agent-team: native Claude must stay Claude-only, without Fable or xhigh";
+      }
+      {
+        assertion = lib.attrNames (builtins.fromJSON renderers.claudeProxiedAgents) == roleNames;
+        message = "agent-team: proxy JSON must override only the canonical roles, not guarded Claude-only agents";
+      }
+      {
+        assertion = team.isolatedReview == { model = "gpt-6-astra"; effort = "xhigh"; }
+          && team.modelFor "codex" roles.team-reviewer == team.isolatedReview.model
+          && team.effortFor "codex" roles.team-reviewer == team.isolatedReview.effort;
+        message = "agent-team: Codex reviews must use Astra/xhigh until Opus Responses support is established";
       }
       {
         assertion = lib.all
@@ -282,7 +325,7 @@ in
       }
     ];
 
-    home.packages = lib.mkIf cfg.codex.enable [ codexReview.review ];
+    home.packages = cli.packages ++ lib.optional cfg.codex.enable codexReview.review;
 
     home.file = roleFiles // globalFiles
       // (lib.optionalAttrs cfg.codex.enable claudeOnlyFiles);
@@ -302,5 +345,8 @@ in
 
     home.activation.agentTeamClaudeSettings =
       lib.hm.dag.entryAfter [ "writeBoundary" ] mergeClaudeFallbackModel;
+
+    home.activation.agentTeamCopilotSettings =
+      lib.hm.dag.entryAfter [ "writeBoundary" ] mergeCopilotDefaults;
   };
 }

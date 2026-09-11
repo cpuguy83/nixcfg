@@ -30,45 +30,6 @@ let
       exec ghostty --working-directory="$dir"
     '';
   };
-
-  # Run claude/codex against the local vekil proxy (GitHub Copilot backend)
-  # instead of the real Anthropic/OpenAI APIs. vekil listens on localhost:1337
-  # and doesn't check the API key, so a dummy value is used.
-  codex-proxied = pkgs.writeShellApplication {
-    name = "codex-proxied";
-    runtimeInputs = [ pkgs-unstable.codex ];
-    text = ''
-      exec codex \
-        -c 'model_provider="proxy"' \
-        -c 'model_providers.proxy.name="Local Proxy"' \
-        -c 'model_providers.proxy.base_url="http://localhost:1337/v1"' \
-        "$@"
-    '';
-  };
-
-  # The Codex Claude Code plugin hardcodes the binary name `codex` (it runs
-  # `codex app-server` and `codex --version`) and offers no setting to point at
-  # a different one, so under plain claude-proxied it would bypass vekil and hit
-  # the real OpenAI API. Expose the proxied wrapper under that name instead.
-  # Deliberately kept out of home.packages: this only shadows `codex` inside
-  # claude-proxied's PATH, so a normal shell still gets the unproxied CLI.
-  codex-proxied-shim = pkgs.runCommand "codex-proxied-shim" { } ''
-    mkdir -p "$out/bin"
-    ln -s ${codex-proxied}/bin/codex-proxied "$out/bin/codex"
-  '';
-
-  claude-proxied = pkgs.writeShellApplication {
-    name = "claude-proxied";
-    runtimeInputs = [
-      pkgs-unstable.claude-code
-      codex-proxied-shim
-    ];
-    text = ''
-      export ANTHROPIC_BASE_URL="http://localhost:1337"
-      export ANTHROPIC_API_KEY="dummy"
-      exec claude "$@"
-    '';
-  };
 in
 {
   home.stateVersion = "24.11";
@@ -104,13 +65,6 @@ in
     # discord
     # legcord
 
-    # Just needed for copilot
-    nodejs_24
-
-    pkgs-unstable.codex
-    pkgs-unstable.claude-code
-    claude-proxied
-    codex-proxied
     (pkgs.symlinkJoin {
       name = "opencode-wrapped";
       paths = [ pkgs.opencode ];
@@ -127,22 +81,6 @@ in
               pkgs.tree
               pkgs.curl
               pkgs.bat
-            ]
-          }"
-      '';
-    })
-    (pkgs.symlinkJoin {
-      name = "github-copilot-cli-wrapped";
-      paths = [ pkgs-unstable.github-copilot-cli ];
-      nativeBuildInputs = [ pkgs.makeWrapper ];
-      postBuild = ''
-        wrapProgram $out/bin/copilot \
-          --prefix LD_LIBRARY_PATH : "${
-            pkgs.lib.makeLibraryPath [
-              pkgs.libsecret
-              pkgs.glib
-              pkgs.stdenv.cc.cc.lib
-              pkgs.openssl
             ]
           }"
       '';

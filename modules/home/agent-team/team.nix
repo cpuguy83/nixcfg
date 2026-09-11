@@ -1,4 +1,4 @@
-{
+rec {
   expectedRoleNames = [
     "team-adversarial-reviewer"
     "team-architect"
@@ -14,25 +14,47 @@
   models = {
     copilot = {
       fast = "gpt-5.6-luna";
-      balanced = "gpt-5.6-terra";
-      deep = "gpt-5.6-sol";
-      adversarial = "claude-opus-5";
+      balanced = "gpt-6-astra";
+      deep = "gpt-6-astra";
+      adversarial = "gpt-6-astra";
+      reviewer = "claude-opus-5";
     };
     claude = {
       fast = "haiku";
       balanced = "sonnet";
-      deep = "opus";
-      # `fable` is a documented alias but is not available through the local
-      # review proxy this host routes Claude through. Model diversity for
-      # adversarial review now comes from the Codex reviewers instead.
-      adversarial = "opus";
+      deep = "claude-opus-5";
+      adversarial = "claude-opus-5";
+      reviewer = "claude-opus-5";
     };
     codex = {
       fast = "gpt-5.6-luna";
-      balanced = "gpt-5.6-terra";
-      deep = "gpt-5.6-sol";
-      adversarial = "gpt-5.4";
+      balanced = "gpt-6-astra";
+      deep = "gpt-6-astra";
+      adversarial = "gpt-6-astra";
+      # Direct upstream cannot serve Opus; proxy Responses support is unconfirmed.
+      reviewer = "gpt-6-astra";
     };
+    claudeProxied = models.copilot;
+  };
+
+  modelFor = harness: role:
+    models.${harness}.${if role.diverseModel or false then "adversarial" else role.modelClass};
+
+  effortFor = harness: role:
+    if harness == "claude" && role.reasoningEffort == "xhigh" then "high"
+    else if harness == "codex" && role.modelClass == "reviewer" then "xhigh"
+    else role.reasoningEffort;
+
+  main = { modelClass = "balanced"; reasoningEffort = "medium"; };
+  defaults = builtins.mapAttrs
+    (harness: _: {
+      model = modelFor harness main;
+      effort = effortFor harness main;
+    })
+    models;
+  isolatedReview = {
+    model = modelFor "codex" roles.team-adversarial-reviewer;
+    effort = effortFor "codex" roles.team-adversarial-reviewer;
   };
 
   commonInstructions = ''
@@ -137,7 +159,8 @@
     - `team-adversarial-reviewer` challenges assumptions using an independent
       reasoning path.
     - `team-pr-operator` performs explicitly authorized git and pull-request
-      operations.
+      operations; substantive conflict resolution goes back through the parent
+      to `team-implementer`, not to the PR operator.
     - `team-watcher` performs one bounded observation cycle and exits.
 
     On Claude only, two further agents consult a second model family:
@@ -211,6 +234,7 @@
       roleName = "Codex design reviewer";
       description = "Gets an independent Codex opinion on a design before any code is written. Use automatically for every non-trivial task, after exploration and before implementing or finalizing a plan.";
       modelClass = "balanced";
+      reasoningEffort = "medium";
       mode = "design";
       prompt = ''
         You obtain a second opinion on a design from Codex, a different model
@@ -262,8 +286,9 @@
 
     "team-codex-final-reviewer" = {
       roleName = "Codex final reviewer";
-      description = "Gets an independent Codex adversarial review of the finished working-tree changes. Use automatically after implementation and tests are complete, alongside the Opus adversarial reviewer.";
+      description = "Gets an independent Codex adversarial review of the finished working-tree changes. Use automatically after implementation and tests are complete, alongside the adversarial reviewer.";
       modelClass = "balanced";
+      reasoningEffort = "medium";
       mode = "final";
       prompt = ''
         You obtain an independent adversarial review of finished work from
@@ -300,6 +325,7 @@
       roleName = "organizer";
       description = "Decomposes non-trivial work, selects specialists, and coordinates evidence-based handoffs.";
       modelClass = "balanced";
+      reasoningEffort = "medium";
       capabilityProfile = "orchestrator-readonly";
       handoffs = [
         "team-architect"
@@ -334,6 +360,7 @@
       roleName = "architect";
       description = "Designs implementation-ready changes grounded in repository structure and constraints.";
       modelClass = "deep";
+      reasoningEffort = "xhigh";
       capabilityProfile = "analysis-readonly";
       handoffs = [
         "team-implementer"
@@ -361,6 +388,7 @@
       roleName = "debugger";
       description = "Reproduces failures, traces them to a demonstrated root cause, and proposes a focused fix.";
       modelClass = "deep";
+      reasoningEffort = "high";
       capabilityProfile = "read-execute";
       handoffs = [
         "team-implementer"
@@ -388,6 +416,7 @@
       roleName = "implementer";
       description = "Makes focused repository changes that follow the approved design and local conventions.";
       modelClass = "balanced";
+      reasoningEffort = "medium";
       capabilityProfile = "read-write-execute";
       handoffs = [
         "team-verifier"
@@ -415,6 +444,7 @@
       roleName = "verifier";
       description = "Validates the requested outcome with focused, reproducible checks and exact results.";
       modelClass = "fast";
+      reasoningEffort = "low";
       capabilityProfile = "read-execute";
       handoffs = [
         "team-debugger"
@@ -441,7 +471,8 @@
     "team-reviewer" = {
       roleName = "reviewer";
       description = "Reviews a concrete change for correctness, regressions, and requirement coverage.";
-      modelClass = "balanced";
+      modelClass = "reviewer";
+      reasoningEffort = "high";
       capabilityProfile = "review-readonly";
       handoffs = [
         "team-implementer"
@@ -468,6 +499,7 @@
       roleName = "adversarial reviewer";
       description = "Challenges assumptions and seeks counterexamples using an independent reasoning path.";
       modelClass = "deep";
+      reasoningEffort = "xhigh";
       diverseModel = true;
       capabilityProfile = "adversarial-readonly";
       handoffs = [
@@ -497,8 +529,9 @@
       roleName = "PR operator";
       description = "Performs explicitly authorized git and pull-request operations with narrow scope.";
       modelClass = "fast";
+      reasoningEffort = "low";
       capabilityProfile = "git-pr-scoped";
-      handoffs = [ ];
+      handoffs = [ "team-implementer" ];
       prompt = ''
         You are the PR operator.
 
@@ -512,6 +545,10 @@
         protected/default branch, merge, or close work without explicit
         authorization for that exact action.
 
+        If a git operation needs substantive conflict resolution or code changes,
+        stop and return the conflict and repository state to the parent for
+        `team-implementer`. Do not resolve implementation decisions yourself.
+
         Keep commit messages and pull-request descriptions concise and focused
         on why the change exists. Do not add AI attribution, co-author, session,
         or similar trailers unless the user explicitly requests them. Report
@@ -523,6 +560,7 @@
       roleName = "watcher";
       description = "Performs one bounded status or event observation and reports changes without persisting.";
       modelClass = "fast";
+      reasoningEffort = "low";
       capabilityProfile = "bounded-watch";
       handoffs = [
         "team-organizer"

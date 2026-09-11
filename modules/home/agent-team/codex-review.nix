@@ -1,4 +1,4 @@
-{ lib, pkgs, codexPackage, cfg }:
+{ lib, pkgs, codexPackage, cfg, routing }:
 
 # A deliberately rigid front end for `codex exec`.
 #
@@ -77,6 +77,9 @@ rec {
 
     text = substitute [
       { from = "@baseUrl@"; to = cfg.baseUrl; }
+      { from = "@codex@"; to = "${codexPackage}/bin/codex"; }
+      { from = "@model@"; to = routing.model; }
+      { from = "@effort@"; to = routing.effort; }
       { from = "@timeoutSeconds@"; to = toString cfg.timeoutSeconds; }
       { from = "@maxBriefBytes@"; to = toString cfg.maxBriefBytes; }
       { from = "@maxBriefAgeSeconds@"; to = toString cfg.maxBriefAgeSeconds; }

@@ -238,7 +238,9 @@ run_codex() {
   # Errors still surface on stderr.
   #
   # shellcheck disable=SC2016
-  CODEX_HOME="$codexhome" timeout "$TIMEOUT" codex \
+  CODEX_HOME="$codexhome" timeout "$TIMEOUT" @codex@ \
+    -c 'model="@model@"' \
+    -c 'model_reasoning_effort="@effort@"' \
     -c 'model_provider="proxy"' \
     -c 'model_providers.proxy.name="Local Proxy"' \
     -c "model_providers.proxy.base_url=\"$BASE_URL\"" \
