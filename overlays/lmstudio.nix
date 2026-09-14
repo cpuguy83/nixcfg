@@ -19,8 +19,6 @@ in
     inherit version src meta;
     passthru.updateScript = pkgs-unstable.lmstudio.updateScript;
 
-    nativeBuildInputs = [ final.graphicsmagick ];
-
     extraPkgs = pkgs: [
       pkgs.ocl-icd
       pkgs.numactl # libnuma.so.1
@@ -28,21 +26,17 @@ in
     ];
 
     extraInstallCommands = ''
-      mkdir -p $out/share/applications
+      # upstream ships pre-rendered icons for every hicolor size
+      mkdir -p $out/share/icons
+      cp -r ${appimageContents}/usr/share/icons/hicolor $out/share/icons/
 
-      src_icon="${appimageContents}/usr/share/icons/hicolor/0x0/apps/lm-studio.png"
-      sizes=("16x16" "32x32" "48x48" "64x64" "128x128" "256x256")
-      for size in "''${sizes[@]}"; do
-        install -dm755 "$out/share/icons/hicolor/$size/apps"
-        gm convert "$src_icon" -resize "$size" "$out/share/icons/hicolor/$size/apps/lm-studio.png"
-      done
-
-      install -m 444 -D ${appimageContents}/lm-studio.desktop -t $out/share/applications
+      install -m 444 -D ${appimageContents}/ai.elementlabs.lmstudio.desktop \
+        -t $out/share/applications
 
       mv $out/bin/lmstudio $out/bin/lm-studio
 
-      substituteInPlace $out/share/applications/lm-studio.desktop \
-        --replace-fail 'Exec=AppRun --no-sandbox %U' 'Exec=lm-studio'
+      substituteInPlace $out/share/applications/ai.elementlabs.lmstudio.desktop \
+        --replace-fail 'Exec=AppRun %U' 'Exec=lm-studio %U'
 
       install -m 755 ${appimageContents}/resources/app/.webpack/lms $out/bin/
 
