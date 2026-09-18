@@ -19,6 +19,8 @@
 # review tool is too easy to mistake for approval.
 
 let
+  tempEnv = import ./temp-env.nix { inherit pkgs; };
+
   designPreamble = pkgs.writeText "codex-design-review-preamble" ''
     You are an independent design reviewer. Another engineering agent produced
     the brief below before writing any code. Do not write or modify files.
@@ -75,7 +77,10 @@ rec {
       pkgs.findutils
     ];
 
-    text = substitute [
+    text = ''
+      # shellcheck source=/dev/null
+      source ${tempEnv} codex
+    '' + substitute [
       { from = "@baseUrl@"; to = cfg.baseUrl; }
       { from = "@codex@"; to = "${codexPackage}/bin/codex"; }
       { from = "@model@"; to = routing.model; }

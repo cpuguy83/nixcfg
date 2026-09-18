@@ -17,6 +17,11 @@ File structure matters.
 Indirection makes things more difficult to reason about.
 Lazy changes (like wrapping an un-exported function with an exported version of it) should be avoided.
 
+Optimize code for human readability, not minimum line count. Preserve blank
+lines between logical sections, keep distinct operations on separate lines,
+and avoid dense one-liners. Follow surrounding formatting conventions.
+Brevity guidance applies to prose, not source code.
+
 
 ## Planning
 
@@ -34,6 +39,21 @@ Planning documents should not be stored in session specific directories or files
 Planning documents may span multiple sessions.
 
 Plan mode is for planning, no file should ever be modified while in plan mode.
+
+## Temporary work
+
+Use `$TMPDIR` for disposable task files. Create one recognizable project-and-purpose
+scratch directory with `mktemp -d "$TMPDIR/<project>-<purpose>.XXXXXX"` (replace the
+placeholders, for example `nixcfg-agent-temp-check.XXXXXX`). Keep task scratch
+inside it rather than using random or generic names alone, hardcoding shared
+`/tmp` or `/var/tmp`, or scattering disposable files through repositories.
+If `TMPDIR` is missing, report the configuration gap instead of choosing a fallback.
+
+Respect exact paths issued by constrained tools, including Codex review briefs.
+Temporary files needed for atomic replacement must stay beside their destination.
+Plans and other durable work belong in their normal persistent locations, not
+scratch. Temporary storage does not grant deletion permission or override any
+existing filesystem, tool, or security restrictions.
 
 ## Security
 

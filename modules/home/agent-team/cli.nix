@@ -1,6 +1,8 @@
 { lib, pkgs, pkgs-unstable, team, renderers }:
 
 let
+  tempEnv = import ./temp-env.nix { inherit pkgs; };
+
   # Config overrides are global Codex options, valid for utility commands and
   # app-server too. Do not use interactive-only --model/--profile flags here.
   # Explicit profiles supply their own defaults. Later user -c overrides (and
@@ -8,6 +10,9 @@ let
   codexWrapper = name: proxied: pkgs.writeShellApplication {
     inherit name;
     text = ''
+      # shellcheck source=/dev/null
+      source ${tempEnv} codex
+
       defaults=(
         -c ${lib.escapeShellArg "model=${builtins.toJSON team.defaults.codex.model}"}
         -c ${lib.escapeShellArg "model_reasoning_effort=${builtins.toJSON team.defaults.codex.effort}"}
@@ -47,7 +52,10 @@ let
     pkgs.writeShellApplication {
       inherit name;
       runtimeInputs = lib.optional proxied codex-proxied-shim;
-      text = lib.optionalString proxied ''
+      text = ''
+        # shellcheck source=/dev/null
+        source ${tempEnv} claude
+      '' + lib.optionalString proxied ''
         export ANTHROPIC_BASE_URL="http://localhost:1337"
         export ANTHROPIC_API_KEY="dummy"
       '' + lib.replaceStrings
@@ -62,6 +70,7 @@ let
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/copilot \
+        --run ${lib.escapeShellArg "source ${tempEnv} copilot"} \
         --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [
           pkgs.libsecret
           pkgs.glib

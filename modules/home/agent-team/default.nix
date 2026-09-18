@@ -58,6 +58,7 @@ let
       "@storeDir@" = builtins.storeDir;
       "@targets@" = lib.concatStringsSep " " (
         map (p: ''"$HOME"/${lib.escapeShellArg p}'') (lib.attrNames globalFiles)
+        ++ [ (lib.escapeShellArg "${config.xdg.configHome}/opencode/AGENTS.md") ]
       );
     } ./takeover.sh;
 
@@ -329,6 +330,10 @@ in
 
     home.file = roleFiles // globalFiles
       // (lib.optionalAttrs cfg.codex.enable claudeOnlyFiles);
+
+    # OpenCode has no rendered team roles. Its supported XDG global rules
+    # override the Claude fallback, so install only the generic instructions.
+    xdg.configFile."opencode/AGENTS.md".source = ./global-instructions.md;
 
     home.activation.agentTeamGlobalInstructions =
       lib.hm.dag.entryBefore [ "checkLinkTargets" ] takeOverGlobalInstructions;

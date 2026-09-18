@@ -52,14 +52,7 @@ unset OPENAI_API_KEY ANTHROPIC_API_KEY AZURE_OPENAI_API_KEY \
 # `~/.ssh/id_ed25519`, because a brief path is a fixed prefix plus 32 hex
 # characters, and no other path can be spelled that way.
 resolve_brief_dir() {
-  local base dir perms
-
-  if [ -n "${XDG_RUNTIME_DIR:-}" ] && [ -d "$XDG_RUNTIME_DIR" ] && [ -O "$XDG_RUNTIME_DIR" ]; then
-    base=$XDG_RUNTIME_DIR
-  else
-    base=$HOME/.cache
-  fi
-  dir=$base/codex-team-review
+  local dir=$TMPDIR/codex-team-review perms
 
   if [ -L "$dir" ]; then
     reject "brief directory $dir is a symlink"
@@ -94,8 +87,8 @@ resolve_brief_dir() {
 # review started. There is then nothing to poison: anything planted earlier is
 # in some other directory, and this one is removed when the run ends.
 #
-# It lives under ~/.cache rather than the brief directory because that one may be
-# on tmpfs, and codex refuses to create its helper binaries under a temporary dir.
+# Keep this separate from TMPDIR: Codex release builds refuse to create alias
+# helper binaries beneath the temporary root, regardless of filesystem type.
 new_codex_home() {
   local base=$HOME/.cache/codex-team-review-home dir perms minutes
 

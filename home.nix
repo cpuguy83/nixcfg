@@ -7,6 +7,26 @@
 }:
 
 let
+  agentTempEnv = import ./modules/home/agent-team/temp-env.nix { inherit pkgs; };
+
+  copilotDesktop = pkgs.symlinkJoin {
+    name = "github-copilot-desktop-wrapped";
+    paths = [ pkgs.github-copilot ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/github \
+        --run ${lib.escapeShellArg "source ${agentTempEnv} copilot"}
+
+      # Materialize the entry before editing: symlinkJoin leaves store symlinks.
+      # Retain metadata, action arguments, resources and the credential helper.
+      desktop="$out/share/applications/GitHub Copilot.desktop"
+      cp --remove-destination "${pkgs.github-copilot}/share/applications/GitHub Copilot.desktop" "$desktop"
+      chmod u+w "$desktop"
+      substituteInPlace "$desktop" \
+        --replace-fail "Exec=${pkgs.github-copilot}/bin/github" "Exec=$out/bin/github"
+    '';
+  };
+
   darkMode = true;
   themeSuffix = if darkMode then "Dark" else "Light";
   colorScheme = if darkMode then "prefer-dark" else "prefer-light";
@@ -59,7 +79,7 @@ in
 
     gcr
 
-    github-copilot
+    copilotDesktop
     ghostty-open
 
     # discord
@@ -71,6 +91,7 @@ in
       nativeBuildInputs = [ pkgs.makeWrapper ];
       postBuild = ''
         wrapProgram $out/bin/opencode \
+          --run ${lib.escapeShellArg "source ${agentTempEnv} opencode"} \
           --prefix PATH : "${
             pkgs.lib.makeBinPath [
               pkgs.python3

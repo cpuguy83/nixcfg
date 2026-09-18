@@ -6,17 +6,33 @@ retained; no personal configuration, credentials, or inference is used.
 """
 
 import json
+import os
 from pathlib import Path
 import re
+import shlex
+import stat
 import subprocess
+import sys
 import tempfile
 import tomllib
 
 
 ROOT = Path(__file__).resolve().parents[3]
+# Retain tests in their own harness; never touch live claude/codex/etc scratch.
+test_root = Path("/tmp/ai-agent-tmp/agent-team-tests")
+for directory in (test_root.parent, test_root):
+    directory.mkdir(mode=0o700, exist_ok=True)
+    info = directory.lstat()
+    assert stat.S_ISDIR(info.st_mode) and info.st_uid == os.getuid()
+    assert stat.S_IMODE(info.st_mode) == 0o700, directory
+fixture = Path(tempfile.mkdtemp(prefix="nixcfg-routing.", dir=test_root))
+print(f"Retained synthetic fixtures: {fixture}", flush=True)
+build_env = os.environ | {key: str(fixture) for key in ("TMPDIR", "TMP", "TEMP")}
+
 PACKAGES = [
     "codex", "codex-proxied", "claude", "claude-proxied",
     "github-copilot-cli-wrapped", "codex-team-review",
+    "github-copilot-desktop-wrapped", "opencode-wrapped",
 ]
 PREFIX = f"""
 let f = builtins.getFlake {json.dumps("path:" + str(ROOT))};
@@ -32,6 +48,7 @@ in
 
 
 def command(args, **kwargs):
+    kwargs.setdefault("env", build_env)
     return subprocess.run(args, check=True, stdout=subprocess.PIPE, **kwargs).stdout
 
 
@@ -48,13 +65,17 @@ data = evaluate("""
   failures = map (a: a.message) (builtins.filter (a: !a.assertion) c.assertions);
   copilotSettings = c.home.activation.agentTeamCopilotSettings.data;
   claudeSettings = c.home.activation.agentTeamClaudeSettings.data;
+  takeover = c.home.activation.agentTeamGlobalInstructions.data;
+  opencodeInstructions = toString c.xdg.configFile."opencode/AGENTS.md".source;
+  opencodeTarget = c.xdg.configHome + "/opencode/AGENTS.md";
+  desktopOriginal = toString f.nixosConfigurations.yavin4.pkgs.github-copilot;
 }
 """)
 assert data["failures"] == [], data["failures"]
 subprocess.run([
     "nix", "build", "--no-link", "--impure", "--expr",
     PREFIX + "packages ++ builtins.attrValues files",
-], check=True)
+], check=True, env=build_env)
 
 ASTRA, LUNA, OPUS = "gpt-6-astra", "gpt-5.6-luna", "claude-opus-5"
 expected = {
@@ -105,21 +126,53 @@ for mode in ("design", "final"):
     assert agent["tools"] == ("Bash, Write, Read" if mode == "design" else "Bash")
 print("PASS: 27 canonical artifacts, two guarded agents, dispatch guidance, HM assertions")
 
-fixture = Path(tempfile.mkdtemp(prefix="agent-routing-tests."))
-print(f"Retained synthetic fixtures: {fixture}", flush=True)
-env = {"HOME": str(fixture), "PATH": "/run/current-system/sw/bin", "LC_ALL": "C"}
+env = {
+    "HOME": str(fixture), "PATH": "/run/current-system/sw/bin", "LC_ALL": "C",
+    "TMPDIR": "/incoming/tmpdir", "TMP": "/incoming/tmp", "TEMP": "/incoming/temp",
+}
+
+BINARIES = {
+    "github-copilot-cli-wrapped": "copilot",
+    "github-copilot-desktop-wrapped": "github",
+    "opencode-wrapped": "opencode",
+}
 
 
 def wrapper(name):
-    return (Path(data["packages"][name]) / "bin" / name).read_text()
+    return (Path(data["packages"][name]) / "bin" / BINARIES.get(name, name)).read_text()
+
+
+setup_path = re.search(r"source (\S+) codex", wrapper("codex")).group(1)
+setup = Path(setup_path).read_text()
+assert "base=/tmp/ai-agent-tmp\n" in setup
+temp_base = fixture / "agent-temp"
+test_setup = fixture / "temp-env.sh"
+test_setup.write_text(setup.replace("base=/tmp/ai-agent-tmp\n", f"base={temp_base}\n"))
+
+
+def isolated(script):
+    # The built policy has the literal production root. Substitute only that
+    # root in a fixture copy, so error tests cannot damage real agent scratch.
+    assert setup_path in script
+    return script.replace(setup_path, str(test_setup))
 
 
 def capture(name, args):
     # Replace only the exact raw exec target in memory, not any on-disk wrapper.
     script, count = re.subn(r"exec /nix/store/[^ \n]+/bin/(?:claude|codex)\b", "capture", wrapper(name))
     assert count == 1, name
+    harness = name.split("-")[0]
+    prelude = f"""
+capture() {{
+  [[ $TMPDIR == {temp_base}/{harness} && $TMP == "$TMPDIR" && $TEMP == "$TMPDIR" ]]
+  [[ $PWD == {fixture} && $(umask) == 0027 ]]
+  {"[[ $CLAUDE_CODE_TMPDIR == $TMPDIR ]]" if harness == "claude" else ":"}
+  printf '%s\\0' "$@"
+}}
+umask 027
+"""
     output = command([
-        "bash", "-c", "capture() { printf '%s\\0' \"$@\"; }\n" + script, name, *args,
+        "bash", "-c", prelude + isolated(script), name, *args,
     ], env=env, cwd=fixture)
     return output.decode().rstrip("\0").split("\0")
 
@@ -192,18 +245,123 @@ print("PASS: wrapper argv defaults/overrides/utilities, proxy JSON/shim, isolate
 # Do not invoke utilities that inspect credentials. Help/version alone exit
 # without inference. app-server --help checks the plugin entry path, not a server.
 for name in ("claude", "claude-proxied", "codex", "codex-proxied"):
-    binary = str(Path(data["packages"][name]) / "bin" / name)
     for args in (["--version"], ["--help"]):
-        assert command([binary, *args], env=env, cwd=fixture)
+        assert command(["bash", "-c", isolated(wrapper(name)), name, *args], env=env, cwd=fixture)
     if name.startswith("codex"):
-        assert b"app-server" in command([binary, "app-server", "--help"], env=env, cwd=fixture)
+        assert b"app-server" in command([
+            "bash", "-c", isolated(wrapper(name)), name, "app-server", "--help",
+        ], env=env, cwd=fixture)
 print("PASS: real wrapper help/version and Codex app-server help (synthetic HOME)")
+
+# makeWrapper launchers retain argv/library/PATH setup and use the same policy.
+for name, binary in BINARIES.items():
+    script = isolated(wrapper(name))
+    script, count = re.subn(
+        r'^exec -a "\$0" "/nix/store/[^"\n]+"  "\$@"[ \t]*$',
+        'capture "$@"', script, flags=re.MULTILINE,
+    )
+    assert count == 1, name
+    expected_root = temp_base / ("opencode" if binary == "opencode" else "copilot")
+    output = command([
+        "bash", "-c",
+        'capture() { printf "%s\\0" "$TMPDIR" "$TMP" "$TEMP" "$@"; }\n' + script,
+        binary, "--version", "argument with spaces",
+    ], env=env, cwd=fixture).decode().rstrip("\0").split("\0")
+    assert output == [str(expected_root)] * 3 + ["--version", "argument with spaces"]
+
+desktop_package = Path(data["packages"]["github-copilot-desktop-wrapped"])
+original_package = Path(data["desktopOriginal"])
+desktop_name = "share/applications/GitHub Copilot.desktop"
+desktop = (desktop_package / desktop_name).read_text()
+original = (original_package / desktop_name).read_text()
+assert desktop == original.replace(
+    f"Exec={original_package}/bin/github", f"Exec={desktop_package}/bin/github",
+)
+assert f"Exec={desktop_package}/bin/github" in desktop
+assert f"Exec={original_package}/bin/github" not in desktop
+assert (desktop_package / "bin/git-credential-copilot").resolve() == (
+    original_package / "bin/git-credential-copilot"
+).resolve()
+assert (desktop_package / "lib").is_dir()
+
+for harness in ("claude", "codex", "copilot", "opencode"):
+    directory = temp_base / harness
+    info = directory.stat()
+    assert stat.S_IMODE(info.st_mode) == 0o700 and info.st_uid == os.getuid()
+assert stat.S_IMODE(temp_base.stat().st_mode) == 0o700
+
+# No cleanup: a later launch leaves unrelated scratch and directory inode alone.
+sentinel = temp_base / "codex/keep"
+sentinel.write_text("retained")
+before = (temp_base / "codex").stat().st_ino
+capture("codex", ["--version"])
+assert sentinel.read_text() == "retained"
+assert (temp_base / "codex").stat().st_ino == before
+
+# Parent state is unaffected; sourcing also restores positional arguments.
+command([
+    "bash", "-c", f"""
+umask 027
+set -- parent arguments
+bash -c {shlex.quote(isolated(wrapper("codex")).replace('exec ', 'true ', 1))} child --version
+[[ $TMPDIR == /incoming/tmpdir && $TMP == /incoming/tmp && $TEMP == /incoming/temp ]]
+[[ $(umask) == 0027 && $PWD == {fixture} && $* == 'parent arguments' ]]
+source {test_setup} codex
+[[ $* == 'parent arguments' && $(umask) == 0027 && $PWD == {fixture} ]]
+""",
+], env=env, cwd=fixture)
+
+# Invalid base AND harness topologies fail before a target can be reached.
+for level in ("base", "harness"):
+    for kind in ("symlink", "file", "public", "special-mode", "missing-parent"):
+        case = fixture / f"invalid-{level}-{kind}"
+        case.mkdir()
+        base = case / "base"
+        bad = base if level == "base" else base / "codex"
+        if level == "harness":
+            base.mkdir(mode=0o700)
+        if kind == "symlink":
+            bad.symlink_to(temp_base / "codex", target_is_directory=True)
+        elif kind == "file":
+            bad.write_text("not a directory")
+        elif kind in ("public", "special-mode"):
+            bad.mkdir(mode=0o700)
+            bad.chmod(0o755 if kind == "public" else 0o1700)
+        else:
+            # A missing ancestor must not be created via mkdir -p.
+            base = case / "absent/base"
+        invalid_setup = setup.replace("base=/tmp/ai-agent-tmp\n", f"base={base}\n")
+        result = subprocess.run([
+            "bash", "-c", invalid_setup + "\nprintf REACHED", "test", "codex",
+        ], env=env, cwd=fixture, capture_output=True)
+        assert result.returncode != 0 and b"agent-temp:" in result.stderr
+        assert b"REACHED" not in result.stdout
+
+# The system root is foreign-owned for a normal user; validation must reject it
+# before trying to create a harness. No privileged chown or foreign file reads.
+if os.getuid() != 0:
+    foreign = setup.replace("base=/tmp/ai-agent-tmp\n", "base=/\n")
+    result = subprocess.run([
+        "bash", "-c", foreign + "\nprintf REACHED", "test", "codex",
+    ], env=env, cwd=fixture, capture_output=True)
+    assert result.returncode != 0 and b"owned" in result.stderr and not result.stdout
+print("PASS: all launch environments, private/idempotent dirs, failure paths, parent state, desktop")
+
+generic = (ROOT / "modules/home/agent-team/global-instructions.md").read_text()
+assert Path(data["opencodeInstructions"]).read_text() == generic
+assert "team-organizer" not in generic and "@wrapper@" not in generic
+assert 'mktemp -d "$TMPDIR/<project>-<purpose>.XXXXXX"' in generic
+assert "Optimize code for human readability" in generic
+for name in (".copilot/copilot-instructions.md", ".claude/CLAUDE.md", ".codex/AGENTS.md"):
+    assert artifact(name) == instructions and artifact(name).startswith(generic)
+assert shlex.quote(data["opencodeTarget"]) in data["takeover"]
 
 HARNESS = """
 set -euo pipefail
 VERBOSE_ARG=""
 warnEcho() { printf '%s\\n' "$*" >&2; }
 verboseEcho() { :; }
+errorEcho() { printf '%s\\n' "$*" >&2; }
 # Retain discarded temps instead of deleting fixture files.
 rm() { :; }
 run() {
@@ -231,7 +389,10 @@ owned = {"model": ASTRA, "effortLevel": "medium"}
 home = fixture / "merge"
 settings = home / ".copilot/settings.json"
 settings.parent.mkdir(parents=True)
-original = {"model": "old", "effortLevel": "low", "permissions": {"allow": ["read"]}, "other": 42}
+original = {
+    "model": "old", "effortLevel": "low", "permissions": {"allow": ["read"]}, "other": 42,
+    "env": {"USER_SETTING": "preserve", "TMPDIR": "/user/setting"},
+}
 settings.write_text(json.dumps(original))
 settings.chmod(0o640)
 merge(home)
@@ -276,10 +437,137 @@ assert b"not a regular file" in merge(nonregular).stderr
 
 claude_settings = home / ".claude/settings.json"
 claude_settings.parent.mkdir()
-claude_settings.write_text('{"model":"user-model","effortLevel":"low","permissions":{}}')
+claude_settings.write_text(json.dumps({
+    "model": "user-model", "effortLevel": "low", "permissions": {},
+    "env": {"USER_SETTING": "preserve", "CLAUDE_CODE_TMPDIR": "/user/setting"},
+}))
 merge(home, "claude")
 assert json.loads(claude_settings.read_text()) == {
     "model": "user-model", "effortLevel": "low", "permissions": {},
+    "env": {"USER_SETTING": "preserve", "CLAUDE_CODE_TMPDIR": "/user/setting"},
     "fallbackModel": ["sonnet", "haiku"],
 }
 print("PASS: owned-key merges, permissions, no-op, malformed/non-object, dry-run, race, symlinks")
+
+# OpenCode participates in the same fail-before-mutation adoption as the other
+# global targets. Redirect its configured absolute XDG target to synthetic HOME.
+adopt_home = fixture / "adoption"
+adopt_target = adopt_home / ".config/opencode/AGENTS.md"
+adopt_target.parent.mkdir(parents=True)
+old_rules = adopt_home / "old-rules.md"
+old_rules.write_text("retain existing OpenCode rules")
+adopt_target.symlink_to(old_rules)
+takeover = data["takeover"].replace(data["opencodeTarget"], str(adopt_target))
+result = subprocess.run([
+    "bash", "-c", HARNESS + takeover,
+], env=env | {"HOME": str(adopt_home)}, cwd=fixture, capture_output=True)
+assert result.returncode != 0 and b"no backup mechanism" in result.stderr
+assert adopt_target.is_symlink()
+command([
+    "bash", "-c", HARNESS + takeover,
+], env=env | {"HOME": str(adopt_home), "HOME_MANAGER_BACKUP_EXT": "backup"}, cwd=fixture)
+assert not adopt_target.is_symlink() and adopt_target.read_text() == old_rules.read_text()
+print("PASS: shared generic instructions, generic-only OpenCode rules and safe adoption")
+
+# The reviewer bypasses ordinary CLI wrappers. Capture its raw executable route
+# while retaining its capability, sandbox, isolation and runtime cleanup logic.
+stub = fixture / "review-capture"
+stub.write_text(f"#!{sys.executable}\n" + """
+import json
+import os
+from pathlib import Path
+import sys
+args = sys.argv[1:]
+result = {
+    "args": args,
+    "env": {k: os.environ.get(k) for k in ("TMPDIR", "TMP", "TEMP", "CODEX_HOME")},
+    "home_mode": Path(os.environ["CODEX_HOME"]).stat().st_mode & 0o777,
+    "prompt": sys.stdin.read(),
+}
+Path(args[args.index("--output-last-message") + 1]).write_text(json.dumps(result))
+""")
+stub.chmod(0o700)
+review_script, count = re.subn(
+    r'(timeout "\$TIMEOUT" )/nix/store/\S+/bin/codex\b',
+    rf"\g<1>{stub}", isolated(review),
+)
+assert count == 1
+review_binary = fixture / "codex-team-review"
+review_binary.write_text(review_script)
+review_binary.chmod(0o700)
+
+
+def review_call(*args, check=True):
+    return subprocess.run(
+        [str(review_binary), *map(str, args)], env=env, cwd=fixture,
+        capture_output=True, check=check,
+    )
+
+
+brief_dir = Path(review_call("brief-dir").stdout.decode().strip())
+assert brief_dir == temp_base / "codex/codex-team-review"
+assert stat.S_IMODE(brief_dir.stat().st_mode) == 0o700
+brief = Path(review_call("new-brief").stdout.decode().strip())
+assert re.fullmatch(r"[0-9a-f]{32}\.brief", brief.name) and not brief.exists()
+issued = brief.with_suffix(".issued")
+assert stat.S_IMODE(issued.stat().st_mode) == 0o600
+brief.write_text("Synthetic design brief.")
+brief.chmod(0o600)
+
+guard_path = frontmatter(artifact(".claude/agents/team-codex-design-reviewer.md"))[
+    "hooks"
+]["PreToolUse"][0]["hooks"][0]["command"].split()[0]
+guard_script = Path(guard_path).read_text().replace(
+    str(Path(data["packages"]["codex-team-review"]) / "bin/codex-team-review"),
+    str(review_binary),
+)
+for tool, field, value, allowed in (
+    ("Write", "file_path", str(brief), True),
+    ("Read", "file_path", str(issued), False),
+    ("Write", "file_path", str(brief_dir / "bad.brief"), False),
+    ("Bash", "command", f"{review_binary} design {brief}", True),
+    ("Bash", "command", f"{review_binary} design {brief}; pwd", False),
+):
+    result = subprocess.run(
+        ["bash", "-c", guard_script, "guard", "design"], env=env, cwd=fixture,
+        input=json.dumps({"tool_name": tool, "tool_input": {field: value}}).encode(),
+        capture_output=True,
+    )
+    assert result.returncode == (0 if allowed else 2), result.stderr
+
+captured = json.loads(review_call("design", brief).stdout)
+assert "Synthetic design brief." in captured["prompt"]
+assert not brief.exists() and not issued.exists()
+assert review_call("design", brief, check=False).returncode == 64
+forged = brief_dir / ("a" * 32 + ".brief")
+assert review_call("design", forged, check=False).returncode == 64
+for kind in ("symlink", "hardlink", "writable"):
+    unsafe = Path(review_call("new-brief").stdout.decode().strip())
+    if kind == "symlink":
+        unsafe.symlink_to(sentinel)
+    elif kind == "hardlink":
+        unsafe.hardlink_to(sentinel)
+    else:
+        unsafe.write_text("Synthetic unsafe brief.")
+        unsafe.chmod(0o666)
+    assert review_call("design", unsafe, check=False).returncode == 64
+assert sentinel.read_text() == "retained"
+
+repo = fixture / "review-repo"
+(repo / ".git").mkdir(parents=True)
+final_capture = json.loads(review_call("final", repo).stdout)
+for captured in (captured, final_capture):
+    child_env = captured["env"]
+    assert [child_env[k] for k in ("TMPDIR", "TMP", "TEMP")] == [str(temp_base / "codex")] * 3
+    codex_home = Path(child_env["CODEX_HOME"])
+    assert codex_home.parent == fixture / ".cache/codex-team-review-home"
+    assert not codex_home.is_relative_to(temp_base) and captured["home_mode"] == 0o700
+    assert not codex_home.exists()  # existing narrowly scoped runtime cleanup
+    args = captured["args"]
+    assert 'shell_environment_policy.inherit="core"' in args
+    assert not any(arg.startswith("shell_environment_policy.set") for arg in args)
+    assert args[args.index("--sandbox") + 1] == "read-only"
+    assert "--ignore-user-config" in args and "project_doc_max_bytes=0" in args
+    assert "mcp_servers={}" in args
+assert sentinel.read_text() == "retained"
+print("PASS: review raw environment, guard/capabilities, replay rejection, separate CODEX_HOME, cleanup")
