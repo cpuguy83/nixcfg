@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
 
 # Statically-defined components handled by update_<name> functions below.
-STATIC_COMPONENTS=(inputs buildx github)
+STATIC_COMPONENTS=(inputs buildx github tether)
 
 # Per-component update scripts discovered anywhere below the repo root (any
 # update.sh other than this one). Each such script owns its component's update
@@ -42,6 +42,12 @@ update_github() {
 	gh_app_ref="$(gh release view --repo github/app --json tagName --jq .tagName)"
 	sed -i -E "s|(releases/download/)v[0-9.]+(/GitHub-Copilot-linux-x64\.deb)|\1${gh_app_ref}\2|" flake.nix
 	nix flake update github-copilot-deb
+}
+
+update_tether() {
+	ref="$(gh release view --repo zackb/tether --json tagName --jq .tagName)"
+	sed -i -E "s|(github:zackb/tether\?ref=refs/tags/)v[0-9.]+|\1${ref}|" flake.nix
+	nix flake update tether
 }
 
 # Resolve a component name to something runnable: a static update_<name>

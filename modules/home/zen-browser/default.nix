@@ -1,6 +1,7 @@
-{ pkgs
-, inputs
-, ...
+{
+  pkgs,
+  inputs,
+  ...
 }:
 
 let
@@ -123,6 +124,15 @@ in
       };
 
       ExtensionSettings = {
+        "better-ghsa@sbk.wtf" = {
+          installation_mode = "force_installed";
+          install_url = "https://addons.mozilla.org/firefox/downloads/file/5021948/better_ghsa-0.0.3.xpi";
+        };
+        # Dumpster Fire
+        "{995A6AA5-D7FF-4B54-BD04-71C6999BB915}" = {
+          installation_mode = "force_installed";
+          install_url = "https://addons.mozilla.org/firefox/downloads/file/5033206/dumpster_fire-1.0.4.xpi";
+        };
         "linux-entra-sso@example.com" = {
           installation_mode = "force_installed";
           install_url = "https://github.com/siemens/linux-entra-sso/releases/download/v1.7.1/linux_entra_sso-1.7.1.xpi";

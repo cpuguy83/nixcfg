@@ -15,6 +15,7 @@
 , gtk-layer-shell
 , hicolor-icon-theme
 , libnotify
+, libsecret
 , nlohmann_json
 , openssl
 , wayland
@@ -25,7 +26,7 @@ stdenv.mkDerivation (finalAttrs: {
   pname = "tether";
   # Keep in sync with the `tether` input's tag in flake.nix; the derivation is
   # handed a plain source tree and cannot read the tag itself.
-  version = "0.2.17";
+  version = "0.2.33";
 
   inherit src;
 
@@ -43,7 +44,7 @@ stdenv.mkDerivation (finalAttrs: {
   #     does not help: the root CMakeLists calls FetchContent_MakeAvailable and
   #     add_subdirectory(test) unconditionally, with no BUILD_TESTING guard.
   # `git describe` also runs at configure time and finds no .git here, which
-  # would stamp the binaries "0.2.17-unknown" -- the version shows up in
+  # would stamp the binaries "0.2.33-unknown" -- the version shows up in
   # `tether --bt-diagnostics`, which is what upstream asks for in bug reports.
   postPatch = ''
     substituteInPlace CMakeLists.txt \
@@ -70,6 +71,7 @@ stdenv.mkDerivation (finalAttrs: {
     gtk-layer-shell
     hicolor-icon-theme
     libnotify
+    libsecret
     nlohmann_json
     openssl
     wayland

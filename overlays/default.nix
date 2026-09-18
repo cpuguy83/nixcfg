@@ -1,10 +1,10 @@
-{ inputs
-, pkgs-unstable
-, copilotVersion
-, ...
+{
+  inputs,
+  pkgs-unstable,
+  copilotVersion,
+  ...
 }:
 let
-  opencodePackageJson = builtins.fromJSON (builtins.readFile "${inputs.opencode}/package.json");
 in
 {
   nixpkgs.overlays = [
@@ -16,17 +16,17 @@ in
     inputs.waybar.overlays.default
     (
       final: prev:
-        let
-          libMozilla = import "${inputs.firefox-addons}/../../lib/mozilla.nix" { lib = final.lib; };
-          buildMozillaXpiAddon = libMozilla.mkBuildMozillaXpiAddon {
-            inherit (final) fetchurl stdenv;
-          };
-        in
-        {
-          firefox-addons = final.callPackage "${inputs.firefox-addons}" {
-            inherit buildMozillaXpiAddon;
-          };
-        }
+      let
+        libMozilla = import "${inputs.firefox-addons}/../../lib/mozilla.nix" { lib = final.lib; };
+        buildMozillaXpiAddon = libMozilla.mkBuildMozillaXpiAddon {
+          inherit (final) fetchurl stdenv;
+        };
+      in
+      {
+        firefox-addons = final.callPackage "${inputs.firefox-addons}" {
+          inherit buildMozillaXpiAddon;
+        };
+      }
     )
     inputs.nixd.overlays.default
     inputs.rust-overlay.overlays.default
@@ -44,15 +44,6 @@ in
     (import ./github-copilot.nix { inherit inputs copilotVersion; })
     (import ./lmstudio.nix { inherit pkgs-unstable; })
     (final: _prev: {
-      opencode =
-        (inputs.opencode.packages.${final.stdenv.hostPlatform.system}.opencode).overrideAttrs
-          (oldAttrs: {
-            postConfigure = (oldAttrs.postConfigure or "") + ''
-              substituteInPlace package.json \
-                --replace-fail '"packageManager": "${opencodePackageJson.packageManager}"' \
-                '"packageManager": "bun@${pkgs-unstable.bun.version}"'
-            '';
-          });
       ghostty = inputs.ghostty.packages.${final.stdenv.hostPlatform.system}.default;
       # Patch the himmelblau broker so MSAL's account-picker interactive flow
       # (account: null / empty username, e.g. `workiq ask`) works end-to-end:
@@ -77,7 +68,7 @@ in
               pkgs = final;
             }).packages;
         in
-        builtins.removeAttrs himmelblauPkgs [ "recurseForDerivations" ];
+        removeAttrs himmelblauPkgs [ "recurseForDerivations" ];
       cider-2 = pkgs-unstable.cider-2;
       signal-desktop = pkgs-unstable.signal-desktop;
       discord = pkgs-unstable.discord;

@@ -1,6 +1,6 @@
---- a/src/core/src/net.cpp	2026-08-29 16:17:17.502243261 -0700
-+++ b/src/core/src/net.cpp	2026-08-29 16:17:17.506339583 -0700
-@@ -67,6 +67,13 @@
+--- a/src/core/src/net.cpp
++++ b/src/core/src/net.cpp
+@@ -80,6 +80,13 @@
      static constexpr size_t kMaxRecentReceivedFiles = 16;
      static std::map<int, ConnectedClientSnapshot> connected_remote_clients;
  
@@ -14,15 +14,15 @@
      void register_client_fd(int fd) {
          std::lock_guard<std::mutex> lock(g_sessions_mutex);
          active_sessions[fd] = {fd, nullptr};
-@@ -576,6 +583,7 @@
+@@ -784,6 +791,7 @@
          }
  
          snapshot["mdns_available"] = g_mdns_available.load();
 +        snapshot["wifi_pairing_mode"] = g_wifi_pairing_mode.load();
+         snapshot["clipboard_available"] = g_wayland && g_wayland->clipboard_available();
+         snapshot["firewall_active"] = firewall_active();
  
-         return snapshot;
-     }
-@@ -936,6 +944,16 @@
+@@ -1198,6 +1206,16 @@
                                      : (err.empty() ? _("Bluetooth is unavailable.") : err);
                              broadcast_local_event(event.dump());
                          }).detach();
@@ -39,7 +39,7 @@
                      } else if (j.contains("command") && j["command"] == "bt_set_ancs") {
                          auto config = bluetooth::load_config();
                          config.ancs_enabled = j.value("enabled", true);
-@@ -1407,8 +1425,22 @@
+@@ -2016,8 +2034,22 @@
                              event["address"] = client_info_[client_fd].address;
                              broadcast_local_event(event.dump());
  
@@ -64,9 +64,9 @@
                          } else {
                              std::string rej = "{\"command\":\"error\",\"message\":\"unauthorized\"}\n";
                              robust_ssl_write(ssl, rej.c_str(), rej.size());
---- a/src/gtk/main.cpp	2026-08-29 16:17:17.500993011 -0700
-+++ b/src/gtk/main.cpp	2026-08-29 16:17:17.507895467 -0700
-@@ -25,6 +25,25 @@
+--- a/src/gtk/main.cpp
++++ b/src/gtk/main.cpp
+@@ -30,6 +30,25 @@
      std::string g_requested_view;
      std::string g_requested_thread;
  
@@ -89,19 +89,19 @@
 +        daemon_send(nlohmann::json{{"command", "pairing_mode_set"}, {"enabled", want}});
 +    }
 +
-     void apply_requested_view() {
-         if (!g_stack)
-             return;
-@@ -49,6 +68,8 @@
- 
-         messages_view_set_visible(view == "messages");
+     // Call control is off by default and enabled out of band, so the tab only
+     // exists once the daemon reports it on.
+     void set_calls_tab_visible(bool enabled) {
+@@ -69,6 +88,8 @@
+         calls_view_set_visible(view == "calls");
          notifications_view_set_visible(view == "notifications");
+         contacts_view_set_visible(view == "contacts");
 +
 +        sync_pairing_mode();
      }
  
-     // The tray controls live here
-@@ -112,6 +133,7 @@
+     GtkWidget* create_app_menu_button() {
+@@ -117,6 +138,7 @@
          if (!tray_close_to_tray())
              return FALSE;
          gtk_widget_hide(window);
@@ -109,7 +109,7 @@
          return TRUE;
      }
  
-@@ -186,6 +208,15 @@
+@@ -202,6 +224,15 @@
          g_signal_connect(window, "delete-event", G_CALLBACK(on_window_delete), nullptr);
          g_signal_connect(
              window, "destroy", G_CALLBACK(+[](GtkWidget*, gpointer) { set_main_window(nullptr); }), nullptr);

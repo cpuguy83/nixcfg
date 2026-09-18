@@ -90,11 +90,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    opencode = {
-      url = "github:anomalyco/opencode";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
-    };
-
     handy = {
       url = "github:cjpais/handy";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -123,12 +118,12 @@
 
     # Consumed as a plain source tree by overlays/tether.nix.
     tether = {
-      url = "github:zackb/tether?ref=refs/tags/v0.2.17";
+      url = "github:zackb/tether?ref=refs/tags/v0.2.33";
       flake = false;
     };
 
     github-copilot-deb = {
-      url = "file+https://github.com/github/app/releases/download/v1.1.19/GitHub-Copilot-linux-x64.deb";
+      url = "file+https://github.com/github/app/releases/download/v1.1.21/GitHub-Copilot-linux-x64.deb";
       flake = false;
     };
 
@@ -139,10 +134,11 @@
   };
 
   outputs =
-    { self
-    , nixpkgs
-    , nixpkgs-unstable
-    , ...
+    {
+      self,
+      nixpkgs,
+      nixpkgs-unstable,
+      ...
     }@inputs:
     let
       system = "x86_64-linux";
@@ -152,8 +148,8 @@
       # ./flake.lock is a guaranteed sibling of flake.nix, so this read is stable
       # regardless of where the package/overlay files live.
       copilotVersion = builtins.head (
-        builtins.match ".*/v([0-9.]+)/.*"
-          (builtins.fromJSON (builtins.readFile ./flake.lock)).nodes.github-copilot-deb.locked.url
+        builtins.match ".*/v([0-9.]+)/.*" (builtins.fromJSON (builtins.readFile ./flake.lock))
+        .nodes.github-copilot-deb.locked.url
       );
 
       pkgs-unstable = import nixpkgs-unstable {

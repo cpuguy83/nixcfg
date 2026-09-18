@@ -20,6 +20,8 @@
   programs.nixvim = {
     enable = true;
 
+    nixpkgs.overlays = [ (import ../../../overlays/copilot-lua.nix) ];
+
     clipboard.providers.wl-copy.enable = true;
 
     plugins.notify.enable = true;
