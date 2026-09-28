@@ -1,9 +1,10 @@
-{ config
-, pkgs
-, pkgs-unstable
-, inputs
-, lib
-, ...
+{
+  config,
+  pkgs,
+  pkgs-unstable,
+  inputs,
+  lib,
+  ...
 }:
 
 let
@@ -138,7 +139,7 @@ in
     cider-2 # Apple music player
 
     lmstudio
-  ];
+    zapp
 
   programs.vscodium = {
     enable = true;
