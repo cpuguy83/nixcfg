@@ -139,7 +139,22 @@ in
     cider-2 # Apple music player
 
     lmstudio
+
+    kubectl
     zapp
+  ];
+
+  programs.bash.bashrcExtra = lib.mkAfter ''
+    alias k=kubectl
+
+    _complete_k() {
+      if ! declare -F __start_kubectl >/dev/null; then
+        _comp_load kubectl || return
+      fi
+      __start_kubectl "$@"
+    }
+    complete -o default -F _complete_k k
+  '';
 
   programs.vscodium = {
     enable = true;
