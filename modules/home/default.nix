@@ -4,6 +4,7 @@
   imports = [
     ./audio
     ./brightnessd
+    ./firefox
     ./hyprland
     ./kdeconnect
     ./neovim
