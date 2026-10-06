@@ -6,7 +6,7 @@
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     buildx = {
-      url = "github:docker/buildx?ref=refs/tags/v0.37.1";
+      url = "github:docker/buildx?ref=refs/tags/v0.37.2";
       flake = false;
     };
 
@@ -118,12 +118,12 @@
 
     # Consumed as a plain source tree by overlays/tether.nix.
     tether = {
-      url = "github:zackb/tether?ref=refs/tags/v0.2.33";
+      url = "github:zackb/tether?ref=refs/tags/v0.2.35";
       flake = false;
     };
 
     github-copilot-deb = {
-      url = "file+https://github.com/github/app/releases/download/v1.1.21/GitHub-Copilot-linux-x64.deb";
+      url = "file+https://github.com/github/app/releases/download/v1.1.26/GitHub-Copilot-linux-x64.deb";
       flake = false;
     };
 
@@ -186,9 +186,17 @@
         };
       };
 
-      packages.${system} = {
-        "home-cpuguy83@yavin4" = self.homeConfigurations."cpuguy83@yavin4".activationPackage;
-      };
+      packages.${system} =
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
+          };
+        in
+        {
+          "home-cpuguy83@yavin4" = self.homeConfigurations."cpuguy83@yavin4".activationPackage;
+          zapp = pkgs.callPackage ./packages/zapp.nix { };
+        };
 
       nixosConfigurations = {
         yavin4 = nixpkgs.lib.nixosSystem {
