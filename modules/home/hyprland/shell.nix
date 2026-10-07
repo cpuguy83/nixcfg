@@ -335,7 +335,8 @@ in
     };
   };
 
-  # The bar. Replaces Waybar, whose taskbar cannot show window previews;
+  # The shared shell includes the bar, launcher, switcher, and overview.
+  # Replaces Waybar, whose taskbar cannot show window previews;
   # see .copilot/plans/quickshell-bar.md.
   home.packages = [ pkgs.quickshell ];
 
@@ -349,7 +350,7 @@ in
 
   systemd.user.services.quickshell-bar = {
     Unit = {
-      Description = "Quickshell bar";
+      Description = "Quickshell desktop shell";
       PartOf = [ "graphical-session.target" ];
       After = [
         "graphical-session.target"

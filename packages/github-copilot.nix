@@ -89,8 +89,15 @@ stdenv.mkDerivation {
     # Tauri's runtime resource resolution (exe/../lib/<product>) keeps working.
     cp -r usr/. "$out/"
 
-    substituteInPlace "$out/share/applications/GitHub Copilot.desktop" \
+    # UWSM requires a desktop entry ID without spaces.
+    mv "$out/share/applications/GitHub Copilot.desktop" \
+      "$out/share/applications/github-copilot.desktop"
+    substituteInPlace "$out/share/applications/github-copilot.desktop" \
       --replace-fail "Exec=github" "Exec=$out/bin/github"
+
+    test -f "$out/share/applications/github-copilot.desktop"
+    test ! -e "$out/share/applications/GitHub Copilot.desktop"
+    grep -Fx 'Name=GitHub Copilot' "$out/share/applications/github-copilot.desktop"
 
     interp="$(cat "$NIX_CC/nix-support/dynamic-linker")"
     rpath="${lib.makeLibraryPath [

@@ -50,6 +50,9 @@ in
         config
         ;
     })
+    (import ./launcher.nix {
+      inherit pkgs lib config;
+    })
     (import ./lockscreen.nix {
       inherit
         pkgs-unstable

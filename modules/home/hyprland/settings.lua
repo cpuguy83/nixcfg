@@ -20,7 +20,7 @@ local terminal = "ghostty +new-window"
 local fileManager = "uwsm app -- ghostty --class=yazi --title=yazi -e ~/.local/bin/exec_yazi"
 local cursor = "WhiteSur-cursors-light"
 local cursorSize = "24"
-local menu = "uwsm app -- fuzzel"
+local menu = "qs-launcher"
 
 -- `hl.exec_cmd` (unlike `hl.dsp.exec_cmd`, which only builds a dispatcher
 -- closure) runs immediately, including under `Hyprland --verify-config` --

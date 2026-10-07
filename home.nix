@@ -20,8 +20,8 @@ let
 
       # Materialize the entry before editing: symlinkJoin leaves store symlinks.
       # Retain metadata, action arguments, resources and the credential helper.
-      desktop="$out/share/applications/GitHub Copilot.desktop"
-      cp --remove-destination "${pkgs.github-copilot}/share/applications/GitHub Copilot.desktop" "$desktop"
+      desktop="$out/share/applications/github-copilot.desktop"
+      cp --remove-destination "${pkgs.github-copilot}/share/applications/github-copilot.desktop" "$desktop"
       chmod u+w "$desktop"
       substituteInPlace "$desktop" \
         --replace-fail "Exec=${pkgs.github-copilot}/bin/github" "Exec=$out/bin/github"

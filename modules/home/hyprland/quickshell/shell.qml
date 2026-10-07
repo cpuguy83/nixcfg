@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
+import "launcher"
 
 ShellRoot {
   // Hyprland emits no event when the layout reflows a workspace in place, so
@@ -21,4 +22,5 @@ ShellRoot {
 
   Switcher {}
   Overview {}
+  Launcher {}
 }
