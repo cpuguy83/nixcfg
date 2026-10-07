@@ -121,7 +121,7 @@ in
       # };
       "linux-entra-sso@example.com" = {
         installation_mode = "force_installed";
-        install_url = "https://github.com/siemens/linux-entra-sso/releases/download/v1.12.0/linux_entra_sso-1.12.0.xpi";
+        install_url = "https://github.com/siemens/linux-entra-sso/releases/download/v1.13.0/linux_entra_sso-1.13.0.xpi";
       };
     };
   };
