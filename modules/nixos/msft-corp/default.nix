@@ -62,31 +62,27 @@ let
     text = builtins.readFile ./99-validate-dns;
   };
 
-  # Adds the corp split-tunnel routes to the corpnet GlobalProtect tunnel after it
-  # connects. corpnet is brought up by standalone gpclient/openconnect (not
-  # NetworkManager), so we hook openconnect's vpnc-script rather than an NM
-  # dispatcher. This wrapper defers to the standard vpnc-script, then adds the
-  # corp routes on connect. The route list itself is an unmanaged file (corp-
-  # internal IP ranges, kept out of this repo) at /etc/msft-vpn/corpnet-routes.txt;
-  # see ./corpnet-vpnc-script.sh for the command to (re)generate it. The script
-  # runs as root under openconnect and reads the routes from that absolute path.
-  corpnetVpncScript = pkgs.writeShellApplication {
-    name = "corpnet-vpnc-script";
-    runtimeInputs = with pkgs; [
-      iproute2 # ip
-      gnugrep
-      gnused
-      gawk
-      coreutils # basename
-      util-linux # logger (journal diagnostics)
-    ];
-    text = ''
-      export CORPNET_BASE_VPNC_SCRIPT=${lib.escapeShellArg "${pkgs.vpnc-scripts}/bin/vpnc-script"}
-      export CORPNET_ROUTES_FILE=${lib.escapeShellArg "/etc/msft-vpn/corpnet-routes.txt"}
+  # Private route policy stays under /etc, never in a Nix derivation.
+  corpnetVpnPackage = pkgs.callPackage ../../../packages/corpnet-vpn { };
 
-      exec ${pkgs.bash}/bin/bash ${./corpnet-vpnc-script.sh} "$@"
+  corpnetVpn = pkgs.writeShellApplication {
+    name = "corpnet-vpn";
+    runtimeInputs = [ pkgs.iproute2 pkgs.systemd ];
+
+    text = ''
+      export CORPNET_PROFILE_USER=${lib.escapeShellArg vpnUser}
+      export CORPNET_PROFILE_UPN=${lib.escapeShellArg (if useHimmelblau then cfg.himmelblau.upn else "")}
+      export CORPNET_BASE_VPNC_SCRIPT=${lib.escapeShellArg "${pkgs.vpnc-scripts}/bin/vpnc-script"}
+
+      exec ${corpnetVpnPackage}/bin/corpnet-vpn "$@"
     '';
   };
+
+  corpnetVpncScript = pkgs.writeShellScript "corpnet-vpnc-script" ''
+    export CORPNET_VPN_COMMAND=${lib.escapeShellArg "${corpnetVpn}/bin/corpnet-vpn"}
+
+    exec ${pkgs.bash}/bin/bash ${./corpnet-vpnc-script.sh} "$@"
+  '';
 
   # ExecStartPre/Post/ExecStopPost hook for corpnet-vpn(@).service (see
   # mkCorpnetVpnService below): writes each state transition to a stable,
@@ -178,7 +174,7 @@ let
       export AUTH_STACK=${lib.escapeShellArg cfg.authStack}
       export NM_DAEMON=${lib.escapeShellArg "${pkgs.networkmanager}/bin/NetworkManager"}
       export EXPECTED_BROWSER=${lib.escapeShellArg cfg.corpnet.browserDesktopFile}
-      export VPN_VPNC_SCRIPT=${lib.escapeShellArg "${corpnetVpncScript}/bin/corpnet-vpnc-script"}
+      export VPN_VPNC_SCRIPT=${lib.escapeShellArg "${corpnetVpncScript}"}
 
       exec ${pkgs.bash}/bin/bash ${./msft-vpn-diagnostics.sh} "$@"
     '';
@@ -246,7 +242,7 @@ let
         # corpnetVpnStateHook's own comment for why a fixed /run path rather
         # than a RuntimeDirectory.
         #
-        # The leading "-" on every one of these is LOAD-BEARING, not
+        # The leading "-" on the indicator hooks is LOAD-BEARING, not
         # decorative: this is the user's actual work VPN, and a failure in
         # this bookkeeping script (e.g. /run transiently unwritable) must
         # never make systemd consider corpnet-vpn(@).service itself failed
@@ -254,8 +250,12 @@ let
         # the panel.
         ExecStartPre = "-${corpnetVpnStateHook} connecting ${region}";
         ExecStartPost = "-${corpnetVpnStateHook} connected ${region}";
-        ExecStopPost = "-${corpnetVpnStateHook} disconnected";
-        ExecStart = "${pkgs.gpclient}/bin/gpclient connect --as-gateway --browser ${corpnetBrowserBin} --os ${gpclientReportedOs} --script ${corpnetVpncScript}/bin/corpnet-vpnc-script ${gateway}";
+        ExecStopPost = [
+          "-${corpnetVpnStateHook} disconnected"
+          # Routing cleanup failures must remain visible, unlike panel bookkeeping.
+          "${corpnetVpn}/bin/corpnet-vpn cleanup"
+        ];
+        ExecStart = "${pkgs.gpclient}/bin/gpclient connect --as-gateway --browser ${corpnetBrowserBin} --os ${gpclientReportedOs} --script ${corpnetVpncScript} ${gateway}";
       };
     };
 in
@@ -345,6 +345,7 @@ in
       };
 
       environment.systemPackages = with pkgs; [
+        corpnetVpn
         vpnDiagnostics
         gpCallbackHandler
         desktop-file-utils # update-desktop-database for the callback handler
@@ -386,8 +387,8 @@ in
       # user's /proc entries. The browser is passed explicitly (see
       # corpnetBrowserBin) because that session env does not carry PATH, so
       # --default-browser auto-detection would fail under the unit. Stopping the
-      # unit tears down the tunnel, so the corp routes added by the vpnc-script
-      # vanish with it. This mirrors the msft-vpn-diagnostics connect invocation.
+      # unit tears down the tunnel; the disconnect hook and ExecStopPost remove
+      # owned bypass routes as well. This mirrors msft-vpn-diagnostics connect.
       #
       # The corpnet-vpn@ template selects a gateway by region at start time, e.g.
       # `systemctl start corpnet-vpn@dublin` connects to
@@ -497,6 +498,58 @@ in
     })
 
     (mkIf useHimmelblau {
+      security.polkit.extraConfig = ''
+        polkit.addRule(function(action, subject) {
+          if (action.id == "org.freedesktop.systemd1.manage-units" &&
+              subject.user == ${builtins.toJSON vpnUser} &&
+              action.lookup("unit") == "corpnet-profile-update.service" &&
+              action.lookup("verb") == "start") {
+            return polkit.Result.YES;
+          }
+        });
+      '';
+
+      systemd.services.corpnet-profile-update = {
+        description = "Refresh saved Microsoft VPN routes through the signed-in broker";
+        after = [ "network-online.target" ];
+        wants = [ "network-online.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          User = vpnUser;
+          RuntimeDirectory = "corpnet-profile-update";
+          RuntimeDirectoryMode = "0700";
+          UMask = "0077";
+          LimitCORE = 0;
+          TimeoutStartSec = 180;
+          TimeoutStopSec = 10;
+          ExecCondition = "${corpnetVpn}/bin/corpnet-vpn eligible";
+          ExecStart = "${corpnetVpn}/bin/corpnet-vpn fetch";
+          ExecStartPost = "+${corpnetVpn}/bin/corpnet-vpn install";
+        };
+      };
+
+      systemd.user.services.corpnet-profile-update-request = {
+        description = "Request the fixed Microsoft VPN profile refresh service";
+        unitConfig.ConditionUser = vpnUser;
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${pkgs.systemd}/bin/systemctl --no-ask-password start corpnet-profile-update.service";
+          TimeoutStartSec = 210;
+        };
+      };
+
+      systemd.user.timers.corpnet-profile-update = {
+        description = "Refresh saved Microsoft VPN routes daily while signed in";
+        wantedBy = [ "timers.target" ];
+        unitConfig.ConditionUser = vpnUser;
+        timerConfig = {
+          OnCalendar = "daily";
+          OnActiveSec = "2min";
+          Persistent = true;
+          Unit = "corpnet-profile-update-request.service";
+        };
+      };
+
       environment.etc."himmelblau/himmelblau.conf".source = himmelblauConfig;
       environment.etc."himmelblau/user-map".text = ''
         ${cfg.himmelblau.localUser}:${cfg.himmelblau.upn}

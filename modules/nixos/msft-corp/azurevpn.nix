@@ -30,8 +30,9 @@ in
     "d /var/log/azurevpnclient 0770 root ${config.programs.azurevpnclient.polkitGroup} -"
     "d ${azureVpnUserLogDir} 0755 ${azureVpnUser} ${azureVpnUserGroup} -"
     "L /var/log/azurevpnclient/AzureVPNClientUI.log - - - - ${azureVpnUserLogDir}/AzureVPNClientUI.log"
-    # Holds the unmanaged corpnet-routes.txt the vpnc-script reads as root.
+    # Route policy is imported locally, not copied into the Nix store.
     "d /etc/msft-vpn 0755 root root -"
+    "d /run/msft-vpn 0700 root root -"
   ];
 
   environment.etc."ssl/certs/DigiCert_Global_Root_G2.pem".source = azureVpnRootCert;
