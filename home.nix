@@ -126,9 +126,8 @@ in
 
     libnotify # for notify-send (send system notifications)
 
-    # Handy looks up its text-input tool via PATH at runtime. Its "launch at
-    # login" feature writes an autostart entry pointing at the unwrapped binary,
-    # bypassing the wtype-in-PATH wrapper, so keep wtype on the ambient PATH too.
+    # Handy's managed login entry uses the same wtype-in-PATH wrapper as normal
+    # launches. Keep wtype available on the ambient PATH too.
     wtype
 
     easyeffects
@@ -304,6 +303,20 @@ in
   };
 
   services.handy.enable = true;
+  xdg.configFile."autostart/Handy.desktop" = lib.mkIf config.services.handy.enable {
+    # Replace the app-generated entry that bypassed the configured wrapper.
+    force = true;
+    text = ''
+      [Desktop Entry]
+      Type=Application
+      Version=1.0
+      Name=Handy
+      Comment=Handystartup script
+      Exec=${pkgs.wrapHandy config.services.handy.package config.services.handy.textInputTool}/bin/handy
+      StartupNotify=false
+      Terminal=false
+    '';
+  };
   services.vekil.enable = true;
   services.tether.enable = true;
 

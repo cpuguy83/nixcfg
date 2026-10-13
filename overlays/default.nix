@@ -31,6 +31,19 @@ in
     inputs.nixd.overlays.default
     inputs.rust-overlay.overlays.default
     inputs.handy-mine.overlays.default
+    (final: prev: {
+      # Apply the runtime rendering workaround to both package and HM launches.
+      wrapHandy =
+        handyPackage: textInputTool:
+        (prev.wrapHandy handyPackage textInputTool).overrideAttrs (oldAttrs: {
+          # symlinkJoin embeds postBuild in buildCommand before overrideAttrs.
+          buildCommand = oldAttrs.buildCommand + ''
+            wrapProgram $out/bin/handy \
+              --set WEBKIT_DISABLE_DMABUF_RENDERER 0
+          '';
+        });
+      handy = final.wrapHandy final.handy-unwrapped final.wtype;
+    })
     inputs.calbar.overlays.default
     (import ./mactahoe-gtk-theme.nix)
     (import ./vscode.nix { inherit inputs; })
