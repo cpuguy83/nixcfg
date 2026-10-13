@@ -112,7 +112,7 @@ in
     ExtensionSettings = {
       "better-ghsa@sbk.wtf" = {
         installation_mode = "force_installed";
-        install_url = "https://addons.mozilla.org/firefox/downloads/file/5073321/better_ghsa-0.0.9.xpi";
+        install_url = "https://addons.mozilla.org/firefox/downloads/file/5114020/better_ghsa-0.0.10.xpi";
       };
       # Dumpster Fire
       # "{995A6AA5-D7FF-4B54-BD04-71C6999BB915}" = {

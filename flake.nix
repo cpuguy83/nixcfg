@@ -6,7 +6,7 @@
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     buildx = {
-      url = "github:docker/buildx?ref=refs/tags/v0.37.2";
+      url = "github:docker/buildx?ref=refs/tags/v0.38.0";
       flake = false;
     };
 
@@ -118,12 +118,12 @@
 
     # Consumed as a plain source tree by overlays/tether.nix.
     tether = {
-      url = "github:zackb/tether?ref=refs/tags/v0.2.35";
+      url = "github:zackb/tether?ref=refs/tags/v0.2.37";
       flake = false;
     };
 
     github-copilot-deb = {
-      url = "file+https://github.com/github/app/releases/download/v1.1.26/GitHub-Copilot-linux-x64.deb";
+      url = "file+https://github.com/github/app/releases/download/v1.1.29/GitHub-Copilot-linux-x64.deb";
       flake = false;
     };
 
