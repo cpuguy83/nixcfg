@@ -17,10 +17,43 @@ File structure matters.
 Indirection makes things more difficult to reason about.
 Lazy changes (like wrapping an un-exported function with an exported version of it) should be avoided.
 
-Optimize code for human readability, not minimum line count. Preserve blank
-lines between logical sections, keep distinct operations on separate lines,
-and avoid dense one-liners. Follow surrounding formatting conventions.
-Brevity guidance applies to prose, not source code.
+## Code readability
+
+Optimize code for human readability, not minimum line count. Brevity guidance
+applies to prose, not source code. This applies to every agent, including
+delegated implementers, and to code examples as well as file edits.
+
+- Separate logical blocks with a blank line. Validation, setup, execution,
+  error handling, and result construction are distinct phases even when each
+  phase is only one or two lines.
+- Keep tightly related statements together: a call and its immediate error
+  check form one block. Put a blank line before the next independent operation.
+  Do not insert blank lines mechanically between every statement.
+- Preserve existing blank lines that separate logical blocks. Do not collapse
+  them to shorten a function, reduce a diff, or satisfy response-length guidance.
+- Keep distinct operations on separate lines. Do not pack statements, branches,
+  or error handling into dense one-liners.
+- Follow the project's formatter and surrounding syntax conventions, but do not
+  copy cramped spacing merely because nearby code is cramped.
+- Before handing back changes, inspect every edited function for missing
+  separation between logical blocks and restore it. A passing formatter does
+  not replace this readability check.
+
+For example, keep independent operations visually separate:
+
+```go
+data, err := os.ReadFile(path)
+if err != nil {
+    return err
+}
+
+var cfg Config
+if err := json.Unmarshal(data, &cfg); err != nil {
+    return err
+}
+
+return cfg.Validate()
+```
 
 
 ## Planning
