@@ -1,9 +1,27 @@
-{ ... }:
+{ pkgs, ... }:
 
 {
   imports = [
     ./shared.nix
   ];
+
+  xdg.desktopEntries.reboot-to-windows = {
+    name = "Reboot to Windows";
+    comment = "Restart the computer into Windows";
+    exec = "${pkgs.systemd}/bin/systemctl reboot --boot-loader-entry=auto-windows";
+    icon = "${pkgs.writeText "windows-logo.svg" ''
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+        <g fill="#0078d4">
+          <rect width="15" height="15"/>
+          <rect x="17" width="15" height="15"/>
+          <rect y="17" width="15" height="15"/>
+          <rect x="17" y="17" width="15" height="15"/>
+        </g>
+      </svg>
+    ''}";
+    terminal = false;
+    categories = [ "System" ];
+  };
 
   mine.desktop.hyprland.monitors = [
     {
