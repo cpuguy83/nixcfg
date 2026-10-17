@@ -27,3 +27,15 @@ function audioReady(node) {
 function outputKey(node) {
   return audioReady(node) ? String(node.id) + ":" + node.name : "unavailable";
 }
+
+// Device identity is independent of volume access: virtual sources may have
+// no .audio. Never mistake a sink (including the dummy output) for an input.
+function sourceReady(node, sink) {
+  return !!(node?.ready && Number.isInteger(node.id) && node.id > 0
+      && node.name && node.name !== "auto_null" && !node.isSink
+      && node.id !== sink?.id);
+}
+
+function inputKey(node, sink) {
+  return sourceReady(node, sink) ? String(node.id) + ":" + node.name : "unavailable";
+}

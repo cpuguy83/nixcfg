@@ -43,7 +43,9 @@ QtObject {
   }
 
   readonly property string outputKey: Logic.outputKey(root.audioState.sink)
+  readonly property string inputKey: Logic.inputKey(root.audioState.source, root.audioState.sink)
   property string lastOutputKey: ""
+  property string lastInputKey: ""
   property bool initialized: false
   property string requestedKind: "volume"
 
@@ -54,6 +56,7 @@ QtObject {
     running: true
     onTriggered: {
       root.lastOutputKey = root.outputKey;
+      root.lastInputKey = root.inputKey;
       root.initialized = true;
     }
   }
@@ -85,6 +88,37 @@ QtObject {
   property Timer deadline: Timer {
     interval: 1000
     onTriggered: root.flushOutput()
+  }
+
+  // Input/output have separate pending windows. Churn in one cannot postpone
+  // the other, and simultaneous changes must emit both kinds of notice.
+  onInputKeyChanged: {
+    if (!root.initialized)
+      return;
+
+    inputSettle.restart();
+    if (!inputDeadline.running)
+      inputDeadline.start();
+  }
+
+  function flushInput() {
+    inputSettle.stop();
+    inputDeadline.stop();
+    if (root.lastInputKey === root.inputKey)
+      return;
+
+    root.lastInputKey = root.inputKey;
+    root.notified("input");
+  }
+
+  property Timer inputSettle: Timer {
+    interval: 150
+    onTriggered: root.flushInput()
+  }
+
+  property Timer inputDeadline: Timer {
+    interval: 1000
+    onTriggered: root.flushInput()
   }
 
   function control(kind, steps) {

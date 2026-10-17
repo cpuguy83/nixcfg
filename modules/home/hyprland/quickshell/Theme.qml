@@ -40,9 +40,13 @@ Singleton {
 
   // Per-screen feedback, using the shared menu/slider palette.
   readonly property int osdDuration: 1800
-  readonly property int osdWidth: 340
-  readonly property int osdPadding: 16
-  readonly property int osdBottomMargin: 100
+  readonly property int osdWidth: 400
+  readonly property int osdVolumeWidth: 256
+  readonly property int osdIconSize: 48
+  readonly property int osdFontSize: 16
+  readonly property int osdTrackHeight: 8
+  readonly property int osdMeterDuration: 100
+  readonly property int osdPadding: 24
 
   readonly property string fontFamily: "AdwaitaMono Nerd Font"
   readonly property int fontSize: 14

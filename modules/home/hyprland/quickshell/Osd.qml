@@ -75,40 +75,6 @@ Scope {
         duration: Theme.osdDuration
       }
 
-      readonly property string kind: entry.event?.kind ?? ""
-      readonly property bool brightness: kind === "brightness" || kind === "brightness-error"
-      readonly property bool microphone: kind === "microphone"
-
-      // Native audio remains live. Virtual microphones and brightness use
-      // completed-operation snapshots, not predictions of a successful write.
-      readonly property bool microphoneSnapshot: microphone && entry.event?.value !== undefined
-      readonly property var node: microphone ? AudioState.source : AudioState.sink
-      readonly property bool available: Logic.audioReady(node)
-      readonly property bool failed: microphoneSnapshot ? entry.event.value < 0 : brightness ? kind === "brightness-error" : !available
-      readonly property bool muted: microphoneSnapshot ? entry.event.muted : !brightness && available && node.audio.muted
-      readonly property real value: brightness || microphoneSnapshot ? (entry.event?.value ?? -1) : available ? Math.round(node.audio.volume * 100) : -1
-      readonly property bool showMeter: !failed && kind !== "output"
-
-      readonly property string glyph: {
-        if (brightness)
-          return failed ? "!" : "\u2600";
-        if (microphone)
-          return muted ? Icons.micMuted : Icons.micOn;
-        return AudioState.sinkIcon(node);
-      }
-
-      readonly property string label: {
-        if (brightness)
-          return failed ? entry.event.text : `Brightness ${value}%`;
-        if (microphoneSnapshot && failed)
-          return entry.event.text;
-        if (!available && !microphoneSnapshot)
-          return microphone ? "Microphone unavailable" : "Output unavailable";
-        if (kind === "output")
-          return node.description || node.name || "Audio output";
-        return `${microphone ? "Microphone" : "Volume"} ${muted ? "muted" : value + "%"}`;
-      }
-
       Connections {
         target: root
         function onDisplay(screenName, event) {
@@ -121,73 +87,25 @@ Scope {
       visible: entry.active
       color: "transparent"
       exclusionMode: ExclusionMode.Ignore
-      implicitWidth: Theme.osdWidth
-      implicitHeight: content.implicitHeight + Theme.osdPadding * 2
+      implicitWidth: content.implicitWidth
+      implicitHeight: content.implicitHeight
       anchors.bottom: true
-      margins.bottom: Theme.osdBottomMargin
+      // Keep the panel's center one-third up, regardless of its content height.
+      margins.bottom: Math.max(0, Math.round(modelData.height / 3 - implicitHeight / 2))
 
       WlrLayershell.layer: WlrLayer.Overlay
       WlrLayershell.namespace: "quickshell-osd"
       WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
       mask: Region {}
 
-      Rectangle {
+      State.OsdContent {
+        id: content
         anchors.fill: parent
-        radius: Theme.menuRadius
-        color: Theme.menuBackground
-        border.width: 1
-        border.color: Theme.menuBorder
-
-        Column {
-          id: content
-          anchors {
-            left: parent.left
-            right: parent.right
-            top: parent.top
-            margins: Theme.osdPadding
-          }
-          spacing: Theme.osdPadding
-
-          Row {
-            width: parent.width
-            spacing: Theme.osdPadding
-
-            Text {
-              id: icon
-              text: overlay.glyph
-              color: overlay.failed ? Theme.statusError : Theme.foreground
-              font.family: Theme.fontFamily
-              font.pixelSize: Theme.iconSize
-            }
-
-            Text {
-              width: parent.width - icon.width - parent.spacing
-              text: overlay.label
-              textFormat: Text.PlainText
-              wrapMode: Text.Wrap
-              maximumLineCount: 3
-              elide: Text.ElideRight
-              color: Theme.foreground
-              font.family: Theme.fontFamily
-              font.pixelSize: Theme.fontSize
-            }
-          }
-
-          Rectangle {
-            visible: overlay.showMeter
-            width: parent.width
-            height: Theme.sliderTrackHeight
-            radius: height / 2
-            color: Theme.sliderTrack
-
-            Rectangle {
-              width: parent.width * Math.max(0, Math.min(100, overlay.value)) / 100
-              height: parent.height
-              radius: parent.radius
-              color: overlay.muted ? Theme.sliderFillMuted : Theme.sliderFill
-            }
-          }
-        }
+        theme: Theme
+        event: overlay.entry.event
+        sink: AudioState.sink
+        source: AudioState.source
+        outputGlyph: AudioState.sinkIcon(AudioState.sink)
       }
     }
   }

@@ -19,6 +19,18 @@ TestCase {
     State.AudioFeedback {}
   }
 
+  Component {
+    id: sourceComponent
+    QtObject {
+      property int id: 42
+      property string name: "easyeffects_source"
+      property string description: "EasyEffects Source"
+      property bool ready: false
+      property bool isSink: false
+      // Deliberately no .audio: identity observation must never need it.
+    }
+  }
+
   QtObject {
     id: fakeAudio
     property var sink: null
@@ -307,6 +319,142 @@ TestCase {
     verify(feedback.count >= 1);
     compare(feedback.signalArguments[0][0], "output");
     tryCompare(audio, "lastOutputKey", "12:sink-12", 500);
+  }
+
+  function source(id, virtual = false, ready = true) {
+    const result = {
+      id: id,
+      name: "source-" + id,
+      description: virtual ? "EasyEffects Source" : "USB Microphone",
+      ready: ready,
+      isSink: false
+    };
+    if (!virtual)
+      result.audio = {volume: 0.75, muted: false};
+    return result;
+  }
+
+  function test_default_input_lifecycle_data() {
+    return [{tag: "native", virtual: false}, {tag: "virtual", virtual: true}];
+  }
+
+  function test_default_input_lifecycle(data) {
+    const audio = observer();
+    fakeAudio.sink = node(1);
+    fakeAudio.source = source(20, data.virtual, false);
+    wait(100);
+    fakeAudio.source = source(21, data.virtual);
+    tryCompare(audio, "initialized", true, 1500);
+    compare(audio.lastInputKey, "21:source-21");
+    compare(feedback.count, 0);
+    wait(200);
+    compare(feedback.count, 0); // No startup event replay after settling either.
+
+    fakeAudio.source = source(22, data.virtual, false);
+    wait(50);
+    fakeAudio.source = source(23, data.virtual);
+    feedback.wait();
+    compare(feedback.count, 1);
+    compare(feedback.signalArguments[0][0], "input");
+    compare(audio.lastInputKey, "23:source-23"); // Not the queued, unready source.
+    fakeAudio.source = null;
+    feedback.wait();
+    compare(audio.lastInputKey, "unavailable");
+    fakeAudio.source = source(24, data.virtual);
+    feedback.wait();
+    compare(audio.lastInputKey, "24:source-24");
+
+    const before = JSON.stringify(fakeAudio.source);
+    fakeAudio.source = source(25, data.virtual);
+    fakeAudio.source = source(24, data.virtual);
+    wait(220);
+    compare(feedback.count, 3); // Transient switches back are silent.
+    compare(JSON.stringify(fakeAudio.source), before);
+    compare(fakeAudio.calls.length, 0);
+    compare(microphoneRequests.count, 0); // Observation must never invoke controls.
+  }
+
+  function test_input_identity_rejects_invalid_sources() {
+    const sink = node(1);
+    for (const invalid of [null, source(2, true, false),
+        Object.assign(source(2), {name: ""}), Object.assign(source(2), {name: "auto_null"}),
+        Object.assign(source(2), {id: 0}), Object.assign(source(2), {id: "2"}),
+        Object.assign(source(2), {isSink: true}), source(1, true)]) {
+      compare(Logic.sourceReady(invalid, sink), false);
+      compare(Logic.inputKey(invalid, sink), "unavailable");
+    }
+    compare(Logic.inputKey(source(2, true), sink), "2:source-2");
+    compare(Logic.inputKey(source(2), sink), "2:source-2");
+  }
+
+  function test_input_property_changes_without_audio() {
+    const audio = observer();
+    const input = createTemporaryObject(sourceComponent, tests);
+    fakeAudio.source = input;
+    tryCompare(audio, "initialized", true, 1500);
+    compare(audio.lastInputKey, "unavailable");
+    compare(feedback.count, 0);
+    input.ready = true;
+    feedback.wait();
+    compare(audio.lastInputKey, "42:easyeffects_source");
+    input.description = "Renamed microphone";
+    wait(220);
+    compare(feedback.count, 1); // Descriptions are live, not device switches.
+    input.ready = false;
+    feedback.wait();
+    compare(audio.lastInputKey, "unavailable");
+    input.ready = true;
+    input.name = "replacement_source";
+    feedback.wait();
+    compare(audio.lastInputKey, "42:replacement_source");
+    compare(fakeAudio.calls.length, 0);
+    compare(microphoneRequests.count, 0);
+  }
+
+  function test_simultaneous_devices_emit_both() {
+    const audio = observer();
+    tryCompare(audio, "initialized", true, 1500);
+    fakeAudio.sink = node(1);
+    fakeAudio.source = source(2, true);
+    tryCompare(feedback, "count", 2, 500);
+    compare(feedback.signalArguments.map(args => args[0]).sort(), ["input", "output"]);
+    compare(audio.lastInputKey, "2:source-2");
+    compare(audio.lastOutputKey, "1:sink-1");
+    compare(fakeAudio.calls.length, 0);
+    compare(microphoneRequests.count, 0);
+  }
+
+  function test_independent_device_deadlines_data() {
+    return [{tag: "input-churn", churn: "input"}, {tag: "output-churn", churn: "output"}];
+  }
+
+  function test_independent_device_deadlines(data) {
+    const audio = observer();
+    tryCompare(audio, "initialized", true, 1500);
+    const quietKind = data.churn === "input" ? "output" : "input";
+    for (let i = 1; i <= 12; ++i) {
+      if (data.churn === "input")
+        fakeAudio.source = source(20 + i, true);
+      else
+        fakeAudio.sink = node(i);
+      if (i === 4) {
+        if (quietKind === "input")
+          fakeAudio.source = source(50, true);
+        else
+          fakeAudio.sink = node(50);
+      }
+      wait(100);
+      if (i === 7) {
+        compare(feedback.count, 1, "Quiet device settles while the other is still churning");
+        compare(feedback.signalArguments[0][0], quietKind);
+      }
+    }
+    verify(feedback.signalArguments.some(args => args[0] === data.churn),
+        "Churning device must emit by its own hard deadline");
+    tryCompare(audio, "lastInputKey", data.churn === "input" ? "32:source-32" : "50:source-50", 500);
+    tryCompare(audio, "lastOutputKey", data.churn === "output" ? "12:sink-12" : "50:sink-50", 500);
+    compare(fakeAudio.calls.length, 0);
+    compare(microphoneRequests.count, 0);
   }
 
   function test_null_sink_is_unavailable() {

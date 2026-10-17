@@ -1,7 +1,11 @@
 # Shell OSD
 
-Quickshell now owns volume/output mute, microphone mute, default-output changes,
-and brightness feedback. SwayOSD and its pactl watcher/libinput backend are
+The panel is horizontally centered, with its center one-third of the screen's
+logical height above the bottom. Placement adapts to each monitor and panel
+height. Device notices use a 400 px panel with 16 px text; meters are 8 px thick.
+
+Quickshell now owns volume/output mute, microphone mute, default-output and
+default-input changes, and brightness feedback. SwayOSD and its pactl watcher/libinput backend are
 retired. Keyboard-lock indicators are not provided; SwayNC is unchanged.
 
 The four audio keys use `quickshell:volumeUp`, `volumeDown`, `volumeMute`, and
@@ -9,6 +13,22 @@ The four audio keys use `quickshell:volumeUp`, `volumeDown`, `volumeMute`, and
 use `AudioState` (5 percentage-point steps, capped at 100%). Missing, unready, or
 dummy outputs show **Output unavailable**; the microphone has its own unavailable
 state. Native indicators read actual volume/mute and stay bound while visible.
+
+The volume OSD uses a 48 px QML vector speaker with three arcs that light
+progressively and continuously across 0–100%; mute replaces the arcs with a cross.
+Normal volume/mute feedback is a 256×128 px panel showing only the centered
+speaker and meter, without a text label. Meter updates retarget a short 100 ms
+transition; there is no entrance/opacity animation. Muting keeps the actual level
+and dims the meter. Device names and errors retain the wider 340 px panel, with
+up to three wrapped lines and ellipsis for longer text.
+Input-switch and microphone-mute feedback use a matching QML vector microphone.
+Successful mute feedback shows only a centered red mic with a cross, without text
+or a meter. Unmute feedback shows the normal mic and meter without text; errors
+retain their labels.
+Input switches show the current source name, with no
+meter; missing input shows **Microphone unavailable**. Unavailable-output errors
+still show their text. No image assets are used. Output-switch glyph selection,
+brightness glyphs, and the bar are unchanged.
 
 Quickshell 0.3.0 does not expose `.audio` for EasyEffects' `Audio/Source/Virtual`.
 For these unsupported sources, the mic key captures the explicit source ID and
@@ -21,9 +41,14 @@ state of a newly selected source. Nonzero exit, start failure, missing helper,
 and malformed output produce explicit **Microphone mute failed** feedback.
 The helper path is supplied by `QS_MIC_MUTE_HELPER`; it has no SwayOSD dependency.
 
-Default-output observation is native PipeWire. The first second establishes a
-silent startup baseline. Later changes settle for 150 ms, with a 1 s maximum
-wait, then display the current device (or unavailable), not an old queued device.
+Default-output and default-input observation is native PipeWire. The first second
+establishes a silent startup baseline for both. Later changes settle for 150 ms,
+with a 1 s maximum wait, then display the current device (or unavailable), not an
+old queued device. Input and output have independent settle/deadline timers;
+simultaneous changes emit both events (the latest event replaces the panel content,
+as usual). Input identity uses readiness, name and ID, not `.audio`, so EasyEffects'
+virtual microphone is still a valid input. Dummy outputs and sinks cannot masquerade
+as inputs. Observation never invokes controls or the microphone helper.
 
 Each screen has its own noninteractive overlay and 1.8 s timer. A new event on
 that screen replaces its content and resets its timer without hiding/remapping
@@ -71,11 +96,22 @@ This is a brightness-only local API, not a generic notification framework.
   `GOPROXY=off GOTOOLCHAIN=local go test ./...`
   (also supports `go test -race ./...`). Tests use fake child processes, verify
   exact argv, exit/reply/start failures and deadlines, and do not open hardware.
-- `QT_QPA_PLATFORM=offscreen qmltestrunner -input modules/home/hyprland/tests`
+- `QT_QPA_PLATFORM=offscreen QML_XHR_ALLOW_FILE_READ=1 qmltestrunner -input modules/home/hyprland/tests`
   with QtQuick/QtTest imports available. `tst_osd.qml` uses fake audio nodes and
   tests protocol validation, targeting, independent lifetimes, repeated events,
-  startup/debounce/deadline behavior, unavailable devices, rejected writes, and
-  virtual microphone snapshots, queueing, failures and source/sink isolation.
+  silent input/output startup, independent debounce/deadline behavior, simultaneous
+  switches, source readiness/loss/recovery without `.audio`, unavailable devices,
+  observation without writes, rejected writes, and virtual microphone snapshots,
+  queueing, failures and source/sink isolation.
+  `tst_volume_icon.qml` instantiates the vector icon and checks continuous arc
+  opacity, clamping, mute, fixed layout, and Shapes rendering with in-memory grabs.
+  `tst_osd_content.qml` renders the actual production `OsdContent` with injected
+  state at native and 1.5× scale, checking icons, text/meter visibility, long-name
+  bounds, snapshots, and interruptible meter updates. It reads the real Theme
+  constants through a local XHR, adapting only the Quickshell singleton declaration
+  for the test runtime; this is why file reads are enabled. It normally keeps grabs
+  in memory. An optional `screenshotDirectory` property allows a scratch-only
+  harness to save screenshots, never repository images.
 - Nonvisual production integration, from the repository root:
   ```sh
   scratch=$(mktemp -d "$TMPDIR/nixcfg-osd-correction.XXXXXX")
