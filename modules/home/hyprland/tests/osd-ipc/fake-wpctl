@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Test double only: rejects any sink selector/id or unexpected operation.
+exec node --input-type=commonjs -e '
+const assert = require("node:assert/strict");
+const args = process.argv.slice(1);
+assert.equal(process.env.LC_ALL, "C");
+assert.equal(args[1], "42");
+assert.deepEqual(args, args[0] === "set-mute" ? ["set-mute", "42", "toggle"] : ["get-volume", "42"]);
+console.error(JSON.stringify(args));
+if (process.env.OSD_FAIL_OPERATION === args[0])
+  process.exit(7);
+if (args[0] === "get-volume")
+  console.log("Volume: 0.75 [MUTED]");
+' "$@"

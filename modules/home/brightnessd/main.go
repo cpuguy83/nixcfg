@@ -8,7 +8,6 @@ import (
 	"iter"
 	"log/slog"
 	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
@@ -73,25 +72,6 @@ func main() {
 	}
 
 	os.Exit(ec)
-}
-
-func notify(mon string, val int, err error) {
-	var args []string
-	if err != nil {
-		args = []string{"--custom-icon", "dialog-error", "--custom-message", err.Error()}
-	} else {
-		prog := fmt.Sprintf("%.2f", float32(val)/100)
-		args = []string{"--custom-progress", prog, "--custom-icon", "display-brightness-symbolic"}
-	}
-
-	if mon != "" {
-		args = append([]string{"--monitor", mon}, args...)
-	}
-
-	if dt, err := exec.Command("swayosd-client", args...).CombinedOutput(); err != nil {
-		slog.Error("could not show osd", "error", err, "output", string(dt))
-		return
-	}
 }
 
 func readBrightness(dev *DDCDevice) (int, error) {

@@ -6,9 +6,6 @@
 -- lua_ls can type-check and complete these names in settings.lua.
 
 ---@type string
-micMuteToggle = nil
-
----@type string
 brightnessPath = nil
 
 ---@type string

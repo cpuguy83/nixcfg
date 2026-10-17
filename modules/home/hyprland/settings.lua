@@ -1,6 +1,6 @@
 -- Native Hyprland Lua config.
 --
--- The locals below (micMuteToggle, brightnessPath, getMonitorPath, layout,
+-- The locals below (brightnessPath, getMonitorPath, layout,
 -- monitors, workspaceRules) are injected by Home Manager from
 -- modules/home/hyprland/settings.nix's `settings` attrset (each entry there
 -- is a `_var`, so it renders as a plain `local` here instead of an
@@ -114,13 +114,13 @@ hl.bind(mod .. " + SHIFT + SPACE", hl.dsp.exec_cmd("pkill -USR2 -n handy"))
 hl.bind(mod .. " + mouse:272", hl.dsp.window.drag())   -- SUPER+left click to drag windows
 hl.bind(mod .. " + mouse:273", hl.dsp.window.resize()) -- SUPER+right click to resize
 
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("swayosd-client --output-volume raise"),
+hl.bind("XF86AudioRaiseVolume", hl.dsp.global("quickshell:volumeUp"),
 	{ locked = true, repeating = true })
-hl.bind("XF86AudioLowervolume", hl.dsp.exec_cmd("swayosd-client --output-volume lower"),
+hl.bind("XF86AudioLowervolume", hl.dsp.global("quickshell:volumeDown"),
 	{ locked = true, repeating = true })
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd("swayosd-client --output-volume mute-toggle"),
+hl.bind("XF86AudioMute", hl.dsp.global("quickshell:volumeMute"),
 	{ locked = true, repeating = true })
-hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd(micMuteToggle), { locked = true, repeating = true })
+hl.bind("XF86AudioMicMute", hl.dsp.global("quickshell:micMute"), { locked = true, repeating = true })
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true, repeating = true })
 hl.bind(
 	"XF86MonBrightnessUp",
@@ -288,6 +288,14 @@ hl.layer_rule({
 	match = { namespace = "quickshell-switcher" },
 	blur = true,
 	ignore_alpha = 0.3,
+})
+
+-- The OSD is a small, noninteractive frosted overlay.
+hl.layer_rule({
+	match = { namespace = "quickshell-osd" },
+	blur = true,
+	ignore_alpha = 0.3,
+	animation = "none",
 })
 
 -- Same deal for the overview: its surface covers the whole output, so

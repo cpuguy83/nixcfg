@@ -38,6 +38,12 @@ Singleton {
   // Percentage points per scroll notch on the audio modules.
   readonly property int volumeStep: 5
 
+  // Per-screen feedback, using the shared menu/slider palette.
+  readonly property int osdDuration: 1800
+  readonly property int osdWidth: 340
+  readonly property int osdPadding: 16
+  readonly property int osdBottomMargin: 100
+
   readonly property string fontFamily: "AdwaitaMono Nerd Font"
   readonly property int fontSize: 14
 

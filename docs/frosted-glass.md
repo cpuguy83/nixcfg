@@ -3,6 +3,10 @@
 This document captures the gotchas and recipe for the frosted-glass look used by
 the desktop (swaync, Hyprland blur, etc.). Referenced from `AGENTS.md`.
 
+The [shell OSD](shell-osd.md) uses the shared Quickshell menu/slider palette
+with a `quickshell-osd` blur rule and `ignore_alpha = 0.3`. Its small layer
+surface is input-transparent; it does not replace SwayNC notifications.
+
 ## GTK4 CSS Gotchas (swaync, etc.)
 - **GTK4 does NOT support `!important`**. Using it will silently break the declaration or cause it to be ignored entirely. Never use `!important` in GTK4 CSS.
 - **User CSS is additive** on top of the system/default CSS, not a replacement. Both providers load at the same priority. The user stylesheet loads second, so at equal specificity the user rule wins.

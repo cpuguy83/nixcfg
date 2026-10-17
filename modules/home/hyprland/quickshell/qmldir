@@ -26,6 +26,7 @@ ControlCenterToggle ControlCenterToggle.qml
 MediaPill MediaPill.qml
 NetworkSection NetworkSection.qml
 Notification Notification.qml
+Osd Osd.qml
 Overview Overview.qml
 OverviewCard OverviewCard.qml
 OverviewWorkspaceRow OverviewWorkspaceRow.qml

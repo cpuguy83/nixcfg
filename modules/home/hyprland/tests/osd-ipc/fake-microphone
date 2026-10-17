@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Never invoke wpctl. Check the production Process's explicit source argv.
+exec node --input-type=commonjs -e '
+const assert = require("node:assert/strict");
+assert.equal(process.argv.length, 2);
+const id = process.argv[1];
+assert.ok(["42", "43", "44"].includes(id), "not a test source id");
+if (id === "43") {
+  console.error("test helper refused source");
+  process.exit(7);
+}
+if (id === "44") {
+  console.log("malformed response");
+} else {
+  setTimeout(() => console.log("Volume: 0.75 [MUTED]"), 60);
+}
+' "$@"

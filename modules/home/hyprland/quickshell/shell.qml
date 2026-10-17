@@ -23,4 +23,5 @@ ShellRoot {
   Switcher {}
   Overview {}
   Launcher {}
+  Osd {}
 }

@@ -2,6 +2,11 @@
 
 let
   corpnet = config.mine.msft-corp.corpnet;
+  mic-mute-feedback = pkgs.writeShellApplication {
+    name = "mic-mute-feedback";
+    runtimeInputs = [ pkgs.wireplumber ];
+    text = builtins.readFile ./mic-mute-feedback.sh;
+  };
   corpnet-vpn-switch = pkgs.writeShellApplication {
     name = "corpnet-vpn-switch";
     runtimeInputs = with pkgs; [ systemd gawk ];
@@ -335,7 +340,7 @@ in
     };
   };
 
-  # The shared shell includes the bar, launcher, switcher, and overview.
+  # The shared shell includes the bar, launcher, switcher, overview, and OSD.
   # Replaces Waybar, whose taskbar cannot show window previews;
   # see .copilot/plans/quickshell-bar.md.
   home.packages = [ pkgs.quickshell ];
@@ -366,6 +371,7 @@ in
     Service = {
       ExecStart = "${pkgs.quickshell}/bin/qs -c bar";
       Environment = [
+        "QS_MIC_MUTE_HELPER=${mic-mute-feedback}/bin/mic-mute-feedback"
         # Qt does not read the GTK icon theme, so window icons fall back to
         # unthemed names without this.
         "QS_ICON_THEME=${config.gtk.iconTheme.name}"
