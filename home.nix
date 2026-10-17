@@ -16,6 +16,7 @@ let
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/github \
+        --set WEBKIT_DMABUF_RENDERER_FORCE_SHM 0 \
         --run ${lib.escapeShellArg "source ${agentTempEnv} copilot"}
 
       # Materialize the entry before editing: symlinkJoin leaves store symlinks.
