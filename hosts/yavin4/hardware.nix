@@ -29,6 +29,7 @@
   };
 
   services.blueman.enable = true;
+  hardware.xpadneo.enable = true; # xbox controller
   hardware.cpu.amd.updateMicrocode = true;
 
   boot.kernelParams = [

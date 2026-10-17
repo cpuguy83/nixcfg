@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 {
   imports = [
     ./hardware.nix
@@ -11,6 +11,11 @@
   hardware.graphics = {
     enable = true;
     enable32Bit = true;
+  };
+
+  # Use xpadneo's input mapping rather than SDL's incompatible raw HID path.
+  programs.steam.package = pkgs.steam.override {
+    extraEnv.SDL_JOYSTICK_HIDAPI = "0";
   };
 
   mine.tether.enable = true;
