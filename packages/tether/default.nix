@@ -16,6 +16,7 @@
 , hicolor-icon-theme
 , libnotify
 , libsecret
+, ncurses
 , nlohmann_json
 , openssl
 , wayland
@@ -72,6 +73,7 @@ stdenv.mkDerivation (finalAttrs: {
     hicolor-icon-theme
     libnotify
     libsecret
+    ncurses
     nlohmann_json
     openssl
     wayland
