@@ -11,6 +11,18 @@ let
   #himmelblauPkgs = inputs.himmelblau.packages.${pkgs.stdenv.hostPlatform.system};
   ssoHostPackage =
     if cfg.authStack == "himmelblau" then pkgs.himmelblau.sso else pkgs.linux-entra-sso-host-mine;
+  agency-install = pkgs.writeShellApplication {
+    name = "agency-install";
+    runtimeInputs = [
+      pkgs.bash
+      pkgs.curl
+      pkgs.coreutils
+      pkgs.gnutar
+      pkgs.gzip
+    ]
+    ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [ pkgs.unzip ];
+    text = builtins.readFile ./agency-install.sh;
+  };
 in
 {
   config = lib.mkIf cfg.enable {
@@ -37,12 +49,15 @@ in
     };
 
     home.packages = with pkgs; [
+      agency-install
       pkgs-unstable.microsoft-edge
 
       (azure-cli.withExtensions [
         azure-cli-extensions.azure-devops
       ])
     ];
+
+    home.sessionPath = [ "${config.home.homeDirectory}/.config/agency/CurrentVersion" ];
 
     # Register OpenSC PKCS#11 module in the NSS database used by Chromium-based
     # browsers (Edge) so they can access PIV certificates on the YubiKey.
