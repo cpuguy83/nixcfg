@@ -343,15 +343,17 @@ in
       };
 
       services.hyprpaper = {
-        enable = false;
+        enable = true;
         settings = {
-          ipc = "on";
-          preload = [
-            "~/Pictures/Backgrounds/Yd15nN4-free-doctor-who-wallpapers.jpg"
-          ];
+          splash = false;
           wallpaper = [
-            "DP-1,~/Pictures/Backgrounds/Yd15nN4-free-doctor-who-wallpapers.jpg"
-            "DP-2,~/Pictures/Backgrounds/Yd15nN4-free-doctor-who-wallpapers.jpg"
+            {
+              monitor = "*";
+              path = "${config.home.homeDirectory}/Pictures/Backgrounds";
+              fit_mode = "cover";
+              timeout = 3600;
+              order = "random-shuffle";
+            }
           ];
         };
       };
