@@ -69,6 +69,13 @@ stdenv.mkDerivation {
     stdenv.cc.cc.lib
   ];
 
+  # Foundry's voice runtime loads OpenSSL dynamically, outside the app's RUNPATH.
+  preFixup = ''
+    gappsWrapperArgs+=(
+      --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ openssl ]}"
+    )
+  '';
+
   # Keep the upstream binary byte-for-byte except for our explicit patchelf call.
   dontConfigure = true;
   dontBuild = true;
